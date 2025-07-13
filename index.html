@@ -3,25 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Portfolio</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Prasanth's Portfolio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: #f0f0f0;
+            color: #333;
+        }
+        header {
+            background: #222;
+            color: white;
+            padding: 20px 50px;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 2.5em;
+        }
+        nav {
+            background: #333;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+        }
+        nav a:hover {
+            background: #555;
+            border-radius: 5px;
+        }
+        section {
+            padding: 40px 60px;
+        }
+        .section-title {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #444;
+        }
+        .about, .projects, .contact {
+            background: white;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .project-item {
+            margin-bottom: 20px;
+        }
+        .project-item h3 {
+            color: #222;
+        }
+        .social-icons a {
+            margin-right: 15px;
+            color: #222;
+            font-size: 1.5em;
+            text-decoration: none;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #222;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <header>
         <h1>Prasanth Philip</h1>
+        <p>Automation Engineer | AI Explorer | Tech Tinkerer</p>
     </header>
     <nav>
-        <a href="index.html">Home</a>
-        <a href="about.html">About</a>
-        <a href="blog.html">Blog</a>
-        <a href="contact.html">Contact</a>
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#contact">Contact</a>
     </nav>
-    <div class="container">
-        <h2>Welcome to My AI Blog</h2>
-        <p>Sharing insights on AI and technology.</p>
-    </div>
+
+    <section id="about" class="about">
+        <h2 class="section-title">About Me</h2>
+        <p>Hello! I'm Prasanth, an automation engineer with a curiosity for artificial intelligence and digital tools that make life easier (and cooler). I enjoy tinkering with tech, building smart systems, and exploring how AI can simplify daily work.</p>
+    </section>
+
+    <section id="projects" class="projects">
+        <h2 class="section-title">Projects</h2>
+        <div class="project-item">
+            <h3>AI-Powered Maintenance Monitor</h3>
+            <p>Developed a monitoring dashboard to detect anomalies in rotating equipment using AI models and live sensor data.</p>
+        </div>
+        <div class="project-item">
+            <h3>Personal Blog on AI</h3>
+            <p>Created a minimalist blog on GitHub Pages to share AI use cases, tutorials, and personal experiments with tools like ChatGPT.</p>
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <h2 class="section-title">Contact Me</h2>
+        <p>Feel free to reach out if you're into AI, automation, or just enjoy a good geeky chat over coffee ☕.</p>
+        <div class="social-icons">
+            <a href="https://github.com/yourusername" target="_blank"><i class="fab fa-github"></i></a>
+            <a href="https://linkedin.com/in/yourusername" target="_blank"><i class="fab fa-linkedin"></i></a>
+            <a href="mailto:your@email.com"><i class="fas fa-envelope"></i></a>
+        </div>
+    </section>
+
     <footer>
-        <p>&copy; 2025 My AI Blog. All rights reserved.</p>
+        <p>&copy; 2025 Prasanth Philip. All rights reserved.</p>
     </footer>
 </body>
 </html>
