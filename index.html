@@ -10,36 +10,84 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         body {
             background: #f0f0f0;
             color: #333;
+            overflow-x: hidden;
         }
         header {
             background: #222;
             color: white;
             padding: 20px 50px;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
         }
         header h1 {
-            font-size: 2.5em;
+            font-size: 2em;
         }
         nav {
-            background: #333;
-            padding: 10px;
             display: flex;
-            justify-content: center;
-            gap: 20px;
+            gap: 30px;
         }
         nav a {
             color: white;
             text-decoration: none;
-            padding: 10px;
+            font-weight: bold;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0%;
+            height: 2px;
+            background: #00bcd4;
+            left: 0;
+            bottom: -5px;
+            transition: 0.4s ease;
         }
         nav a:hover {
-            background: #555;
-            border-radius: 5px;
+            color: #00bcd4;
+        }
+        nav a:hover::after {
+            width: 100%;
+        }
+        .profile-pic {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 30px auto 20px auto;
+            display: block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            animation: fadeIn 1s ease forwards;
+        }
+        .interests {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            animation: slideUp 1.2s ease forwards;
+        }
+        .interests span {
+            display: inline-block;
+            margin: 0 10px;
+            animation: bounce 2s infinite;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
         }
         section {
             padding: 40px 60px;
@@ -55,6 +103,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             padding: 30px;
+            animation: fadeIn 1s ease forwards;
         }
         .project-item {
             margin-bottom: 20px;
@@ -67,6 +116,11 @@
             color: #222;
             font-size: 1.5em;
             text-decoration: none;
+            transition: transform 0.3s;
+        }
+        .social-icons a:hover {
+            transform: scale(1.2);
+            color: #00bcd4;
         }
         footer {
             text-align: center;
@@ -78,14 +132,21 @@
 </head>
 <body>
     <header>
-        <h1>Prasanth Philip</h1>
-        <p>Automation Engineer | AI Explorer | Tech Tinkerer</p>
+        <h1>Prasanth</h1>
+        <nav>
+            <a href="#about">About</a>
+            <a href="#projects">Projects</a>
+            <a href="#contact">Contact</a>
+        </nav>
     </header>
-    <nav>
-        <a href="#about">About</a>
-        <a href="#projects">Projects</a>
-        <a href="#contact">Contact</a>
-    </nav>
+
+    <img src="https://via.placeholder.com/150" alt="Profile Picture" class="profile-pic">
+    <div class="interests">
+        <span>🤖 AI</span>
+        <span>⚙️ Automation</span>
+        <span>💡 Innovation</span>
+        <span>📚 Learning</span>
+    </div>
 
     <section id="about" class="about">
         <h2 class="section-title">About Me</h2>
@@ -108,9 +169,9 @@
         <h2 class="section-title">Contact Me</h2>
         <p>Feel free to reach out if you're into AI, automation, or just enjoy a good geeky chat over coffee ☕.</p>
         <div class="social-icons">
-            <a href="https://github.com/prasanthebenezer" target="_blank"><i class="fab fa-github"></i></a>
-            <a href="https://linkedin.com/in/prasanth-philip" target="_blank"><i class="fab fa-linkedin"></i></a>
-            <a href="mailto:prasanthebenezer@gmail.com"><i class="fas fa-envelope"></i></a>
+            <a href="https://github.com/yourusername" target="_blank"><i class="fab fa-github"></i></a>
+            <a href="https://linkedin.com/in/yourusername" target="_blank"><i class="fab fa-linkedin"></i></a>
+            <a href="mailto:your@email.com"><i class="fas fa-envelope"></i></a>
         </div>
     </section>
 
