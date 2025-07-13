@@ -43,6 +43,27 @@
             align-items: center;
         }
 
+        .header-contact {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .header-contact a {
+            color: #e0e0e0;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .header-contact a:hover {
+            color: #00d4ff;
+        }
+
+        .contact-divider {
+            color: #666;
+        }
+
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
@@ -54,6 +75,25 @@
             display: flex;
             list-style: none;
             gap: 2rem;
+            align-items: center;
+        }
+
+        .cv-download {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 212, 255, 0.3);
+        }
+
+        .cv-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.5);
+            color: #000;
         }
 
         .nav-links a {
@@ -475,12 +515,20 @@
     <header>
         <nav class="container">
             <div class="logo">Prasanth Philip</div>
+            <div class="header-contact">
+                <a href="mailto:prasanthebenezer@gmail.com">📧 prasanthebenezer@gmail.com</a>
+                <span class="contact-divider">|</span>
+                <a href="tel:+966554834720">📱 +966-554834720</a>
+                <span class="contact-divider">|</span>
+                <span>📍 Al Kharj, Saudi Arabia</span>
+            </div>
             <ul class="nav-links">
                 <li><a href="#home">Home</a></li>
                 <li><a href="#about">About</a></li>
                 <li><a href="#skills">Skills</a></li>
                 <li><a href="#projects">Projects</a></li>
                 <li><a href="#contact">Contact</a></li>
+                <li><a href="#" class="cv-download" onclick="downloadCV()">📄 Download CV</a></li>
             </ul>
         </nav>
     </header>
@@ -678,7 +726,7 @@
                     <div style="text-align: center; padding: 2rem; background: rgba(255, 255, 255, 0.05); border-radius: 15px; border: 1px solid rgba(0, 212, 255, 0.2);">
                         <h4 style="color: #00d4ff; margin-bottom: 1rem;">Professional Network</h4>
                         <div class="social-links">
-                            <a href="https://www.linkedin.com/in/prasanth-philip-a306032a" target="_blank">LinkedIn</a>
+                            <a href="https://www.linkedin.com/in/prasanth-philip" target="_blank">LinkedIn</a>
                             <a href="mailto:prasanthebenezer@gmail.com">Email</a>
                         </div>
                         <p style="margin-top: 1rem; color: #b0b0b0;">Member of Saudi Council of Engineers & IEEE</p>
@@ -705,6 +753,64 @@
                 document.querySelector(this.getAttribute('href')).scrollIntoView({
                     behavior: 'smooth'
                 });
+
+        // CV Download Function
+        function downloadCV() {
+            const cvContent = `
+PRASANTH PHILIP
+Al Kharj, Saudi Arabia | +966-554834720 / 91-7356535741
+prasanthebenezer@gmail.com | LinkedIn: https://www.linkedin.com/in/prasanth-philip
+
+PROFESSIONAL SUMMARY
+A strategic and results-driven Automation & MES Leader with over 13 years of experience directing large-scale automation, electrical, and MES projects in the process manufacturing industry. Proven expertise in leading the end-to-end lifecycle of critical system migrations, replacing legacy controls with modern Siemens and WinCos platforms while minimizing downtime and ensuring business continuity.
+
+CORE COMPETENCIES
+• Automation & MES Leadership: MES Implementation & Maintenance, E&A Strategy, People Development & Coaching
+• Project Management: Capital Investment Projects, Budgeting & Cost Control, Project Planning & Execution
+• Control Systems: Siemens (S7-1500, S7-400), ABB (AC450), WinCos R2
+• HMI/SCADA: Wonderware InTouch, WinCC, TIA Portal
+• Networking: Profibus, Profinet
+• Management Software: SAP (Plant Maintenance), ProPlant, EsXi Servers
+• Compliance & Quality: ISO9001:2000, Safety & Quality Compliance, Lean Six Sigma
+
+PROFESSIONAL EXPERIENCE
+
+Sr. Engineer (Automation & Maintenance) | ARASCO | Al Kharj, Saudi Arabia | March 2009 – Present
+
+KEY ACHIEVEMENTS:
+• Led modernization of all ARASCO plants in Al Kharj site, improving asset availability by 25%
+• Managed project budgets up to SAR 15 million, consistently delivering on time and under budget
+• Spearheaded replacement of 30-year-old legacy automation system with zero disruption to 300MT/day capacity
+• Successfully completed automation upgrade for Al Kharj Feed Mill 1, replacing 34-year-old ABB PLCs with Siemens S7-1500 and WinCos R2 MES
+• Led complete automation retrofit of critical chemical (Premix) plant, migrating 24-year-old legacy system to modern Siemens S7-400
+
+Systems Engineer (Project Lead) | Aryans Infoway Pvt Ltd | Kerala, India | January 2007 – February 2009
+
+EDUCATION
+Bachelor of Engineering, Electronics & Automation | Anna University | Chennai, India
+
+CERTIFICATIONS
+• Certified Maintenance and Reliability Practitioner (CMRP) (2022)
+• LEAN/Six Sigma Practitioner (2021)
+• Simatic S7-400 with Step 7 V5.6 | SITRAIN (2018)
+• Advanced Automation & Control Systems | Buhler Automation Academy, Switzerland (2016)
+• ISO9001:2000 Internal Auditor (2010)
+
+PROFESSIONAL AFFILIATIONS
+• Member, Saudi Council of Engineers
+• Member, IEEE (Since 2011)
+            `;
+
+            const blob = new Blob([cvContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Prasanth_Philip_CV.txt';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
             });
         });
 
