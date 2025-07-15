@@ -452,6 +452,55 @@
             left: -20px;
             color: #667eea;
         }
+        /* Projects Section */
+        .projects {
+            background: var(--bg-secondary);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .project-card {
+            background: var(--bg-primary);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .project-title {
+            color: var(--primary-color);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .project-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .project-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tech-tag {
+            background: var(--accent-color);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+
 
         /* Education & Certifications */
         .education-cert {
@@ -979,6 +1028,46 @@
                     <p>Led embedded systems and firmware (PIC) projects, serving as the primary technical interface for clients. Drove resolution of enterprise software issues and developed detailed instrument specifications.</p>
                 </div>
             </section>
+             <!-- Projects Section -->
+    <section id="projects" class="section projects">
+        <div class="container">
+            <h2 class="section-title">Key Projects</h2>
+            <div class="projects-grid">
+                <div class="project-card">
+                    <h3 class="project-title">Silo Plant Automation Retrofit</h3>
+                    <p class="project-description">Led the complete replacement of a 30-year-old legacy automation system, implementing a phased migration strategy that ensured zero disruption to the 300MT/day customer commitment by running new and old systems in parallel.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Siemens S7-400</span>
+                        <span class="tech-tag">WinCos R3</span>
+                        <span class="tech-tag">Profibus</span>
+                        <span class="tech-tag">Migration Strategy</span>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <h3 class="project-title">Al Kharj Feed Mill 1 Upgrade</h3>
+                    <p class="project-description">Successfully completed the automation upgrade, replacing 34-year-old ABB PLCs with state-of-the-art Siemens S7-1500 and WinCos R3 MES, including Profinet networks to improve system robustness.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Siemens S7-1500</span>
+                        <span class="tech-tag">WinCos R3 MES</span>
+                        <span class="tech-tag">Profinet</span>
+                        <span class="tech-tag">System Modernization</span>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <h3 class="project-title">Premix Plant Automation</h3>
+                    <p class="project-description">Led the complete automation and instrumentation retrofit of a critical Premix plant, migrating a 24-year-old legacy system to a modern Siemens S7-400 and Profibus network infrastructure.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Siemens S7-400</span>
+                        <span class="tech-tag">Profibus Network</span>
+                        <span class="tech-tag">Instrumentation</span>
+                        <span class="tech-tag">Legacy Migration</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
             <!-- Education & Certifications -->
             <section id="education" class="section">
