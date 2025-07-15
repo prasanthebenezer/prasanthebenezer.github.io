@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prasanth Philip - Automation & MES Leader</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -11,109 +12,35 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #0f172a;
+            --accent-color: #06b6d4;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --border-color: #374151;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background-color: #f8f9fa;
-            transition: all 0.3s ease;
-        }
-
-        /* Dark Theme Styles */
-        body.dark-theme {
-            color: #e0e0e0;
-            background-color: #121212;
-        }
-
-        body.dark-theme .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-        }
-
-        body.dark-theme .nav {
-            background: #1e1e1e;
-            border-bottom: 1px solid #333;
-        }
-
-        body.dark-theme .nav a {
-            color: #e0e0e0;
-        }
-
-        body.dark-theme .nav a:hover {
-            background: #2c3e50;
-            color: white;
-        }
-
-        body.dark-theme .section-title {
-            color: #e0e0e0;
-        }
-
-        body.dark-theme .section-title::after {
-            background: #2c3e50;
-        }
-
-        body.dark-theme .stat-item,
-        body.dark-theme .skill-category,
-        body.dark-theme .experience-item,
-        body.dark-theme .education-item,
-        body.dark-theme .cert-item {
-            background: #1e1e1e;
-            border: 1px solid #333;
-        }
-
-        body.dark-theme .stat-number {
-            color: #3498db;
-        }
-
-        body.dark-theme .skill-category h3 {
-            color: #3498db;
-        }
-
-        body.dark-theme .skill-list li {
-            border-bottom: 1px solid #333;
-        }
-
-        body.dark-theme .experience-item::before {
-            background: #3498db;
-        }
-
-        body.dark-theme .job-title {
-            color: #e0e0e0;
-        }
-
-        body.dark-theme .company-info {
-            color: #3498db;
-        }
-
-        body.dark-theme .duration {
-            color: #bbb;
-        }
-
-        body.dark-theme .experience-highlights li::before {
-            color: #3498db;
-        }
-
-        body.dark-theme .education-item h3,
-        body.dark-theme .cert-item h3 {
-            color: #3498db;
-        }
-
-        body.dark-theme .cert-list li {
-            border-bottom: 1px solid #333;
-        }
-
-        body.dark-theme .footer {
-            background: #1e1e1e;
-            border-top: 1px solid #333;
-        }
-
-        body.dark-theme .social-links a {
-            border-color: #e0e0e0;
-            color: #e0e0e0;
-        }
-
-        body.dark-theme .social-links a:hover {
-            background: #e0e0e0;
-            color: #1e1e1e;
+            color: var(--text-primary);
+            background-color: var(--bg-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .container {
@@ -122,177 +49,231 @@
             padding: 0 20px;
         }
 
-        /* Header Section */
+        /* Header */
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 80px 0;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.1);
+            background: var(--bg-primary);
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .header-content {
-            position: relative;
-            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .profile-img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 4px solid white;
-            margin: 0 auto 30px;
-            background: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 60px;
-            color: #667eea;
+        .logo {
+            font-size: 1.5rem;
             font-weight: bold;
-            overflow: hidden;
+            color: var(--primary-color);
         }
 
-        .profile-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .profile-img.has-image {
-            font-size: 0;
-        }
-
-        .header h1 {
-            font-size: 3em;
-            margin-bottom: 10px;
-            font-weight: 300;
-        }
-
-        .header .subtitle {
-            font-size: 1.3em;
-            margin-bottom: 30px;
-            opacity: 0.9;
-        }
-
-        .contact-info {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-
-        .contact-item {
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 1.1em;
+            justify-content: center;
         }
 
-        .contact-item a {
+        .theme-toggle:hover {
+            background-color: var(--primary-color);
             color: white;
+            transform: scale(1.1);
+        }
+
+        /* Sticky Navigation */
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 15px 0;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sticky-nav.scrolled {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--primary-color);
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .profile-pic:hover {
+            transform: scale(1.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
             text-decoration: none;
-            transition: opacity 0.3s;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
         }
 
-        .contact-item a:hover {
-            opacity: 0.8;
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--primary-color);
         }
 
-        /* CV Download Button */
-        .cv-download {
-            margin-top: 30px;
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
         }
 
         .cv-btn {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
+            background: var(--primary-color);
             color: white;
-            padding: 12px 30px;
+            padding: 8px 16px;
+            border-radius: 25px;
             text-decoration: none;
-            border-radius: 30px;
             font-weight: 500;
-            font-size: 1.1em;
-            border: 2px solid white;
             transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .cv-btn:hover {
-            background: white;
-            color: #667eea;
+            background: var(--secondary-color);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
 
-        body.dark-theme .cv-btn {
-            background: rgba(52, 152, 219, 0.2);
-            border-color: #3498db;
-            color: white;
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
+            padding: 100px 0;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards;
         }
 
-        body.dark-theme .cv-btn:hover {
-            background: #3498db;
-            color: white;
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
         }
 
-        /* Navigation */
-        .nav {
-            background: white;
-            padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        .hero .subtitle {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
         }
 
-        .nav ul {
-            list-style: none;
+        .hero .tagline {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
             display: flex;
+            gap: 20px;
             justify-content: center;
-            gap: 40px;
+            flex-wrap: wrap;
         }
 
-        .nav a {
-            color: #333;
-            text-decoration: none;
-            font-weight: 500;
-            padding: 10px 20px;
+        .btn {
+            padding: 12px 30px;
             border-radius: 25px;
-            transition: all 0.3s;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .nav a:hover {
-            background: #667eea;
+        .btn-primary {
+            background: var(--primary-color);
             color: white;
         }
 
-        /* Main Content */
-        .main-content {
-            padding: 60px 0;
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
         }
 
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Sections */
         .section {
-            margin-bottom: 80px;
+            padding: 80px 0;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .section-title {
+            font-size: 2.5rem;
             text-align: center;
-            font-size: 2.5em;
             margin-bottom: 50px;
-            color: #333;
+            color: var(--text-primary);
             position: relative;
         }
 
@@ -304,154 +285,143 @@
             transform: translateX(-50%);
             width: 60px;
             height: 3px;
-            background: #667eea;
+            background: var(--primary-color);
         }
 
         /* About Section */
         .about-content {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
+            grid-template-columns: 1fr 2fr;
+            gap: 50px;
             align-items: center;
         }
 
+        .about-image {
+            text-align: center;
+        }
+
+        .about-image img {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .about-image img:hover {
+            transform: scale(1.05);
+        }
+
         .about-text {
-            font-size: 1.1em;
+            font-size: 1.1rem;
             line-height: 1.8;
+            color: var(--text-secondary);
         }
 
         .about-text p {
             margin-bottom: 20px;
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
+        /* Experience Section */
+        .experience {
+            background: var(--bg-secondary);
         }
 
-        .stat-item {
-            text-align: center;
+        .experience-item {
+            background: var(--bg-primary);
             padding: 30px;
-            background: white;
+            margin-bottom: 30px;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
         }
 
-        .stat-number {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
+        .experience-item:hover {
+            transform: translateY(-5px);
         }
 
-        .stat-label {
-            font-size: 1.1em;
-            color: #666;
+        .experience-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .experience-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .experience-company {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .experience-date {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .experience-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .experience-description ul {
+            margin-left: 20px;
+        }
+
+        .experience-description li {
+            margin-bottom: 8px;
         }
 
         /* Skills Section */
         .skills-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
+            gap: 30px;
         }
 
         .skill-category {
-            background: white;
+            background: var(--bg-secondary);
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .skill-category:hover {
+            transform: translateY(-5px);
         }
 
         .skill-category h3 {
-            color: #667eea;
+            color: var(--primary-color);
             margin-bottom: 20px;
-            font-size: 1.3em;
+            font-size: 1.3rem;
         }
 
-        .skill-list {
-            list-style: none;
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
         }
 
-        .skill-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 1.05em;
+        .skill-tag {
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
         }
 
-        .skill-list li:last-child {
-            border-bottom: none;
+        .skill-tag:hover {
+            background: var(--secondary-color);
         }
 
-        /* Experience Section */
-        .experience-item {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-            position: relative;
-        }
-
-        .experience-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-            background: #667eea;
-            border-radius: 0 10px 10px 0;
-        }
-
-        .experience-header {
-            margin-bottom: 20px;
-        }
-
-        .job-title {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .company-info {
-            color: #667eea;
-            font-size: 1.1em;
-            margin-bottom: 10px;
-        }
-
-        .duration {
-            color: #666;
-            font-style: italic;
-        }
-
-        .experience-highlights {
-            margin-top: 20px;
-        }
-
-        .experience-highlights h4 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        .experience-highlights ul {
-            list-style: none;
-            padding-left: 20px;
-        }
-
-        .experience-highlights li {
-            margin-bottom: 8px;
-            position: relative;
-        }
-
-        .experience-highlights li::before {
-            content: '→';
-            position: absolute;
-            left: -20px;
-            color: #667eea;
-        }
         /* Projects Section */
         .projects {
             background: var(--bg-secondary);
@@ -501,99 +471,99 @@
             font-size: 0.8rem;
         }
 
-
-        /* Education & Certifications */
-        .education-cert {
+        /* Contact Section */
+        .contact-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 40px;
+            gap: 50px;
         }
 
-        .education-item, .cert-item {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        .education-item h3, .cert-item h3 {
-            color: #667eea;
-            margin-bottom: 10px;
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
-        .cert-list {
-            list-style: none;
+        .contact-item i {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            width: 25px;
         }
 
-        .cert-list li {
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        .cert-list li:last-child {
-            border-bottom: none;
+        .form-group {
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Theme Toggle Button */
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 1.2em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        .form-group label {
+            margin-bottom: 5px;
+            color: var(--text-primary);
+            font-weight: 500;
         }
 
-        .theme-toggle:hover {
-            background: #5a67d8;
-            transform: scale(1.1);
+        .form-group input,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: border-color 0.3s ease;
         }
 
-        body.dark-theme .theme-toggle {
-            background: #3498db;
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
         }
 
-        body.dark-theme .theme-toggle:hover {
-            background: #2980b9;
-        }
-        .footer {
-            background: #333;
-            color: white;
-            text-align: center;
-            padding: 40px 0;
-        }
-
-        .footer p {
-            margin-bottom: 20px;
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
         }
 
         .social-links {
             display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-link {
+            display: flex;
+            align-items: center;
             justify-content: center;
-            gap: 20px;
-        }
-
-        .social-links a {
+            width: 45px;
+            height: 45px;
+            background: var(--primary-color);
             color: white;
+            border-radius: 50%;
             text-decoration: none;
-            padding: 10px 20px;
-            border: 2px solid white;
-            border-radius: 25px;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
 
-        .social-links a:hover {
-            background: white;
-            color: #333;
+        .social-link:hover {
+            background: var(--secondary-color);
+            transform: scale(1.1);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 30px 0;
         }
 
         /* Animations */
@@ -608,281 +578,92 @@
             }
         }
 
-        @keyframes fadeInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes fadeInRight {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0px);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.05);
-            }
-        }
-
-        /* Animation Classes */
-        .fade-in-up {
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        .fade-in-left {
-            animation: fadeInLeft 0.8s ease-out;
-        }
-
-        .fade-in-right {
-            animation: fadeInRight 0.8s ease-out;
-        }
-
-        .float {
-            animation: float 3s ease-in-out infinite;
-        }
-
-        /* Header Animations */
-        .header-content {
-            animation: fadeInUp 1s ease-out;
-        }
-
-        .profile-img {
-            animation: fadeInUp 1.2s ease-out; /*, float 4s ease-in-out infinite 2s;*/
-        }
-
-        .contact-info {
-            animation: fadeInUp 1.4s ease-out;
-        }
-
-        .cv-download {
-            animation: fadeInUp 1.6s ease-out;
-        }
-
-        /* Navigation Animation */
-        .nav {
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        /* Section Animations - will be triggered by scroll */
-        .section {
-            opacity: 0;
-            transform: translateY(50px);
-            transition: all 0.8s ease-out;
-        }
-
-        .section.animate {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Card Hover Animations */
-        .stat-item {
-            transition: all 0.3s ease;
-        }
-
-        .stat-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .skill-category {
-            transition: all 0.3s ease;
-        }
-
-        .skill-category:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .experience-item {
-            transition: all 0.3s ease;
-        }
-
-        .experience-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .education-item,
-        .cert-item {
-            transition: all 0.3s ease;
-        }
-
-        .education-item:hover,
-        .cert-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Button Animation Enhancements */
-        .cv-btn {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cv-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .cv-btn:hover::before {
-            left: 100%;
-        }
-
-        .theme-toggle {
-            animation: pulse 2s infinite;
-        }
-
-        .theme-toggle:hover {
-            animation: none;
-        }
-
-        /* Stats Number Animation */
-        .stat-number {
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Skill List Animation */
-        .skill-list li {
-            transition: all 0.3s ease;
-        }
-
-        .skill-list li:hover {
-            color: #667eea;
-            transform: translateX(10px);
-        }
-
-        body.dark-theme .skill-list li:hover {
-            color: #3498db;
-        }
-
-        /* Social Links Animation */
-        .social-links a {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .social-links a::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .social-links a:hover::before {
-            left: 100%;
-        }
-
-        /* Reduce motion for users who prefer it */
-        @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2.5em;
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
             }
 
-            .contact-info {
+            .nav-content {
                 flex-direction: column;
-                gap: 15px;
+                gap: 20px;
             }
 
-            .nav ul {
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 20px;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .hero-buttons {
                 flex-direction: column;
-                gap: 10px;
+                align-items: center;
             }
 
             .about-content {
                 grid-template-columns: 1fr;
-                gap: 30px;
+                text-align: center;
             }
 
-            .stats {
+            .experience-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .contact-content {
                 grid-template-columns: 1fr;
             }
 
-            .skills-grid {
-                grid-template-columns: 1fr;
+            .section {
+                padding: 50px 0;
             }
 
-            .education-cert {
-                grid-template-columns: 1fr;
+            .container {
+                padding: 0 15px;
             }
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
         }
     </style>
 </head>
 <body>
-    <!-- Theme Toggle Button -->
-    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Theme">
-        🌙
-    </button>
-    <!-- Header Section -->
-    <section class="header">
+    <!-- Header -->
+    <header class="header">
         <div class="container">
             <div class="header-content">
-                <div class="profile-img has-image">
-                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Prasanth Philip" style="display: block;">
-                </div>
-                <h1>Prasanth Philip</h1>
-                <div class="subtitle">Automation & MES Leader</div>
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <span>📍</span>
-                        <span>Al Kharj, Saudi Arabia</span>
-                    </div>
-                    <div class="contact-item">
-                        <span>📞</span>
-                        <span>+966-554834720</span>
-                    </div>
-                    <div class="contact-item">
-                        <span>✉️</span>
-                        <a href="mailto:prasanthebenezer@gmail.com">prasanthebenezer@gmail.com</a>
-                    </div>
-                    <div class="contact-item">
-                        <span>🔗</span>
-                        <a href="https://www.linkedin.com/in/prasanth-philip" target="_blank">LinkedIn</a>
-                    </div>
+                <div class="logo">Prasanth Philip</div>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-sun" id="theme-icon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sticky Navigation -->
+    <nav class="sticky-nav" id="stickyNav">
+        <div class="container">
+            <div class="nav-content">
+                <div class="nav-left">
+                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Profile" class="profile-pic">
+                    <ul class="nav-links">
+                        <li><a href="#about" class="nav-link">About</a></li>
+                        <li><a href="#experience" class="nav-link">Experience</a></li>
+                        <li><a href="#projects" class="nav-link">Projects</a></li>
+                        <li><a href="#skills" class="nav-link">Skills</a></li>
+                        <li><a href="#contact" class="nav-link">Contact</a></li>
+                    </ul>
                 </div>
                 <div class="cv-download">
                     <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="cv-btn">
@@ -891,289 +672,298 @@
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- Navigation -->
-    <nav class="nav">
-        <div class="container">
-            <ul>
-                <li><a href="#about">About</a></li>
-                <li><a href="#skills">Skills</a></li>
-                <li><a href="#experience">Experience</a></li>
-                <li><a href="#education">Education</a></li>
-            </ul>
-        </div>
     </nav>
 
-    <!-- Main Content -->
-    <div class="main-content">
+    <!-- Hero Section -->
+    <section class="hero">
         <div class="container">
-            <!-- About Section -->
-            <section id="about" class="section">
-                <h2 class="section-title">About Me</h2>
-                <div class="about-content">
-                    <div class="about-text">
-                        <p>A strategic and results-driven Automation & MES Leader with over 14 years of experience directing large-scale automation, electrical, and MES projects in the process manufacturing industry.</p>
-                        <p>Proven expertise in leading the end-to-end lifecycle of critical system migrations, replacing legacy controls with modern Siemens and WinCos platforms while minimizing downtime and ensuring business continuity.</p>
-                        <p>A dedicated people leader, committed to coaching engineering teams, developing talent, and fostering a culture of safety, compliance, and continuous improvement in line with core business objectives.</p>
-                    </div>
-                    <div class="stats">
-                        <div class="stat-item">
-                            <div class="stat-number">14+</div>
-                            <div class="stat-label">Years Experience</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">25%</div>
-                            <div class="stat-label">Asset Availability Improvement</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">SAR 15M</div>
-                            <div class="stat-label">Project Budgets Managed</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">95%+</div>
-                            <div class="stat-label">Schedule Compliance</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Skills Section -->
-            <section id="skills" class="section">
-                <h2 class="section-title">Core Competencies</h2>
-                <div class="skills-grid">
-                    <div class="skill-category">
-                        <h3>Automation & MES Leadership</h3>
-                        <ul class="skill-list">
-                            <li>MES Implementation & Maintenance</li>
-                            <li>E&A Strategy</li>
-                            <li>People Development & Coaching</li>
-                            <li>Succession Planning</li>
-                            <li>AI and N8N Automation</li>
-                        </ul>
-                    </div>
-                    <div class="skill-category">
-                        <h3>Project Management</h3>
-                        <ul class="skill-list">
-                            <li>Capital Investment Projects</li>
-                            <li>Budgeting & Cost Control</li>
-                            <li>Project Planning & Execution</li>
-                            <li>Resource Allocation</li>
-                            <li>Risk Mitigation</li>
-                        </ul>
-                    </div>
-                    <div class="skill-category">
-                        <h3>Technical Systems</h3>
-                        <ul class="skill-list">
-                            <li>Siemens (S7-1500, S7-400)</li>
-                            <li>ABB (AC450)</li>
-                            <li>WinCos R3</li>
-                            <li>Wonderware InTouch</li>
-                            <li>Profibus/Profinet</li>
-                        </ul>
-                    </div>
-                    <div class="skill-category">
-                        <h3>Compliance & Quality</h3>
-                        <ul class="skill-list">
-                            <li>ISO9001:2000</li>
-                            <li>Safety & Quality Compliance</li>
-                            <li>Lean Six Sigma</li>
-                            <li>Change Control Procedures</li>
-                            <li>SAP Plant Maintenance</li>
-                        </ul>
-                    </div>
-                    <div class="skill-category">
-                        <h3>Artificial Intelligence</h3>
-                        <ul class="skill-list">
-                            <li>N8N RAG agents deployment</li>
-                            <li>Natural Language Processing (NLP)</li>
-                            <li>AI model deployment</li>
-                            <li>Automation and AI integration</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Experience Section -->
-            <section id="experience" class="section">
-                <h2 class="section-title">Professional Experience</h2>
-                
-                <div class="experience-item">
-                    <div class="experience-header">
-                        <div class="job-title">Sr. Engineer (Automation & Maintenance)</div>
-                        <div class="company-info">ARASCO (Arabian Agricultural Services Company)</div>
-                        <div class="duration">March 2009 - Present | Al Kharj, Saudi Arabia</div>
-                    </div>
-                    <p>Provides strategic leadership for all MES, Electrical & Automation (E&A) functions, managing capital projects, leading maintenance teams, and driving system improvements to enhance plant performance and product quality.</p>
-                    
-                    <div class="experience-highlights">
-                        <h4>Key Achievements:</h4>
-                        <ul>
-                            <li>Led modernization of all ARASCO plants in Al Kharj site, improving asset availability by 25%</li>
-                            <li>Managed project budgets up to SAR 15 million, consistently delivering on time and under budget</li>
-                            <li>Spearheaded replacement of 30-year-old legacy automation system with zero disruption to 300MT/day customer commitment</li>
-                            <li>Successfully completed automation upgrade for Al Kharj Feed Mill 1, replacing 34-year-old ABB PLCs with Siemens S7-1500</li>
-                            <li>Achieved 95%+ schedule compliance for automation hardware and MES infrastructure maintenance</li>
-                            <li>Implemented Lean Six Sigma principles leading to 25% increase in production efficiency</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="experience-item">
-                    <div class="experience-header">
-                        <div class="job-title">Systems Engineer (Project Lead)</div>
-                        <div class="company-info">Aryans Infoway Pvt Ltd</div>
-                        <div class="duration">January 2007 - February 2009 | Kerala, India</div>
-                    </div>
-                    <p>Led embedded systems and firmware (PIC) projects, serving as the primary technical interface for clients. Drove resolution of enterprise software issues and developed detailed instrument specifications.</p>
-                </div>
-            </section>
-             <!-- Projects Section -->
-            <section id="projects" class="section projects">
-                <div class="container">
-                    <h2 class="section-title">Key Projects</h2>
-                    <div class="projects-grid">
-                        <div class="project-card">
-                            <h3 class="project-title">Silo Plant Automation Retrofit</h3>
-                            <p class="project-description">Led the complete replacement of a 30-year-old legacy automation system, implementing a phased migration strategy that ensured zero disruption to the 300MT/day customer commitment by running new and old systems in parallel.</p>
-                            <div class="project-tech">
-                                <span class="tech-tag">Siemens S7-400</span>
-                                <span class="tech-tag">WinCos R3</span>
-                                <span class="tech-tag">Profibus</span>
-                                <span class="tech-tag">Migration Strategy</span>
-                            </div>
-                        </div>
-                        
-                        <div class="project-card">
-                            <h3 class="project-title">Al Kharj Feed Mill 1 Upgrade</h3>
-                            <p class="project-description">Successfully completed the automation upgrade, replacing 34-year-old ABB PLCs with state-of-the-art Siemens S7-1500 and WinCos R3 MES, including Profinet networks to improve system robustness.</p>
-                            <div class="project-tech">
-                                <span class="tech-tag">Siemens S7-1500</span>
-                                <span class="tech-tag">WinCos R3 MES</span>
-                                <span class="tech-tag">Profinet</span>
-                                <span class="tech-tag">System Modernization</span>
-                            </div>
-                        </div>
-                        
-                        <div class="project-card">
-                            <h3 class="project-title">Premix Plant Automation</h3>
-                            <p class="project-description">Led the complete automation and instrumentation retrofit of a critical Premix plant, migrating a 24-year-old legacy system to a modern Siemens S7-400 and Profibus network infrastructure.</p>
-                            <div class="project-tech">
-                                <span class="tech-tag">Siemens S7-400</span>
-                                <span class="tech-tag">Profibus Network</span>
-                                <span class="tech-tag">Instrumentation</span>
-                                <span class="tech-tag">Legacy Migration</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Education & Certifications -->
-            <section id="education" class="section">
-                <h2 class="section-title">Education & Certifications</h2>
-                <div class="education-cert">
-                    <div>
-                        <div class="education-item">
-                            <h3>Bachelor of Engineering</h3>
-                            <p><strong>Electronics & Instrumentation</strong></p>
-                            <p>Anna University, Chennai, India</p>
-                        </div>
-                        <div class="education-item">
-                            <h3>Professional Affiliations</h3>
-                            <ul class="cert-list">
-                                <li>Member, Saudi Council of Engineers</li>
-                                <li>Member, IEEE (Since 2011)</li>
-                                <li>CMRP, 2022</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="cert-item">
-                            <h3>Key Certifications</h3>
-                            <ul class="cert-list">
-                                <li>Certified Maintenance and Reliability Practitioner (CMRP) - 2022</li>
-                                <li>LEAN/Six Sigma Practitioner - 2021</li>
-                                <li>Simatic S7-400 with Step 7 V5.6 - SITRAIN - 2018</li>
-                                <li>Advanced Automation & Control Systems - Buhler Academy - 2016</li>
-                                <li>Support Control System & WinCos Architecture - Buhler Academy - 2011, 2012</li>
-                                <li>ISO9001:2000 Internal Auditor - 2010</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <h1>Prasanth Philip</h1>
+            <p class="subtitle">Automation & MES Leader</p>
+            <p class="tagline">Driving smart factories with strategic automation and AI insights</p>
+            <div class="hero-buttons">
+                <a href="#" class="btn btn-primary" onclick="downloadCV()">
+                    <i class="fas fa-download"></i>
+                    Download CV
+                </a>
+                <a href="#contact" class="btn btn-secondary">
+                    <i class="fas fa-envelope"></i>
+                    Contact Me
+                </a>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section">
+        <div class="container">
+            <h2 class="section-title">About Me</h2>
+            <div class="about-content">
+                <div class="about-image">
+                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Prasanth Philip">
+                </div>
+                <div class="about-text">
+                    <p>A strategic and results-driven Automation & MES Leader with over 14 years of experience directing large-scale automation, electrical, and MES projects in the process manufacturing industry.</p>
+                    <p>Proven expertise in leading the end-to-end lifecycle of critical system migrations, replacing legacy controls with modern Siemens and WinCos platforms while minimizing downtime and ensuring business continuity.</p>
+                    <p>A dedicated people leader, committed to coaching engineering teams, developing talent, and fostering a culture of safety, compliance, and continuous improvement in line with core business objectives.</p>
+                    <div style="margin-top: 30px;">
+                        <a href="#" class="btn btn-primary" onclick="downloadCV()">
+                            <i class="fas fa-download"></i>
+                            Download Full CV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Experience Section -->
+    <section id="experience" class="section experience">
+        <div class="container">
+            <h2 class="section-title">Professional Experience</h2>
+            
+            <div class="experience-item">
+                <div class="experience-header">
+                    <div>
+                        <h3 class="experience-title">Sr. Engineer (Automation & Maintenance)</h3>
+                        <p class="experience-company">ARASCO (Arabian Agricultural Services Company)</p>
+                    </div>
+                    <div class="experience-date">March 2009 – Present</div>
+                </div>
+                <div class="experience-description">
+                    <p>Provides strategic leadership for all MES, Electrical & Automation (E&A) functions, managing capital projects, leading maintenance teams, and driving system improvements to enhance plant performance and product quality.</p>
+                    <ul>
+                        <li>Coached and mentored a team of automation engineers and technicians, enhancing core competencies in PLC programming, MES operations, and troubleshooting</li>
+                        <li>Led talent development initiatives, identifying training needs and creating development plans that align engineering resources with business objectives</li>
+                        <li>Managed project budgets up to SAR 15 million, consistently delivering projects on time and under budget</li>
+                        <li>Spearheaded the replacement of a 30-year-old legacy automation system at the Silo Plant, ensuring zero disruption to 300MT/day customer commitment</li>
+                        <li>Successfully completed automation upgrades for Al Kharj Feed Mill 1, replacing 34-year-old ABB PLCs with state-of-the-art Siemens S7-1500 and WinCos R3 MES</li>
+                        <li>Achieved 95%+ schedule compliance for maintenance activities and 25% improvement in production efficiency through Lean Six Sigma principles</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="experience-item">
+                <div class="experience-header">
+                    <div>
+                        <h3 class="experience-title">Systems Engineer (Project Lead)</h3>
+                        <p class="experience-company">Aryans Infoway Pvt Ltd</p>
+                    </div>
+                    <div class="experience-date">January 2007 – February 2009</div>
+                </div>
+                <div class="experience-description">
+                    <p>Led embedded systems and firmware (PIC) projects, serving as the primary technical interface for clients. Drove resolution of enterprise software issues and developed detailed instrument specifications for pressure, temperature, and level analyzer instruments.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills" class="section">
+        <div class="container">
+            <h2 class="section-title">Skills & Certifications</h2>
+            <div class="skills-grid">
+                <div class="skill-category">
+                    <h3><i class="fas fa-cogs"></i> Automation & Control Systems</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">Siemens S7-1500</span>
+                        <span class="skill-tag">Siemens S7-400</span>
+                        <span class="skill-tag">ABB AC450</span>
+                        <span class="skill-tag">WinCos R3</span>
+                        <span class="skill-tag">TIA Portal</span>
+                        <span class="skill-tag">Profibus</span>
+                        <span class="skill-tag">Profinet</span>
+                    </div>
+                </div>
+                
+                <div class="skill-category">
+                    <h3><i class="fas fa-desktop"></i> HMI/SCADA & Software</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">Wonderware InTouch</span>
+                        <span class="skill-tag">WinCC</span>
+                        <span class="skill-tag">SAP Plant Maintenance</span>
+                        <span class="skill-tag">ProPlant</span>
+                        <span class="skill-tag">EsXi Servers</span>
+                        <span class="skill-tag">MES Implementation</span>
+                    </div>
+                </div>
+                
+                <div class="skill-category">
+                    <h3><i class="fas fa-robot"></i> AI & Modern Technologies</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">AI in Manufacturing</span>
+                        <span class="skill-tag">N8N Automation</span>
+                        <span class="skill-tag">Field Sensor Data Analysis</span>
+                        <span class="skill-tag">Equipment Lifecycle Management</span>
+                    </div>
+                </div>
+                
+                <div class="skill-category">
+                    <h3><i class="fas fa-certificate"></i> Certifications</h3>
+                    <div class="skill-tags">
+                        <span class="skill-tag">CMRP (2022)</span>
+                        <span class="skill-tag">Lean Six Sigma</span>
+                        <span class="skill-tag">ISO9001:2000</span>
+                        <span class="skill-tag">IEEE Member</span>
+                        <span class="skill-tag">Saudi Council of Engineers</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="section projects">
+        <div class="container">
+            <h2 class="section-title">Key Projects</h2>
+            <div class="projects-grid">
+                <div class="project-card">
+                    <h3 class="project-title">Silo Plant Automation Retrofit</h3>
+                    <p class="project-description">Led the complete replacement of a 30-year-old legacy automation system, implementing a phased migration strategy that ensured zero disruption to the 300MT/day customer commitment by running new and old systems in parallel.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Siemens S7-400</span>
+                        <span class="tech-tag">WinCos R3</span>
+                        <span class="tech-tag">Profibus</span>
+                        <span class="tech-tag">Migration Strategy</span>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <h3 class="project-title">Al Kharj Feed Mill 1 Upgrade</h3>
+                    <p class="project-description">Successfully completed the automation upgrade, replacing 34-year-old ABB PLCs with state-of-the-art Siemens S7-1500 and WinCos R3 MES, including Profinet networks to improve system robustness.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Siemens S7-1500</span>
+                        <span class="tech-tag">WinCos R3 MES</span>
+                        <span class="tech-tag">Profinet</span>
+                        <span class="tech-tag">System Modernization</span>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <h3 class="project-title">Premix Plant Automation</h3>
+                    <p class="project-description">Led the complete automation and instrumentation retrofit of a critical Premix plant, migrating a 24-year-old legacy system to a modern Siemens S7-400 and Profibus network infrastructure.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Siemens S7-400</span>
+                        <span class="tech-tag">Profibus Network</span>
+                        <span class="tech-tag">Instrumentation</span>
+                        <span class="tech-tag">Legacy Migration</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="section">
+        <div class="container">
+            <h2 class="section-title">Get In Touch</h2>
+            <div class="contact-content">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <p>📞 +966-554834720</p>
+                            <p>📞 +91-7356535741</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <p>✉️ prasanthebenezer@gmail.com</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-globe"></i>
+                        <div>
+                            <p>🌐 https://prasanthebenezer.github.io/</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <p>📍 Al Kharj, Saudi Arabia</p>
+                        </div>
+                    </div>
+                    
+                    <div class="social-links">
+                        <a href="https://linkedin.com/in/prasanth-philip" class="social-link" target="_blank" title="LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                            <span style="display: none;">LinkedIn</span>
+                        </a>
+                        <a href="https://prasanthebenezer.github.io/" class="social-link" target="_blank" title="GitHub">
+                            <i class="fab fa-github"></i>
+                            <span style="display: none;">GitHub</span>
+                        </a>
+                        <a href="mailto:prasanthebenezer@gmail.com" class="social-link" title="Email">
+                            <i class="fas fa-envelope"></i>
+                            <span style="display: none;">Email</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <form class="contact-form" onsubmit="handleSubmit(event)">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <input type="text" id="subject" name="subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <p>&copy; 2025 Prasanth Philip. All rights reserved.</p>
-            <div class="social-links">
-                <a href="mailto:prasanthebenezer@gmail.com">Email</a>
-                <a href="https://www.linkedin.com/in/prasanth-philip" target="_blank">LinkedIn</a>
-                <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf">Download CV</a>
-            </div>
         </div>
     </footer>
 
     <script>
-        // Theme Toggle Functionality
-        function toggleTheme() {
-            const body = document.body;
-            const themeToggle = document.querySelector('.theme-toggle');
-            
-            body.classList.toggle('dark-theme');
-            
-            // Update button icon
-            if (body.classList.contains('dark-theme')) {
-                themeToggle.innerHTML = '☀️';
-                localStorage.setItem('theme', 'dark');
-            } else {
-                themeToggle.innerHTML = '🌙';
-                localStorage.setItem('theme', 'light');
-            }
-        }
-
-        // Load saved theme on page load
-        function loadTheme() {
+        // Theme management
+        function initTheme() {
             const savedTheme = localStorage.getItem('theme');
-            const body = document.body;
-            const themeToggle = document.querySelector('.theme-toggle');
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = savedTheme || systemTheme;
             
-            if (savedTheme === 'dark') {
-                body.classList.add('dark-theme');
-                themeToggle.innerHTML = '☀️';
-            } else {
-                themeToggle.innerHTML = '🌙';
-            }
+            document.documentElement.setAttribute('data-theme', theme);
+            updateThemeIcon(theme);
         }
 
-        // Function to add profile photo
-        function addProfilePhoto(imageUrl) {
-            const profileImg = document.getElementById('profileImg');
-            const profilePhoto = document.getElementById('profilePhoto');
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             
-            profilePhoto.src = imageUrl;
-            profilePhoto.style.display = 'block';
-            profileImg.classList.add('has-image');
-            
-            // Hide the fallback text
-            profileImg.childNodes.forEach(node => {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    node.textContent = 'PP';
-                }
-            });
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
         }
 
-        // Scroll Animation Observer
-        function initScrollAnimations() {
-            const sections = document.querySelectorAll('.section');
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        // Intersection Observer for animations
+        function initAnimations() {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        entry.target.classList.add('animate');
+                        entry.target.classList.add('visible');
                     }
                 });
             }, {
@@ -1181,95 +971,91 @@
                 rootMargin: '0px 0px -50px 0px'
             });
 
-            sections.forEach(section => {
+            // Make sections visible immediately and observe them
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('visible'); // Add this to make sections visible immediately
                 observer.observe(section);
             });
         }
 
-        // Animate stats numbers
-        function animateStats() {
-            const statNumbers = document.querySelectorAll('.stat-number');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const target = entry.target;
-                        const text = target.textContent;
-                        const hasPlus = text.includes('+');
-                        const hasPercent = text.includes('%');
-                        const hasCurrency = text.includes('SAR');
-                        
-                        let finalNumber = parseFloat(text.replace(/[^\d.]/g, ''));
-                        
-                        if (finalNumber) {
-                            animateNumber(target, finalNumber, hasPlus, hasPercent, hasCurrency);
-                        }
-                        
-                        observer.unobserve(target);
+        // Sticky navigation
+        function initStickyNav() {
+            const nav = document.getElementById('stickyNav');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 100) {
+                    nav.classList.add('scrolled');
+                } else {
+                    nav.classList.remove('scrolled');
+                }
+                
+                // Update active nav link
+                updateActiveNavLink();
+            });
+
+            // Smooth scroll for nav links
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    if (targetElement) {
+                        const offsetTop = targetElement.offsetTop - 100;
+                        window.scrollTo({
+                            top: offsetTop,
+                            behavior: 'smooth'
+                        });
                     }
                 });
-            }, { threshold: 0.5 });
-
-            statNumbers.forEach(stat => observer.observe(stat));
-        }
-
-        function animateNumber(element, finalNumber, hasPlus, hasPercent, hasCurrency) {
-            let currentNumber = 0;
-            const increment = finalNumber / 50;
-            const timer = setInterval(() => {
-                currentNumber += increment;
-                if (currentNumber >= finalNumber) {
-                    currentNumber = finalNumber;
-                    clearInterval(timer);
-                }
-                
-                let displayText = Math.floor(currentNumber);
-                if (hasCurrency) {
-                    displayText = `SAR ${displayText}M`;
-                } else if (hasPercent) {
-                    displayText = `${displayText}%`;
-                } else if (hasPlus) {
-                    displayText = `${displayText}+`;
-                }
-                
-                element.textContent = displayText;
-            }, 30);
-        }
-
-        // Initialize animations on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTheme();
-            initScrollAnimations();
-            animateStats();
-        });
-
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
             });
-        });
+        }
 
-        // Add active class to navigation items on scroll
-        window.addEventListener('scroll', function() {
-            const sections = document.querySelectorAll('section[id]');
-            const navLinks = document.querySelectorAll('.nav a');
+        function updateActiveNavLink() {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('.nav-link');
             
-            let current = '';
+            let currentSection = '';
             sections.forEach(section => {
-                const sectionTop = section.offsetTop;
-                const sectionHeight = section.clientHeight;
-                if (pageYOffset >= sectionTop - 200) {
-                    current = section.getAttribute('id');
+                const sectionTop = section.offsetTop - 150;
+                if (window.scrollY >= sectionTop) {
+                    currentSection = section.getAttribute('id');
                 }
             });
-
+            
             navLinks.forEach(link => {
                 link.classList.remove('active');
-                if (link.getAttribute('href') === '#' + current) {
+                if (link.getAttribute('href') === `#${currentSection}`) {
                     link.classList.add('active');
+                }
+            });
+        }
+        
+        // Contact form handler
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+            
+            // Simple success message
+            alert('Thank you for your message! I will get back to you soon.');
+            event.target.reset();
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            initAnimations();
+            initStickyNav();
+            
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (!localStorage.getItem('theme')) {
+                    const newTheme = e.matches ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    updateThemeIcon(newTheme);
                 }
             });
         });
