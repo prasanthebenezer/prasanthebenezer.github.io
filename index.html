@@ -211,6 +211,43 @@
             opacity: 0.8;
         }
 
+        /* CV Download Button */
+        .cv-download {
+            margin-top: 30px;
+        }
+
+        .cv-btn {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 500;
+            font-size: 1.1em;
+            border: 2px solid white;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .cv-btn:hover {
+            background: white;
+            color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-theme .cv-btn {
+            background: rgba(52, 152, 219, 0.2);
+            border-color: #3498db;
+            color: white;
+        }
+
+        body.dark-theme .cv-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+
         /* Navigation */
         .nav {
             background: white;
@@ -577,6 +614,11 @@
                         <a href="https://www.linkedin.com/in/prasanth-philip" target="_blank">LinkedIn</a>
                     </div>
                 </div>
+                <div class="cv-download">
+                    <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="cv-btn">
+                        📄 Download CV
+                    </a>
+                </div>
             </div>
         </div>
     </section>
@@ -752,6 +794,7 @@
             <div class="social-links">
                 <a href="mailto:prasanthebenezer@gmail.com">Email</a>
                 <a href="https://www.linkedin.com/in/prasanth-philip" target="_blank">LinkedIn</a>
+                <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf">Download CV</a>
             </div>
         </div>
     </footer>
