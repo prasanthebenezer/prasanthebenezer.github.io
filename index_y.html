@@ -473,37 +473,65 @@
 
         /* Contact Section */
         .contact-content {
-            display: flex;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
         }
 
         .contact-info {
             display: flex;
             flex-direction: column;
-            gap: 30px;
-            align-items: center;
-            text-align: center;
-            max-width: 600px;
+            gap: 20px;
         }
 
         .contact-item {
             display: flex;
             align-items: center;
             gap: 15px;
-            justify-content: center;
         }
 
         .contact-item i {
             color: var(--primary-color);
-            font-size: 1.5rem;
-            width: 30px;
-            text-align: center;
+            font-size: 1.2rem;
+            width: 25px;
         }
 
-        .contact-item div p {
-            margin: 0;
-            font-size: 1.1rem;
-            color: var(--text-secondary);
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
         }
 
         .social-links {
@@ -592,7 +620,7 @@
             }
 
             .contact-content {
-                display: block;
+                grid-template-columns: 1fr;
             }
 
             .section {
@@ -628,7 +656,7 @@
         <div class="container">
             <div class="nav-content">
                 <div class="nav-left">
-                    <img src="https://via.placeholder.com/40x40/2563eb/ffffff?text=PP" alt="Profile" class="profile-pic">
+                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Profile" class="profile-pic">
                     <ul class="nav-links">
                         <li><a href="#about" class="nav-link">About</a></li>
                         <li><a href="#experience" class="nav-link">Experience</a></li>
@@ -637,10 +665,11 @@
                         <li><a href="#contact" class="nav-link">Contact</a></li>
                     </ul>
                 </div>
-                <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="cv-btn">
-                        <i class="fas fa-download"></i>
-                        Download CV
+                <div class="cv-download">
+                    <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="cv-btn">
+                        📄 Download CV
                     </a>
+                </div>
             </div>
         </div>
     </nav>
@@ -652,10 +681,10 @@
             <p class="subtitle">Automation & MES Leader</p>
             <p class="tagline">Driving smart factories with strategic automation and AI insights</p>
             <div class="hero-buttons">
-                <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="cv-btn">
-                        <i class="fas fa-download"></i>
-                        Download CV
-                    </a>
+                <a href="#" class="btn btn-primary" onclick="downloadCV()">
+                    <i class="fas fa-download"></i>
+                    Download CV
+                </a>
                 <a href="#contact" class="btn btn-secondary">
                     <i class="fas fa-envelope"></i>
                     Contact Me
@@ -677,10 +706,10 @@
                     <p>Proven expertise in leading the end-to-end lifecycle of critical system migrations, replacing legacy controls with modern Siemens and WinCos platforms while minimizing downtime and ensuring business continuity.</p>
                     <p>A dedicated people leader, committed to coaching engineering teams, developing talent, and fostering a culture of safety, compliance, and continuous improvement in line with core business objectives.</p>
                     <div style="margin-top: 30px;">
-                        <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="cv-btn">
-                        <i class="fas fa-download"></i>
-                        Download CV
-                    </a>
+                        <a href="#" class="btn btn-primary" onclick="downloadCV()">
+                            <i class="fas fa-download"></i>
+                            Download Full CV
+                        </a>
                     </div>
                 </div>
             </div>
@@ -728,7 +757,50 @@
         </div>
     </section>
 
-    <!-- Skills Section -->
+    
+
+    <!-- Projects Section -->
+    <section id="projects" class="section projects">
+        <div class="container">
+            <h2 class="section-title">Key Projects</h2>
+            <div class="projects-grid">
+                <div class="project-card">
+                    <h3 class="project-title">Silo Plant Automation Retrofit</h3>
+                    <p class="project-description">Led the complete replacement of a 30-year-old legacy automation system, implementing a phased migration strategy that ensured zero disruption to the 300MT/day customer commitment by running new and old systems in parallel.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Siemens S7-400</span>
+                        <span class="tech-tag">WinCos R3</span>
+                        <span class="tech-tag">Profibus</span>
+                        <span class="tech-tag">Migration Strategy</span>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <h3 class="project-title">Al Kharj Feed Mill 1 Upgrade</h3>
+                    <p class="project-description">Successfully completed the automation upgrade, replacing 34-year-old ABB PLCs with state-of-the-art Siemens S7-1500 and WinCos R3 MES, including Profinet networks to improve system robustness.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Siemens S7-1500</span>
+                        <span class="tech-tag">WinCos R3 MES</span>
+                        <span class="tech-tag">Profinet</span>
+                        <span class="tech-tag">System Modernization</span>
+                    </div>
+                </div>
+                
+                <div class="project-card">
+                    <h3 class="project-title">Premix Plant Automation</h3>
+                    <p class="project-description">Led the complete automation and instrumentation retrofit of a critical Premix plant, migrating a 24-year-old legacy system to a modern Siemens S7-400 and Profibus network infrastructure.</p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Siemens S7-400</span>
+                        <span class="tech-tag">Profibus Network</span>
+                        <span class="tech-tag">Instrumentation</span>
+                        <span class="tech-tag">Legacy Migration</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+<!-- Skills Section -->
     <section id="skills" class="section">
         <div class="container">
             <h2 class="section-title">Skills & Certifications</h2>
@@ -782,47 +854,6 @@
         </div>
     </section>
 
-    <!-- Projects Section -->
-    <section id="projects" class="section projects">
-        <div class="container">
-            <h2 class="section-title">Key Projects</h2>
-            <div class="projects-grid">
-                <div class="project-card">
-                    <h3 class="project-title">Silo Plant Automation Retrofit</h3>
-                    <p class="project-description">Led the complete replacement of a 30-year-old legacy automation system, implementing a phased migration strategy that ensured zero disruption to the 300MT/day customer commitment by running new and old systems in parallel.</p>
-                    <div class="project-tech">
-                        <span class="tech-tag">Siemens S7-400</span>
-                        <span class="tech-tag">WinCos R3</span>
-                        <span class="tech-tag">Profibus</span>
-                        <span class="tech-tag">Migration Strategy</span>
-                    </div>
-                </div>
-                
-                <div class="project-card">
-                    <h3 class="project-title">Al Kharj Feed Mill 1 Upgrade</h3>
-                    <p class="project-description">Successfully completed the automation upgrade, replacing 34-year-old ABB PLCs with state-of-the-art Siemens S7-1500 and WinCos R3 MES, including Profinet networks to improve system robustness.</p>
-                    <div class="project-tech">
-                        <span class="tech-tag">Siemens S7-1500</span>
-                        <span class="tech-tag">WinCos R3 MES</span>
-                        <span class="tech-tag">Profinet</span>
-                        <span class="tech-tag">System Modernization</span>
-                    </div>
-                </div>
-                
-                <div class="project-card">
-                    <h3 class="project-title">Premix Plant Automation</h3>
-                    <p class="project-description">Led the complete automation and instrumentation retrofit of a critical Premix plant, migrating a 24-year-old legacy system to a modern Siemens S7-400 and Profibus network infrastructure.</p>
-                    <div class="project-tech">
-                        <span class="tech-tag">Siemens S7-400</span>
-                        <span class="tech-tag">Profibus Network</span>
-                        <span class="tech-tag">Instrumentation</span>
-                        <span class="tech-tag">Legacy Migration</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- Contact Section -->
     <section id="contact" class="section">
         <div class="container">
@@ -832,41 +863,68 @@
                     <div class="contact-item">
                         <i class="fas fa-phone"></i>
                         <div>
-                            <p>+966-554834720</p>
-                            <p>+91-7356535741</p>
+                            <p>📞 +966-554834720</p>
+                            <p>📞 +91-7356535741</p>
                         </div>
                     </div>
                     <div class="contact-item">
                         <i class="fas fa-envelope"></i>
                         <div>
-                            <p>prasanthebenezer@gmail.com</p>
+                            <p>✉️ prasanthebenezer@gmail.com</p>
                         </div>
                     </div>
                     <div class="contact-item">
                         <i class="fas fa-globe"></i>
                         <div>
-                            <p>https://prasanthebenezer.github.io/</p>
+                            <p>🌐 https://prasanthebenezer.github.io/</p>
                         </div>
                     </div>
                     <div class="contact-item">
                         <i class="fas fa-map-marker-alt"></i>
                         <div>
-                            <p>Al Kharj, Saudi Arabia</p>
+                            <p>📍 Al Kharj, Saudi Arabia</p>
                         </div>
                     </div>
                     
                     <div class="social-links">
                         <a href="https://linkedin.com/in/prasanth-philip" class="social-link" target="_blank" title="LinkedIn">
                             <i class="fab fa-linkedin-in"></i>
+                            <span style="display: none;">LinkedIn</span>
                         </a>
                         <a href="https://prasanthebenezer.github.io/" class="social-link" target="_blank" title="GitHub">
                             <i class="fab fa-github"></i>
+                            <span style="display: none;">GitHub</span>
                         </a>
                         <a href="mailto:prasanthebenezer@gmail.com" class="social-link" title="Email">
                             <i class="fas fa-envelope"></i>
+                            <span style="display: none;">Email</span>
                         </a>
                     </div>
                 </div>
+                /*
+                <form class="contact-form" onsubmit="handleSubmit(event)">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <input type="text" id="subject" name="subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        Send Message
+                    </button>
+                </form>
+                */
             </div>
         </div>
     </section>
@@ -976,8 +1034,35 @@
                 }
             });
         }
+        
+          // Contact form handler
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+            
+            // Create mailto link with form data
+            const subject = encodeURIComponent(data.subject);
+            const body = encodeURIComponent(
+                `Name: ${data.name}\n` +
+                `Email: ${data.email}\n` +
+                `Subject: ${data.subject}\n\n` +
+                `Message:\n${data.message}`
+            );
+            
+            const mailtoLink = `mailto:prasanthebenezer@gmail.com?subject=${subject}&body=${body}`;
+            
+            // Try to open email client
+            window.location.href = mailtoLink;
+            
+            // Show success message
+            alert('Your email client should open now. If it doesn\'t, please copy the message and send it manually to prasanthebenezer@gmail.com');
+            
+            // Reset form
+            event.target.reset();
+        }
 
-       
         // Initialize everything
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
