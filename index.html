@@ -4,935 +4,236 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prasanth Philip - Automation & MES Leader</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary-color: #2563eb;
-            --secondary-color: #0f172a;
-            --accent-color: #06b6d4;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --border-color: #e5e7eb;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-
-        [data-theme="dark"] {
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --bg-primary: #111827;
-            --bg-secondary: #1f2937;
-            --border-color: #374151;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background-color: var(--bg-primary);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Header */
-        .header {
-            background: var(--bg-primary);
-            padding: 20px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        .theme-toggle {
-            background: none;
-            border: 2px solid var(--border-color);
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
-            cursor: pointer;
-            color: var(--text-primary);
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .theme-toggle:hover {
-            background-color: var(--primary-color);
-            color: white;
-            transform: scale(1.1);
-        }
-
-        /* Sticky Navigation */
-        .sticky-nav {
-            position: sticky;
-            top: 0;
-            background: var(--bg-primary);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            padding: 15px 0;
-            transition: all 0.3s ease;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .sticky-nav.scrolled {
-            box-shadow: var(--shadow-lg);
-        }
-
-        .nav-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .profile-pic {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid var(--primary-color);
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-
-        .profile-pic:hover {
-            transform: scale(1.1);
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 30px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-secondary);
-            font-weight: 500;
-            transition: color 0.3s ease;
-            position: relative;
-        }
-
-        .nav-links a:hover,
-        .nav-links a.active {
-            color: var(--primary-color);
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary-color);
-            transition: width 0.3s ease;
-        }
-
-        .nav-links a:hover::after,
-        .nav-links a.active::after {
-            width: 100%;
-        }
-
-        .cv-btn {
-            background: var(--primary-color);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .cv-btn:hover {
-            background: var(--secondary-color);
-            transform: translateY(-2px);
-        }
-
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
-            padding: 100px 0;
-            text-align: center;
-            opacity: 0;
-            animation: fadeInUp 1s ease forwards;
-        }
-
-        .hero h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            color: var(--text-primary);
-        }
-
-        .hero .subtitle {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            margin-bottom: 20px;
-        }
-
-        .hero .tagline {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            margin-bottom: 40px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-            border: 2px solid var(--primary-color);
-            
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary-color);
-            border: 2px solid var(--primary-color);
-            
-        }
-
-        .btn-secondary:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        /* Sections */
-        .section {
-            padding: 80px 0;
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.6s ease;
-        }
-
-        .section.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .section-title {
-            font-size: 2.5rem;
-            text-align: center;
-            margin-bottom: 50px;
-            color: var(--text-primary);
-            position: relative;
-        }
-
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 3px;
-            background: var(--primary-color);
-        }
-
-        /* About Section */
-        .about-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 50px;
-            align-items: center;
-        }
-
-        .about-image {
-            text-align: center;
-        }
-
-        .about-image img {
-            width: 250px;
-            height: 250px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 5px solid var(--primary-color);
-            transition: transform 0.3s ease;
-        }
-
-        .about-image img:hover {
-            transform: scale(1.05);
-        }
-
-        .about-text {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: var(--text-secondary);
-        }
-
-        .about-text p {
-            margin-bottom: 20px;
-        }
-
-        /* Experience Section */
-        .experience {
-            background: var(--bg-secondary);
-        }
-
-        .experience-item {
-            background: var(--bg-primary);
-            padding: 30px;
-            margin-bottom: 30px;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease;
-        }
-
-        .experience-item:hover {
-            transform: translateY(-5px);
-        }
-
-        .experience-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-        }
-
-        .experience-title {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            margin-bottom: 5px;
-        }
-
-        .experience-company {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-
-        .experience-date {
-            color: var(--text-secondary);
-            font-style: italic;
-        }
-
-        .experience-description {
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
-        .experience-description ul {
-            margin-left: 20px;
-        }
-
-        .experience-description li {
-            margin-bottom: 8px;
-        }
-
-        /* Skills Section */
-        .skills-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-
-        .skill-category {
-            background: var(--bg-secondary);
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-
-        .skill-category:hover {
-            transform: translateY(-5px);
-        }
-
-        .skill-category h3 {
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            font-size: 1.3rem;
-        }
-
-        .skill-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .skill-tag {
-            background: var(--primary-color);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            transition: background 0.3s ease;
-        }
-
-        .skill-tag:hover {
-            background: var(--secondary-color);
-        }
-
-        /* Projects Section */
-        .projects {
-            background: var(--bg-secondary);
-        }
-
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-        }
-
-        .project-card {
-            background: var(--bg-primary);
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease;
-        }
-
-        .project-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .project-title {
-            color: var(--primary-color);
-            font-size: 1.3rem;
-            margin-bottom: 15px;
-        }
-
-        .project-description {
-            color: var(--text-secondary);
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .project-tech {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .tech-tag {
-            background: var(--accent-color);
-            color: white;
-            padding: 3px 10px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-        }
-
-        /* Contact Section */
-        .contact-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 60px;
-            align-items: flex-start;
-        }
-        
-        .contact-info {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            align-items: flex-start;
-            text-align: left;
-        }
-
-        .contact-item {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .contact-item i {
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            width: 30px;
-            text-align: center;
-        }
-
-        .contact-item div p {
-            margin: 0;
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-        }
-        
-        .contact-item a {
-            color: inherit;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .contact-item a:hover {
-            color: var(--primary-color);
-            text-decoration: underline;
-        }
-
-        .contact-form-container h3 {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            margin-bottom: 25px;
-        }
-        
-        .contact-form .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .contact-form .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-        
-        .contact-form .form-control {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-family: inherit;
-            transition: border-color 0.3s ease;
-        }
-        
-        .contact-form .form-control:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-        }
-        
-        .contact-form .btn {
-            width: 100%;
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .social-link {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 45px;
-            height: 45px;
-            background: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .social-link:hover {
-            background: var(--secondary-color);
-            transform: scale(1.1);
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--secondary-color);
-            color: white;
-            text-align: center;
-            padding: 30px 0;
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .nav-content {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .nav-right {
-                padding-top: 10px;
-            }
-
-            .nav-links {
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 20px;
-            }
-
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .hero .subtitle {
-                font-size: 1.2rem;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .about-content {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
-
-            .experience-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .contact-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .section {
-                padding: 50px 0;
-            }
-
-            .container {
-                padding: 0 15px;
-            }
-        }
-
-        /* Smooth scrolling */
-        html {
-            scroll-behavior: smooth;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Header -->
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Theme">
+        🌙
+    </button>
+    <!-- Header Section -->
     <header class="header">
         <div class="container">
             <div class="header-content">
-                <div class="logo">Prasanth Philip</div>
+                <div class="profile-img has-image">
+                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Prasanth Philip" style="display: block;">
+                </div>
+                <h1>Prasanth Philip</h1>
+                <div class="subtitle">Automation & MES Leader</div>
+                <div class="contact-info">
+                    <div class="contact-item"><span>📍</span><span>Al Kharj, Saudi Arabia</span></div>
+                    <div class="contact-item"><span>📞</span><span>+966-554834720</span></div>
+                    <div class="contact-item"><span>✉️</span><a href="mailto:prasanthebenezer@gmail.com">prasanthebenezer@gmail.com</a></div>
+                    <div class="contact-item"><span>🔗</span><a href="https://www.linkedin.com/in/prasanth-philip" target="_blank">LinkedIn</a></div>
+                </div>
+                <div class="cv-download">
+                    <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="cv-btn"><i class="fas fa-download"></i> Download CV</a>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Sticky Navigation -->
-    <nav class="sticky-nav" id="stickyNav">
+    <!-- Navigation -->
+    <nav class="nav">
         <div class="container">
-            <div class="nav-content">
-                <div class="nav-left">
-                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Profile" class="profile-pic" onerror="this.onerror=null;this.src='https://placehold.co/40x40/2563eb/FFFFFF?text=PP';">
-                    <ul class="nav-links">
-                        <li><a href="#about" class="nav-link">About</a></li>
-                        <li><a href="#experience" class="nav-link">Experience</a></li>
-                        <li><a href="#projects" class="nav-link">Projects</a></li>
-                        <li><a href="#skills" class="nav-link">Skills</a></li>
-                        <li><a href="#contact" class="nav-link">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="nav-right">
-                    <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="cv-btn">
-                            <i class="fas fa-download"></i>
-                            Download CV
-                    </a>
-                    <button class="theme-toggle" onclick="toggleTheme()">
-                        <i class="fas fa-sun" id="theme-icon"></i>
-                    </button>
-                </div>
-            </div>
+            <ul>
+                <li><a href="#about">About</a></li>
+                <li><a href="#skills">Skills</a></li>
+                <li><a href="#experience">Experience</a></li>
+                <li><a href="#projects">Projects</a></li>
+                <li><a href="#education">Education</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero">
+    <!-- Main Content -->
+    <main class="main-content">
         <div class="container">
-            <h1>Prasanth Philip</h1>
-            <p class="subtitle">Automation & MES Leader</p>
-            <p class="tagline">Driving smart factories with strategic automation and AI insights</p>
-            <div class="hero-buttons">
-                <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="btn btn-primary">
-                        <i class="fas fa-download"></i>
-                        Download CV
-                    </a>
-                <a href="#contact" class="btn btn-primary">
-                    <i class="fas fa-envelope"></i>
-                    Contact Me
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section id="about" class="section">
-        <div class="container">
-            <h2 class="section-title">About Me</h2>
-            <div class="about-content">
-                <div class="about-image">
-                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Prasanth Philip" onerror="this.onerror=null;this.src='https://placehold.co/250x250/2563eb/FFFFFF?text=PP';">
-                </div>
-                <div class="about-text">
-                    <p>A strategic and results-driven Automation & MES Leader with over 14 years of experience directing large-scale automation, electrical, and MES projects in the process manufacturing industry.</p>
-                    <p>Proven expertise in leading the end-to-end lifecycle of critical system migrations, replacing legacy controls with modern Siemens and WinCos platforms while minimizing downtime and ensuring business continuity.</p>
-                    <p>A dedicated people leader, committed to coaching engineering teams, developing talent, and fostering a culture of safety, compliance, and continuous improvement in line with core business objectives.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Experience Section -->
-    <section id="experience" class="section experience">
-        <div class="container">
-            <h2 class="section-title">Professional Experience</h2>
-            
-            <div class="experience-item">
-                <div class="experience-header">
-                    <div>
-                        <h3 class="experience-title">Sr. Engineer (Automation & Maintenance)</h3>
-                        <p class="experience-company">ARASCO (Arabian Agricultural Services Company)</p>
+            <!-- About Section -->
+            <section id="about" class="section">
+                <h2 class="section-title">About Me</h2>
+                <div class="about-content">
+                    <div class="about-text">
+                        <p>A strategic and results-driven Automation & MES Leader with over 14 years of experience directing large-scale automation, electrical, and MES projects in the process manufacturing industry.</p>
+                        <p>Proven expertise in leading the end-to-end lifecycle of critical system migrations, replacing legacy controls with modern Siemens and WinCos platforms while minimizing downtime and ensuring business continuity.</p>
+                        <p>A dedicated people leader, committed to coaching engineering teams, developing talent, and fostering a culture of safety, compliance, and continuous improvement in line with core business objectives.</p>
                     </div>
-                    <div class="experience-date">March 2009 – Present</div>
+                    <div class="stats">
+                        <div class="stat-item"><div class="stat-number">14+</div><div class="stat-label">Years Experience</div></div>
+                        <div class="stat-item"><div class="stat-number">25%</div><div class="stat-label">Asset Availability Improvement</div></div>
+                        <div class="stat-item"><div class="stat-number">SAR 15M</div><div class="stat-label">Project Budgets Managed</div></div>
+                        <div class="stat-item"><div class="stat-number">95%+</div><div class="stat-label">Schedule Compliance</div></div>
+                    </div>
                 </div>
-                <div class="experience-description">
+            </section>
+
+            <!-- Skills Section -->
+            <section id="skills" class="section">
+                <h2 class="section-title">Core Competencies</h2>
+                <div class="skills-grid">
+                    <div class="skill-category">
+                        <h3>Automation & MES Leadership</h3>
+                        <ul class="skill-list">
+                            <li>MES Implementation & Maintenance</li>
+                            <li>E&A Strategy</li>
+                            <li>People Development & Coaching</li>
+                            <li>Succession Planning</li>
+                            <li>AI and N8N Automation</li>
+                        </ul>
+                    </div>
+                    <div class="skill-category">
+                        <h3>Project Management</h3>
+                        <ul class="skill-list">
+                            <li>Capital Investment Projects</li>
+                            <li>Budgeting & Cost Control</li>
+                            <li>Project Planning & Execution</li>
+                            <li>Resource Allocation</li>
+                            <li>Risk Mitigation</li>
+                        </ul>
+                    </div>
+                    <div class="skill-category">
+                        <h3>Technical Systems</h3>
+                        <ul class="skill-list">
+                            <li>Siemens (S7-1500, S7-400)</li>
+                            <li>ABB (AC450)</li>
+                            <li>WinCos R3</li>
+                            <li>Wonderware InTouch</li>
+                            <li>Profibus/Profinet</li>
+                        </ul>
+                    </div>
+                    <div class="skill-category">
+                        <h3>Compliance & Quality</h3>
+                        <ul class="skill-list">
+                            <li>ISO9001:2000</li>
+                            <li>Safety & Quality Compliance</li>
+                            <li>Lean Six Sigma</li>
+                            <li>Change Control Procedures</li>
+                            <li>SAP Plant Maintenance</li>
+                        </ul>
+                    </div>
+                    <div class="skill-category">
+                        <h3>Artificial Intelligence</h3>
+                        <ul class="skill-list">
+                            <li>N8N RAG agents deployment</li>
+                            <li>Natural Language Processing (NLP)</li>
+                            <li>AI model deployment</li>
+                            <li>Automation and AI integration</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Experience Section -->
+            <section id="experience" class="section">
+                <h2 class="section-title">Professional Experience</h2>
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <div class="job-title">Sr. Engineer (Automation & Maintenance)</div>
+                        <div class="company-info">ARASCO (Arabian Agricultural Services Company)</div>
+                        <div class="duration">March 2009 - Present | Al Kharj, Saudi Arabia</div>
+                    </div>
                     <p>Provides strategic leadership for all MES, Electrical & Automation (E&A) functions, managing capital projects, leading maintenance teams, and driving system improvements to enhance plant performance and product quality.</p>
-                    <ul>
-                        <li>Coached and mentored a team of automation engineers and technicians, enhancing core competencies in PLC programming, MES operations, and troubleshooting</li>
-                        <li>Led talent development initiatives, identifying training needs and creating development plans that align engineering resources with business objectives</li>
-                        <li>Managed project budgets up to SAR 15 million, consistently delivering projects on time and under budget</li>
-                        <li>Spearheaded the replacement of a 30-year-old legacy automation system at the Silo Plant, ensuring zero disruption to 300MT/day customer commitment</li>
-                        <li>Successfully completed automation upgrades for Al Kharj Feed Mill 1, replacing 34-year-old ABB PLCs with state-of-the-art Siemens S7-1500 and WinCos R3 MES</li>
-                        <li>Achieved 95%+ schedule compliance for maintenance activities and 25% improvement in production efficiency through Lean Six Sigma principles</li>
-                    </ul>
+                    <div class="experience-highlights">
+                        <h4>Key Achievements:</h4>
+                        <ul>
+                            <li>Led modernization of all ARASCO plants in Al Kharj site, improving asset availability by 25%</li>
+                            <li>Managed project budgets up to SAR 15 million, consistently delivering on time and under budget</li>
+                            <li>Spearheaded replacement of 30-year-old legacy automation system with zero disruption to 300MT/day customer commitment</li>
+                            <li>Successfully completed automation upgrade for Al Kharj Feed Mill 1, replacing 34-year-old ABB PLCs with Siemens S7-1500</li>
+                            <li>Achieved 95%+ schedule compliance for automation hardware and MES infrastructure maintenance</li>
+                            <li>Implemented Lean Six Sigma principles leading to 25% increase in production efficiency</li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <div class="job-title">Systems Engineer (Project Lead)</div>
+                        <div class="company-info">Aryans Infoway Pvt Ltd</div>
+                        <div class="duration">January 2007 - February 2009 | Kerala, India</div>
+                    </div>
+                    <p>Led embedded systems and firmware (PIC) projects, serving as the primary technical interface for clients. Drove resolution of enterprise software issues and developed detailed instrument specifications.</p>
+                </div>
+            </section>
 
-            <div class="experience-item">
-                <div class="experience-header">
+             <!-- Projects Section -->
+            <section id="projects" class="section">
+                <div class="container">
+                    <h2 class="section-title">Key Projects</h2>
+                    <div class="projects-grid">
+                        <div class="project-card">
+                            <h3 class="project-title">Silo Plant Automation Retrofit</h3>
+                            <p class="project-description">Led the complete replacement of a 30-year-old legacy automation system, implementing a phased migration strategy that ensured zero disruption to the 300MT/day customer commitment by running new and old systems in parallel.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Siemens S7-400</span>
+                                <span class="tech-tag">WinCos R3</span>
+                                <span class="tech-tag">Profibus</span>
+                                <span class="tech-tag">Migration Strategy</span>
+                            </div>
+                        </div>
+                        <div class="project-card">
+                            <h3 class="project-title">Al Kharj Feed Mill 1 Upgrade</h3>
+                            <p class="project-description">Successfully completed the automation upgrade, replacing 34-year-old ABB PLCs with state-of-the-art Siemens S7-1500 and WinCos R3 MES, including Profinet networks to improve system robustness.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Siemens S7-1500</span>
+                                <span class="tech-tag">WinCos R3 MES</span>
+                                <span class="tech-tag">Profinet</span>
+                                <span class="tech-tag">System Modernization</span>
+                            </div>
+                        </div>
+                        <div class="project-card">
+                            <h3 class="project-title">Premix Plant Automation</h3>
+                            <p class="project-description">Led the complete automation and instrumentation retrofit of a critical Premix plant, migrating a 24-year-old legacy system to a modern Siemens S7-400 and Profibus network infrastructure.</p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Siemens S7-400</span>
+                                <span class="tech-tag">Profibus Network</span>
+                                <span class="tech-tag">Instrumentation</span>
+                                <span class="tech-tag">Legacy Migration</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Education & Certifications -->
+            <section id="education" class="section">
+                <h2 class="section-title">Education & Certifications</h2>
+                <div class="education-cert">
                     <div>
-                        <h3 class="experience-title">Systems Engineer (Project Lead)</h3>
-                        <p class="experience-company">Aryans Infoway Pvt Ltd</p>
-                    </div>
-                    <div class="experience-date">January 2007 – February 2009</div>
-                </div>
-                <div class="experience-description">
-                    <p>Led embedded systems and firmware (PIC) projects, serving as the primary technical interface for clients. Drove resolution of enterprise software issues and developed detailed instrument specifications for pressure, temperature, and level analyzer instruments.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Projects Section -->
-    <section id="projects" class="section projects">
-        <div class="container">
-            <h2 class="section-title">Key Projects</h2>
-            <div class="projects-grid">
-                <div class="project-card">
-                    <h3 class="project-title">Silo Plant Automation Retrofit</h3>
-                    <p class="project-description">Led the complete replacement of a 30-year-old legacy automation system, implementing a phased migration strategy that ensured zero disruption to the 300MT/day customer commitment by running new and old systems in parallel.</p>
-                    <div class="project-tech">
-                        <span class="tech-tag">Siemens S7-400</span>
-                        <span class="tech-tag">WinCos R3</span>
-                        <span class="tech-tag">Profibus</span>
-                        <span class="tech-tag">Migration Strategy</span>
-                    </div>
-                </div>
-                
-                <div class="project-card">
-                    <h3 class="project-title">Al Kharj Feed Mill 1 Upgrade</h3>
-                    <p class="project-description">Successfully completed the automation upgrade, replacing 34-year-old ABB PLCs with state-of-the-art Siemens S7-1500 and WinCos R3 MES, including Profinet networks to improve system robustness.</p>
-                    <div class="project-tech">
-                        <span class="tech-tag">Siemens S7-1500</span>
-                        <span class="tech-tag">WinCos R3 MES</span>
-                        <span class="tech-tag">Profinet</span>
-                        <span class="tech-tag">System Modernization</span>
-                    </div>
-                </div>
-                
-                <div class="project-card">
-                    <h3 class="project-title">Premix Plant Automation</h3>
-                    <p class="project-description">Led the complete automation and instrumentation retrofit of a critical Premix plant, migrating a 24-year-old legacy system to a modern Siemens S7-400 and Profibus network infrastructure.</p>
-                    <div class="project-tech">
-                        <span class="tech-tag">Siemens S7-400</span>
-                        <span class="tech-tag">Profibus Network</span>
-                        <span class="tech-tag">Instrumentation</span>
-                        <span class="tech-tag">Legacy Migration</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Skills Section -->
-    <section id="skills" class="section">
-        <div class="container">
-            <h2 class="section-title">Skills & Certifications</h2>
-            <div class="skills-grid">
-                <div class="skill-category">
-                    <h3><i class="fas fa-cogs"></i> Automation & Control Systems</h3>
-                    <div class="skill-tags">
-                        <span class="skill-tag">Siemens S7-1500</span>
-                        <span class="skill-tag">Siemens S7-400</span>
-                        <span class="skill-tag">ABB AC450</span>
-                        <span class="skill-tag">WinCos R3</span>
-                        <span class="skill-tag">TIA Portal</span>
-                        <span class="skill-tag">Profibus</span>
-                        <span class="skill-tag">Profinet</span>
-                    </div>
-                </div>
-                
-                <div class="skill-category">
-                    <h3><i class="fas fa-desktop"></i> HMI/SCADA & Software</h3>
-                    <div class="skill-tags">
-                        <span class="skill-tag">Wonderware InTouch</span>
-                        <span class="skill-tag">WinCC</span>
-                        <span class="skill-tag">SAP Plant Maintenance</span>
-                        <span class="skill-tag">ProPlant</span>
-                        <span class="skill-tag">EsXi Servers</span>
-                        <span class="skill-tag">MES Implementation</span>
-                    </div>
-                </div>
-                
-                <div class="skill-category">
-                    <h3><i class="fas fa-robot"></i> AI & Modern Technologies</h3>
-                    <div class="skill-tags">
-                        <span class="skill-tag">AI in Manufacturing</span>
-                        <span class="skill-tag">N8N Automation</span>
-                        <span class="skill-tag">Field Sensor Data Analysis</span>
-                        <span class="skill-tag">Equipment Lifecycle Management</span>
-                    </div>
-                </div>
-                
-                <div class="skill-category">
-                    <h3><i class="fas fa-certificate"></i> Certifications</h3>
-                    <div class="skill-tags">
-                        <span class="skill-tag">CMRP (2022)</span>
-                        <span class="skill-tag">Lean Six Sigma</span>
-                        <span class="skill-tag">ISO9001:2000</span>
-                        <span class="skill-tag">IEEE Member</span>
-                        <span class="skill-tag">Saudi Council of Engineers</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    
-
-    <!-- Contact Section -->
-    <section id="contact" class="section">
-        <div class="container">
-            <h2 class="section-title">Get In Touch</h2>
-            <div class="contact-grid">
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <i class="fas fa-phone"></i>
-                        <div>
-                            <p>+966-554834720</p>
-                            <p>+91-7356535741</p>
+                        <div class="education-item">
+                            <h3>Bachelor of Engineering</h3>
+                            <p><strong>Electronics & Instrumentation</strong></p>
+                            <p>Anna University, Chennai, India</p>
+                        </div>
+                        <div class="education-item">
+                            <h3>Professional Affiliations</h3>
+                            <ul class="cert-list">
+                                <li>Member, Saudi Council of Engineers</li>
+                                <li>Member, IEEE (Since 2011)</li>
+                                <li>CMRP, 2022</li>
+                            </ul>
                         </div>
                     </div>
-                    <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
-                        <div>
-                            <p><a href="mailto:prasanthebenezer@gmail.com">prasanthebenezer@gmail.com</a></p>
+                    <div>
+                        <div class="cert-item">
+                            <h3>Key Certifications</h3>
+                            <ul class="cert-list">
+                                <li>Certified Maintenance and Reliability Practitioner (CMRP) - 2022</li>
+                                <li>LEAN/Six Sigma Practitioner - 2021</li>
+                                <li>Simatic S7-400 with Step 7 V5.6 - SITRAIN - 2018</li>
+                                <li>Advanced Automation & Control Systems - Buhler Academy - 2016</li>
+                                <li>Support Control System & WinCos Architecture - Buhler Academy - 2011, 2012</li>
+                                <li>ISO9001:2000 Internal Auditor - 2010</li>
+                            </ul>
                         </div>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-globe"></i>
-                        <div>
-                            <p><a href="https://prasanthebenezer.github.io/" target="_blank" rel="noopener noreferrer">prasanthebenezer.github.io/</a></p>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <div>
-                            <p>Al Kharj, Saudi Arabia</p>
-                        </div>
-                    </div>
-                    
-                    <div class="social-links">
-                        <a href="https://linkedin.com/in/prasanth-philip" class="social-link" target="_blank" title="LinkedIn">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                        <a href="https://prasanthebenezer.github.io/" class="social-link" target="_blank" title="GitHub">
-                            <i class="fab fa-github"></i>
-                        </a>
-                        <a href="mailto:prasanthebenezer@gmail.com" class="social-link" title="Email">
-                            <i class="fas fa-envelope"></i>
-                        </a>
                     </div>
                 </div>
+            </section>
+
+            <!-- Contact Section -->
+            <section id="contact" class="section">
+                <h2 class="section-title">Get in Touch</h2>
                 <div class="contact-form-container">
                     <form id="contactForm" action="https://prasanthebenezer.app.n8n.cloud/webhook/c99e897c-406a-4bc2-81d7-fc4629bd6fd2" method="POST" class="contact-form">
                         <div class="form-group">
@@ -947,152 +248,128 @@
                             <label for="message">Message</label>
                             <textarea id="message" name="message" rows="5" class="form-control" placeholder="Your Message" required></textarea>
                         </div>
-                        <button type="submit" id="submit-btn" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> Send Message
-                        </button>
-                        <div id="form-status" style="margin-top: 15px; font-weight: 500;"></div>
+                        <div class="form-submit-area">
+                            <button type="submit" id="submit-btn" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Send Message
+                            </button>
+                            <div id="form-status" style="margin-top: 15px; font-weight: 500;"></div>
+                        </div>
                     </form>
                 </div>
-            </div>
+            </section>
         </div>
-    </section>
+    </main>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
+            <div class="social-links">
+                <a href="mailto:prasanthebenezer@gmail.com" title="Email"><i class="fas fa-envelope"></i></a>
+                <a href="https://www.linkedin.com/in/prasanth-philip" target="_blank" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" title="Download CV"><i class="fas fa-file-download"></i></a>
+            </div>
             <p>&copy; 2025 Prasanth Philip. All rights reserved.</p>
         </div>
     </footer>
 
     <script>
-        // Theme management
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            const theme = savedTheme || systemTheme;
-            
-            document.documentElement.setAttribute('data-theme', theme);
-            updateThemeIcon(theme);
-        }
-
+        // Theme Toggle Functionality
         function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const body = document.body;
+            const themeToggle = document.querySelector('.theme-toggle');
             
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
+            body.classList.toggle('dark-theme');
+            
+            if (body.classList.contains('dark-theme')) {
+                themeToggle.innerHTML = '☀️';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeToggle.innerHTML = '�';
+                localStorage.setItem('theme', 'light');
+            }
         }
 
-        function updateThemeIcon(theme) {
-            const icon = document.getElementById('theme-icon');
-            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        // Load saved theme on page load
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.querySelector('.theme-toggle').innerHTML = '☀️';
+            }
         }
 
-        // Intersection Observer for animations
-        function initAnimations() {
+        // Scroll Animation Observer
+        function initScrollAnimations() {
+            const sections = document.querySelectorAll('.section');
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
+                        entry.target.classList.add('animate');
+                        observer.unobserve(entry.target);
                     }
                 });
-            }, {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            });
+            }, { threshold: 0.1 });
 
-            // Make sections visible immediately and observe them
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.add('visible'); // Add this to make sections visible immediately
+            sections.forEach(section => {
                 observer.observe(section);
             });
         }
 
-        // Sticky navigation
-        function initStickyNav() {
-            const nav = document.getElementById('stickyNav');
-            const navLinks = document.querySelectorAll('.nav-link');
-            
-            window.addEventListener('scroll', () => {
-                if (window.scrollY > 100) {
-                    nav.classList.add('scrolled');
-                } else {
-                    nav.classList.remove('scrolled');
-                }
-                
-                // Update active nav link
-                updateActiveNavLink();
-            });
-
-            // Smooth scroll for nav links
-            navLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const targetId = link.getAttribute('href');
-                    const targetElement = document.querySelector(targetId);
-                    
-                    if (targetElement) {
-                        const offsetTop = targetElement.offsetTop - 100;
-                        window.scrollTo({
-                            top: offsetTop,
-                            behavior: 'smooth'
-                        });
+        // Animate stats numbers
+        function animateStats() {
+            const statNumbers = document.querySelectorAll('.stat-number');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = entry.target;
+                        const text = target.textContent;
+                        const hasPlus = text.includes('+');
+                        const hasPercent = text.includes('%');
+                        const hasCurrency = text.includes('SAR');
+                        
+                        let finalNumber = parseFloat(text.replace(/[^\d.]/g, ''));
+                        
+                        if (!isNaN(finalNumber)) {
+                            animateNumber(target, finalNumber, hasPlus, hasPercent, hasCurrency);
+                        }
+                        
+                        observer.unobserve(target);
                     }
                 });
-            });
+            }, { threshold: 0.5 });
+
+            statNumbers.forEach(stat => observer.observe(stat));
         }
 
-        function updateActiveNavLink() {
-            const sections = document.querySelectorAll('section[id]');
-            const navLinks = document.querySelectorAll('.nav-link');
-            const scrollY = window.pageYOffset;
+        function animateNumber(element, finalNumber, hasPlus, hasPercent, hasCurrency) {
+            let currentNumber = 0;
+            const duration = 1500; // ms
+            const stepTime = 30; // ms
+            const steps = duration / stepTime;
+            const increment = finalNumber / steps;
 
-            let currentSection = '';
-
-            sections.forEach(current => {
-                const sectionHeight = current.offsetHeight;
-                const sectionTop = current.offsetTop - 100;
-                let sectionId = current.getAttribute('id');
-
-                if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
-                    currentSectionId = sectionId;
+            const timer = setInterval(() => {
+                currentNumber += increment;
+                if (currentNumber >= finalNumber) {
+                    currentNumber = finalNumber;
+                    clearInterval(timer);
                 }
-            });
-            
-            // A special check for the very bottom of the page to correctly highlight the last section
-            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 5) { // 5px buffer
-                const lastSection = sections[sections.length - 1];
-                if (lastSection) {
-                    currentSectionId = lastSection.getAttribute('id');
+                
+                let displayText = Math.floor(currentNumber);
+                if (hasCurrency) {
+                    displayText = `SAR ${displayText}M`;
+                } else if (hasPercent) {
+                    displayText = `${displayText}%`;
+                } else if (hasPlus) {
+                    displayText = `${displayText}+`;
                 }
-            }
-
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === '#' + currentSectionId) {
-                    link.classList.add('active');
-                }
-            });
+                
+                element.textContent = displayText;
+            }, stepTime);
         }
 
-       
-        // Initialize everything
-        document.addEventListener('DOMContentLoaded', () => {
-            initTheme();
-            initAnimations();
-            initStickyNav();
-            
-            // Listen for system theme changes
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                if (!localStorage.getItem('theme')) {
-                    const newTheme = e.matches ? 'dark' : 'light';
-                    document.documentElement.setAttribute('data-theme', newTheme);
-                    updateThemeIcon(newTheme);
-                }
-            });
-
-            // Handle Contact Form Submission
+        // Handle Form Submission
+        function handleFormSubmit() {
             const contactForm = document.getElementById('contactForm');
             if (contactForm) {
                 contactForm.addEventListener('submit', function(e) {
@@ -1103,7 +380,6 @@
                     const formData = new FormData(contactForm);
                     const action = contactForm.getAttribute('action');
 
-                    // Provide user feedback
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
                     formStatus.textContent = '';
@@ -1118,8 +394,8 @@
                     })
                     .then(response => {
                         if (response.ok) {
-                            formStatus.textContent = "Message sent successfully!..";
-                            formStatus.style.color = 'var(--primary-color)';
+                            formStatus.textContent = "Message sent successfully!";
+                            formStatus.style.color = 'var(--color-accent)';
                             contactForm.reset();
                         } else {
                             throw new Error('Network response was not ok.');
@@ -1127,24 +403,59 @@
                     })
                     .catch(error => {
                         formStatus.textContent = "Oops! Something went wrong. Please try again later.";
-                        formStatus.style.color = '#ef4444'; // A red color
+                        formStatus.style.color = '#ef4444'; // A red color for errors
                         console.error('Error:', error);
                     })
                     .finally(() => {
-                        // Re-enable the button after a short delay to prevent spam
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
                         setTimeout(() => {
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
-                        }, 2000);
-
-                        // Make the status message disappear after 5 seconds
-                            setTimeout(() => {
-                                formStatus.textContent = '';
-                            }, 5000);
+                            formStatus.textContent = '';
+                        }, 5000);
                     });
                 });
             }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            initScrollAnimations();
+            animateStats();
+            handleFormSubmit();
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Add active class to navigation items on scroll
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 100) { // Adjusted offset
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
         });
     </script>
 </body>
 </html>
+�
