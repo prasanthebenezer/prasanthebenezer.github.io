@@ -117,12 +117,6 @@
             gap: 15px;
         }
 
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
         .profile-pic {
             width: 40px;
             height: 40px;
@@ -240,8 +234,6 @@
         .btn-primary {
             background: var(--primary-color);
             color: white;
-            border: 2px solid var(--primary-color);
-            
         }
 
         .btn-secondary {
@@ -257,8 +249,6 @@
 
         .btn-primary:hover {
             background: var(--secondary-color);
-            border: 2px solid var(--primary-color);
-            
         }
 
         .btn-secondary:hover {
@@ -482,25 +472,25 @@
         }
 
         /* Contact Section */
-        .contact-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 60px;
-            align-items: flex-start;
+        .contact-content {
+            display: flex;
+            justify-content: center;
         }
-        
+
         .contact-info {
             display: flex;
             flex-direction: column;
             gap: 30px;
-            align-items: flex-start;
-            text-align: left;
+            align-items: center;
+            text-align: center;
+            max-width: 600px;
         }
 
         .contact-item {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
+            justify-content: center;
         }
 
         .contact-item i {
@@ -514,60 +504,6 @@
             margin: 0;
             font-size: 1.1rem;
             color: var(--text-secondary);
-        }
-        
-        .contact-item a {
-            color: inherit;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .contact-item a:hover {
-            color: var(--primary-color);
-            text-decoration: underline;
-        }
-
-        .contact-form-container h3 {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            margin-bottom: 25px;
-        }
-        
-        .contact-form .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .contact-form .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-        
-        .contact-form .form-control {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 1rem;
-            font-family: inherit;
-            transition: border-color 0.3s ease;
-        }
-        
-        .contact-form .form-control:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-        }
-        
-        .contact-form .btn {
-            width: 100%;
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
         }
 
         .social-links {
@@ -626,10 +562,6 @@
                 gap: 20px;
             }
 
-            .nav-right {
-                padding-top: 10px;
-            }
-
             .nav-links {
                 flex-wrap: wrap;
                 justify-content: center;
@@ -659,8 +591,8 @@
                 align-items: flex-start;
             }
 
-            .contact-grid {
-                grid-template-columns: 1fr;
+            .contact-content {
+                display: block;
             }
 
             .section {
@@ -684,6 +616,9 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">Prasanth Philip</div>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-sun" id="theme-icon"></i>
+                </button>
             </div>
         </div>
     </header>
@@ -693,7 +628,7 @@
         <div class="container">
             <div class="nav-content">
                 <div class="nav-left">
-                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Profile" class="profile-pic" onerror="this.onerror=null;this.src='https://placehold.co/40x40/2563eb/FFFFFF?text=PP';">
+                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Profile" class="profile-pic">
                     <ul class="nav-links">
                         <li><a href="#about" class="nav-link">About</a></li>
                         <li><a href="#experience" class="nav-link">Experience</a></li>
@@ -702,15 +637,10 @@
                         <li><a href="#contact" class="nav-link">Contact</a></li>
                     </ul>
                 </div>
-                <div class="nav-right">
-                    <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="cv-btn">
-                            <i class="fas fa-download"></i>
-                            Download CV
+                <a href="./assets/Prasanth_Philip_CV.pdf" download="Prasanth_Philip_CV.pdf" class="cv-btn">
+                        <i class="fas fa-download"></i>
+                        Download CV
                     </a>
-                    <button class="theme-toggle" onclick="toggleTheme()">
-                        <i class="fas fa-sun" id="theme-icon"></i>
-                    </button>
-                </div>
             </div>
         </div>
     </nav>
@@ -726,7 +656,7 @@
                         <i class="fas fa-download"></i>
                         Download CV
                     </a>
-                <a href="#contact" class="btn btn-primary">
+                <a href="#contact" class="btn btn-secondary">
                     <i class="fas fa-envelope"></i>
                     Contact Me
                 </a>
@@ -740,7 +670,7 @@
             <h2 class="section-title">About Me</h2>
             <div class="about-content">
                 <div class="about-image">
-                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Prasanth Philip" onerror="this.onerror=null;this.src='https://placehold.co/250x250/2563eb/FFFFFF?text=PP';">
+                    <img src="https://avatars.githubusercontent.com/u/42520202?s=400&u=33775cd2e469352a5618a05856dd5bad5a148ae1&v=4" alt="Prasanth Philip">
                 </div>
                 <div class="about-text">
                     <p>A strategic and results-driven Automation & MES Leader with over 14 years of experience directing large-scale automation, electrical, and MES projects in the process manufacturing industry.</p>
@@ -893,7 +823,7 @@
     <section id="contact" class="section">
         <div class="container">
             <h2 class="section-title">Get In Touch</h2>
-            <div class="contact-grid">
+            <div class="contact-content">
                 <div class="contact-info">
                     <div class="contact-item">
                         <i class="fas fa-phone"></i>
@@ -905,13 +835,13 @@
                     <div class="contact-item">
                         <i class="fas fa-envelope"></i>
                         <div>
-                            <p><a href="mailto:prasanthebenezer@gmail.com">prasanthebenezer@gmail.com</a></p>
+                            <p>prasanthebenezer@gmail.com</p>
                         </div>
                     </div>
                     <div class="contact-item">
                         <i class="fas fa-globe"></i>
                         <div>
-                            <p><a href="https://prasanthebenezer.github.io/" target="_blank" rel="noopener noreferrer">prasanthebenezer.github.io/</a></p>
+                            <p>https://prasanthebenezer.github.io/</p>
                         </div>
                     </div>
                     <div class="contact-item">
@@ -932,26 +862,6 @@
                             <i class="fas fa-envelope"></i>
                         </a>
                     </div>
-                </div>
-                <div class="contact-form-container">
-                    <form id="contactForm" action="https://prasanthebenezer.app.n8n.cloud/webhook/c99e897c-406a-4bc2-81d7-fc4629bd6fd2" method="POST" class="contact-form">
-                        <div class="form-group">
-                            <label for="name">Name</label>
-                            <input type="text" id="name" name="name" class="form-control" placeholder="Your Name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" class="form-control" placeholder="Your Email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="message">Message</label>
-                            <textarea id="message" name="message" rows="5" class="form-control" placeholder="Your Message" required></textarea>
-                        </div>
-                        <button type="submit" id="submit-btn" class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i> Send Message
-                        </button>
-                        <div id="form-status" style="margin-top: 15px; font-weight: 500;"></div>
-                    </form>
                 </div>
             </div>
         </div>
@@ -1044,33 +954,20 @@
         }
 
         function updateActiveNavLink() {
-            const sections = document.querySelectorAll('section[id]');
+            const sections = document.querySelectorAll('.section');
             const navLinks = document.querySelectorAll('.nav-link');
-            const scrollY = window.pageYOffset;
-
+            
             let currentSection = '';
-
-            sections.forEach(current => {
-                const sectionHeight = current.offsetHeight;
-                const sectionTop = current.offsetTop - 100;
-                let sectionId = current.getAttribute('id');
-
-                if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
-                    currentSectionId = sectionId;
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 150;
+                if (window.scrollY >= sectionTop) {
+                    currentSection = section.getAttribute('id');
                 }
             });
             
-            // A special check for the very bottom of the page to correctly highlight the last section
-            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 5) { // 5px buffer
-                const lastSection = sections[sections.length - 1];
-                if (lastSection) {
-                    currentSectionId = lastSection.getAttribute('id');
-                }
-            }
-
             navLinks.forEach(link => {
                 link.classList.remove('active');
-                if (link.getAttribute('href') === '#' + currentSectionId) {
+                if (link.getAttribute('href') === `#${currentSection}`) {
                     link.classList.add('active');
                 }
             });
@@ -1091,59 +988,6 @@
                     updateThemeIcon(newTheme);
                 }
             });
-
-            // Handle Contact Form Submission
-            const contactForm = document.getElementById('contactForm');
-            if (contactForm) {
-                contactForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-
-                    const submitBtn = document.getElementById('submit-btn');
-                    const formStatus = document.getElementById('form-status');
-                    const formData = new FormData(contactForm);
-                    const action = contactForm.getAttribute('action');
-
-                    // Provide user feedback
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-                    formStatus.textContent = '';
-                    formStatus.style.color = 'inherit';
-
-                    fetch(action, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            formStatus.textContent = "Message sent successfully!..";
-                            formStatus.style.color = 'var(--primary-color)';
-                            contactForm.reset();
-                        } else {
-                            throw new Error('Network response was not ok.');
-                        }
-                    })
-                    .catch(error => {
-                        formStatus.textContent = "Oops! Something went wrong. Please try again later.";
-                        formStatus.style.color = '#ef4444'; // A red color
-                        console.error('Error:', error);
-                    })
-                    .finally(() => {
-                        // Re-enable the button after a short delay to prevent spam
-                        setTimeout(() => {
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
-                        }, 2000);
-
-                        // Make the status message disappear after 5 seconds
-                            setTimeout(() => {
-                                formStatus.textContent = '';
-                            }, 5000);
-                    });
-                });
-            }
         });
     </script>
 </body>
