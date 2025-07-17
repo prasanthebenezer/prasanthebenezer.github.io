@@ -12,7 +12,7 @@
             --bg-header: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --bg-footer: #333;
             --text-primary: #333;
-            --text-secondary: #666;
+            --text-secondary: #d6d3d3;
             --text-header: #ffffff;
             --text-footer: #ffffff;
             --color-accent: #667eea;
@@ -108,9 +108,19 @@
         }
 
         .header .subtitle {
-            font-size: 1.3em;
-            margin-bottom: 15px;
-            opacity: 0.9;
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .header .tagline {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+
         }
 
         .contact-info {
