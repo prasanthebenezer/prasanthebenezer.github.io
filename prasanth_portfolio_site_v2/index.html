@@ -1,0 +1,157 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Prasanth Philip — Automation & MES Leader</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="profile.svg">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <h1 class="name">Prasanth <span class="surname">Philip</span></h1>
+        <p class="title">Automation &amp; MES Leader</p>
+      </div>
+      <div class="controls">
+        <button id="theme-toggle" aria-label="Toggle theme" class="icon-btn">🌗</button>
+      </div>
+    </div>
+  </header>
+
+  <nav id="main-nav" class="nav">
+    <div class="nav-inner">
+      <img src="profile.svg" alt="Prasanth profile" class="nav-avatar" />
+      <ul class="nav-links">
+        <li><a href="#about">About</a></li>
+        <li><a href="#experience">Experience</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#skills">Skills</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <a class="cv-btn" href="Prasanth_Philip_CV.pdf" download>Download CV</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="hero" class="hero">
+      <div class="hero-inner">
+        <div class="hero-text">
+          <h2 class="hero-name">Prasanth Philip</h2>
+          <p class="hero-role">Automation &amp; MES Leader | Driving smart factories with strategic automation and AI insights</p>
+          <div class="hero-ctas">
+            <a class="btn primary" href="Prasanth_Philip_CV.pdf" download>Download CV</a>
+            <a class="btn ghost" href="#contact">Contact Me</a>
+          </div>
+        </div>
+        <div class="hero-art">
+          <img src="profile.svg" alt="Profile placeholder" class="hero-avatar" />
+        </div>
+      </div>
+    </section>
+
+    <section id="about" class="section about">
+      <div class="container">
+        <h3>About</h3>
+        <p>A strategic and results-driven Automation &amp; MES Leader with over 14 years of experience directing large-scale automation, electrical, and MES projects in the process manufacturing industry. Proven expertise in leading the end-to-end lifecycle of critical system migrations, replacing legacy controls with modern Siemens and WinCos platforms while minimizing downtime and ensuring business continuity. A dedicated people leader, committed to coaching engineering teams, developing talent, and fostering a culture of safety, compliance, and continuous improvement in line with core business objectives.</p>
+        <a class="cv-inline" href="Prasanth_Philip_CV.pdf" download>Download full CV (PDF)</a>
+      </div>
+    </section>
+
+    <section id="experience" class="section experience">
+      <div class="container">
+        <h3>Experience</h3>
+        <div class="job">
+          <h4>Sr. Engineer (Automation &amp; Maintenance) — ARASCO</h4>
+          <p class="meta">Al Kharj, Saudi Arabia | March 2009 – Present</p>
+          <ul>
+            <li>Led modernization of ARASCO plants, raising asset availability by 25%.</li>
+            <li>Managed capital projects up to SAR 15M, delivered on time and under budget.</li>
+            <li>Spearheaded Silo Plant retrofit — zero disruption to 300MT/day operations.</li>
+            <li>Led Premix and Feed Mill upgrades, migrating legacy PLCs to Siemens platforms and integrating WinCos MES.</li>
+          </ul>
+        </div>
+
+        <div class="job">
+          <h4>Systems Engineer (Project Lead) — Aryans Infoway Pvt Ltd</h4>
+          <p class="meta">Kerala, India | Jan 2007 – Feb 2009</p>
+          <ul>
+            <li>Led embedded systems and firmware (PIC) projects and client technical interfaces.</li>
+            <li>Developed instrument specifications for pressure, temperature, and level analysers.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="projects" class="section projects">
+      <div class="container">
+        <h3>Projects</h3>
+        <div class="projects-grid">
+          <article class="card">
+            <h4>Silo Plant Retrofit</h4>
+            <p>Zero-downtime phased migration of legacy automation system for a 300MT/day plant.</p>
+          </article>
+          <article class="card">
+            <h4>Premix Plant Automation</h4>
+            <p>Complete automation and instrumentation retrofit; Siemens S7-400 migration with Profibus.</p>
+          </article>
+          <article class="card">
+            <h4>Feed Mill 1 Upgrade</h4>
+            <p>Replacement of ABB PLCs with Siemens S7-1500 and WinCos R3 MES integration, adding Profinet networks.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="skills" class="section skills">
+      <div class="container">
+        <h3>Skills &amp; Certifications</h3>
+        <div class="skills-grid">
+          <div class="skill">Siemens S7-1500 / S7-400</div>
+          <div class="skill">WinCos R3</div>
+          <div class="skill">MES / SCADA / WinCC / Wonderware</div>
+          <div class="skill">Profibus / Profinet</div>
+          <div class="skill">SAP — Plant Maintenance</div>
+          <div class="skill">AI in Manufacturing &amp; N8N automation</div>
+          <div class="skill">Lean Six Sigma</div>
+          <div class="skill">CMRP</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="section contact">
+      <div class="container">
+        <h3>Contact</h3>
+        <p>Prefer email? <a href="mailto:prasanthebenezer@gmail.com">prasanthebenezer@gmail.com</a></p>
+        <form id="contact-form" action="#" onsubmit="return handleContact(event);">
+          <div class="form-row">
+            <input type="text" id="name" name="name" placeholder="Your name" required />
+            <input type="email" id="email" name="email" placeholder="Your email" required />
+          </div>
+          <textarea id="message" name="message" rows="5" placeholder="Message" required></textarea>
+          <div class="form-row">
+            <button class="btn primary" type="submit">Send Message</button>
+            <button class="btn ghost" type="reset">Reset</button>
+          </div>
+        </form>
+
+        <div class="social">
+          <a href="https://www.linkedin.com/in/prasanth-philip" target="_blank" rel="noopener">LinkedIn</a> ·
+          <a href="https://prasanthebenezer.github.io/" target="_blank" rel="noopener">GitHub Pages</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© Prasanth Philip — Automation &amp; MES Leader</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
