@@ -581,10 +581,26 @@ body.dark-theme .cv-btn:hover {
 }
 
 /* Projects Section */
+.project-category-title {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 32px;
+    margin-top: 60px;
+    padding-left: 20px;
+    border-left: 5px solid var(--color-accent);
+    letter-spacing: -0.01em;
+}
+
+.project-category-title:first-of-type {
+    margin-top: 0;
+}
+
 .projects-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 32px;
+    margin-bottom: 40px;
 }
 
 .project-card {
@@ -610,6 +626,22 @@ body.dark-theme .cv-btn:hover {
     background: linear-gradient(90deg, var(--color-gradient-1), var(--color-gradient-2));
 }
 
+.project-card.featured {
+    border: 2px solid var(--color-accent);
+    background: var(--bg-card);
+}
+
+.project-card.featured::before {
+    height: 5px;
+    background: linear-gradient(90deg, var(--color-gradient-1), var(--color-gradient-2), var(--color-gradient-3));
+}
+
+.project-card.featured:hover {
+    transform: translateY(-10px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--color-gradient-2);
+}
+
 .project-card:hover {
     transform: translateY(-8px);
     box-shadow: var(--shadow-lg);
@@ -628,6 +660,47 @@ body.dark-theme .cv-btn:hover {
     line-height: 1.7;
     margin-bottom: 24px;
     font-weight: 500;
+}
+
+.project-details {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.project-details h4 {
+    color: var(--color-accent);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.project-details ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.project-details li {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 10px;
+    padding-left: 24px;
+    position: relative;
+    font-weight: 500;
+}
+
+.project-details li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+    font-weight: 700;
+}
+
+.project-details li strong {
+    color: var(--text-primary);
 }
 
 .project-tech {
