@@ -25,11 +25,43 @@ function loadTheme() {
     }
 }
 
+// Mobile Menu Toggle
+function toggleMobileMenu() {
+    const navLinks = document.getElementById('navLinks');
+    const menuToggle = document.querySelector('.mobile-menu-toggle');
+
+    navLinks.classList.toggle('active');
+
+    // Change icon
+    const icon = menuToggle.querySelector('i');
+    if (navLinks.classList.contains('active')) {
+        icon.className = 'fas fa-times';
+    } else {
+        icon.className = 'fas fa-bars';
+    }
+}
+
+// Close mobile menu when link is clicked
+function closeMobileMenu() {
+    const navLinks = document.getElementById('navLinks');
+    const menuToggle = document.querySelector('.mobile-menu-toggle');
+
+    if (navLinks.classList.contains('active')) {
+        navLinks.classList.remove('active');
+        const icon = menuToggle.querySelector('i');
+        icon.className = 'fas fa-bars';
+    }
+}
+
 // Smooth scroll with offset for fixed nav
 function smoothScroll() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
+
+            // Close mobile menu if open
+            closeMobileMenu();
+
             const target = document.querySelector(this.getAttribute('href'));
             if (target) {
                 const offsetTop = target.offsetTop - 80;

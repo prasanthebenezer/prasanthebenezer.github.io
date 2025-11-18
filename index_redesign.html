@@ -19,17 +19,22 @@
     <!-- Minimal Navigation -->
     <nav class="nav" id="nav">
         <div class="nav-content">
-            <a href="#" class="nav-logo">PP</a>
-            <div class="nav-links">
+            <a href="#about" class="nav-logo">PP</a>
+            <div class="nav-links" id="navLinks">
                 <a href="#about">About</a>
                 <a href="#experience">Experience</a>
                 <a href="#projects">Projects</a>
                 <a href="#skills">Skills</a>
                 <a href="#contact">Contact</a>
             </div>
-            <a href="./assets/Prasanth_Philip_CV.pdf" download class="nav-cta">
-                <i class="fas fa-download"></i> CV
-            </a>
+            <div class="nav-actions">
+                <a href="./assets/Prasanth_Philip_CV.pdf" download class="nav-cta">
+                    <i class="fas fa-download"></i> CV
+                </a>
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
         </div>
     </nav>
 
