@@ -19,17 +19,22 @@
     <!-- Minimal Navigation -->
     <nav class="nav" id="nav">
         <div class="nav-content">
-            <a href="#" class="nav-logo">PP</a>
-            <div class="nav-links">
+            <a href="#about" class="nav-logo">PP</a>
+            <div class="nav-links" id="navLinks">
                 <a href="#about">About</a>
                 <a href="#experience">Experience</a>
                 <a href="#projects">Projects</a>
                 <a href="#skills">Skills</a>
                 <a href="#contact">Contact</a>
             </div>
-            <a href="./assets/Prasanth_Philip_CV.pdf" download class="nav-cta">
-                <i class="fas fa-download"></i> CV
-            </a>
+            <div class="nav-actions">
+                <a href="./assets/Prasanth_Philip_CV.pdf" download class="nav-cta">
+                    <i class="fas fa-download"></i> CV
+                </a>
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -139,7 +144,7 @@
             <div class="project-category">
                 <h3 class="category-title">AI Automation Systems</h3>
                 <div class="project-grid">
-                    <div class="project-card">
+                    <div class="project-card highlight">
                         <div class="project-header">
                             <h4>Sales Agent System</h4>
                             <span class="project-badge">AI Multi-Agent</span>
@@ -159,7 +164,7 @@
                         </div>
                     </div>
 
-                    <div class="project-card">
+                    <div class="project-card highlight">
                         <div class="project-header">
                             <h4>Proposal Agent</h4>
                             <span class="project-badge">AI Automation</span>
@@ -179,7 +184,7 @@
                         </div>
                     </div>
 
-                    <div class="project-card">
+                    <div class="project-card highlight">
                         <div class="project-header">
                             <h4>Onboarding Agent System</h4>
                             <span class="project-badge">3-Agent Workflow</span>
