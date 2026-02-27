@@ -6,7 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a static personal portfolio website for Prasanth Philip, deployed via GitHub Pages at `https://prasanthebenezer.github.io`. There is no build step, bundler, or package manager — all files are served directly.
 
-## Deployment
+## Git & Deployment
+
+Always use the `gh` CLI for git authentication and push operations:
+```
+gh auth setup-git && git push origin main
+```
 
 Pushing to `main` triggers the GitHub Actions workflow (`.github/workflows/static.yml`), which deploys the entire repository root to GitHub Pages automatically. The live site reflects the root-level files (`index.html`, `styles.css`, `script.js`, `assets/`).
 
