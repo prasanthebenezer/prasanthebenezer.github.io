@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  portfolio:
+    build: .
+    container_name: prasanth-portfolio
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge
