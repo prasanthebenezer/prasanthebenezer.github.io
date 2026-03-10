@@ -1,0 +1,11 @@
+.git
+.github
+node_modules
+*.md
+.gitignore
+docker-compose.yml
+Dockerfile
+.dockerignore
+index_redesign.html
+styles_redesign.css
+script_redesign.js
