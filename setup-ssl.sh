@@ -28,7 +28,7 @@ read -p "Press Enter to continue once DNS is configured..."
 certbot certonly --standalone \
   -d prasanthebenezer.com \
   -d www.prasanthebenezer.com \
-  --email your-email@example.com \
+  --email prasanthebenezer@gmail.com \
   --agree-tos \
   --non-interactive
 
