@@ -4,6 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prasanth Philip - Automation & AI Leader</title>
+    <meta name="description" content="Prasanth Philip — Automation & AI Leader with 16+ years of experience in industrial automation, MES implementation, and AI-powered business solutions.">
+    <meta name="author" content="Prasanth Philip">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Prasanth Philip - Automation & AI Leader">
+    <meta property="og:description" content="Building intelligent systems that bridge industrial automation and AI-powered business operations. 16+ years of experience.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://prasanthebenezer.github.io">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+
+    <!-- Dark mode flash prevention -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark-theme');
+        }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -361,14 +380,21 @@
 
                 <form id="contactForm" action="https://prasanthebenezer.app.n8n.cloud/webhook/c99e897c-406a-4bc2-81d7-fc4629bd6fd2" method="POST" class="contact-form-minimal">
                     <div class="form-row">
-                        <input type="text" name="name" placeholder="Your Name" required>
-                        <input type="email" name="email" placeholder="Your Email" required>
+                        <div class="form-field">
+                            <label for="contact-name" class="sr-only">Your Name</label>
+                            <input type="text" id="contact-name" name="name" placeholder="Your Name" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="contact-email" class="sr-only">Your Email</label>
+                            <input type="email" id="contact-email" name="email" placeholder="Your Email" required>
+                        </div>
                     </div>
-                    <textarea name="message" rows="4" placeholder="Your Message" required></textarea>
+                    <label for="contact-message" class="sr-only">Your Message</label>
+                    <textarea id="contact-message" name="message" rows="4" placeholder="Your Message" required></textarea>
                     <button type="submit" class="btn btn-primary" id="submit-btn">
                         <i class="fas fa-paper-plane"></i> Send Message
                     </button>
-                    <div id="form-status"></div>
+                    <div id="form-status" role="status" aria-live="polite"></div>
                 </form>
             </div>
         </div>

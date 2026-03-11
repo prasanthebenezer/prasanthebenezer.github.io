@@ -14,7 +14,7 @@ function toggleTheme() {
     }
 }
 
-// Load saved theme
+// Load saved theme (syncs body class with html class set in head script)
 function loadTheme() {
     const savedTheme = localStorage.getItem('theme');
     const themeToggle = document.querySelector('.theme-toggle');
@@ -23,6 +23,8 @@ function loadTheme() {
         document.body.classList.add('dark-theme');
         themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
     }
+    // Remove the html-level class now that body has it
+    document.documentElement.classList.remove('dark-theme');
 }
 
 // Mobile Menu Toggle
