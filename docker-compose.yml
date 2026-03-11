@@ -5,8 +5,11 @@ services:
     build: .
     container_name: prasanth-portfolio
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     restart: unless-stopped
+    volumes:
+      - ./letsencrypt:/etc/letsencrypt:ro
     networks:
       - web
 
