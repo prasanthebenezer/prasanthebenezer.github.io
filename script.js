@@ -78,6 +78,9 @@ function smoothScroll() {
 
 // Intersection Observer for fade-in animations
 function initScrollAnimations() {
+    // Add class so CSS can safely hide elements (no-JS users see everything)
+    document.body.classList.add('js-animations');
+
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -100px 0px'
@@ -94,7 +97,6 @@ function initScrollAnimations() {
 
     // Observe sections
     document.querySelectorAll('.section').forEach(section => {
-        section.style.opacity = '0';
         section.style.transform = 'translateY(20px)';
         section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         observer.observe(section);
@@ -102,7 +104,6 @@ function initScrollAnimations() {
 
     // Observe timeline items
     document.querySelectorAll('.timeline-item').forEach((item, index) => {
-        item.style.opacity = '0';
         item.style.transform = 'translateX(-20px)';
         item.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
         observer.observe(item);
@@ -110,7 +111,6 @@ function initScrollAnimations() {
 
     // Observe project cards
     document.querySelectorAll('.project-card').forEach((card, index) => {
-        card.style.opacity = '0';
         card.style.transform = 'translateY(20px)';
         card.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
         observer.observe(card);
@@ -255,6 +255,25 @@ document.addEventListener('DOMContentLoaded', function() {
     initScrollAnimations();
     handleFormSubmit();
     animateStats();
+
+    // Copyright year
+    const yearEl = document.getElementById('copyright-year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+    // Back to top button
+    const backToTop = document.getElementById('backToTop');
+    if (backToTop) {
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 500) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+        backToTop.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 
     // Update active nav on scroll
     window.addEventListener('scroll', updateActiveNav);
