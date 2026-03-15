@@ -210,8 +210,8 @@ async function saveEquipment(e) {
 
 async function uploadCertificate(file, certNumber) {
   const formData = new FormData();
-  formData.append('certificate', file);
   formData.append('certificate_number', certNumber);
+  formData.append('certificate', file);
 
   await fetch(`${CONFIG.API_BASE}/upload-certificate`, {
     method: 'POST',
