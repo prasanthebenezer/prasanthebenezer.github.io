@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body data-page="admin">
@@ -76,6 +77,34 @@
           </button>
           <button class="btn btn-secondary" onclick="adminLogout()">
             <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-filters">
+        <div class="filter-group">
+          <label for="filterEquipId"><i class="fas fa-search"></i> Equipment</label>
+          <input type="text" id="filterEquipId" placeholder="Search by ID, name or serial..." oninput="applyFilters()">
+        </div>
+        <div class="filter-group">
+          <label for="filterDueDate"><i class="fas fa-calendar"></i> Due Before</label>
+          <input type="text" id="filterDueDate" placeholder="Select date..." readonly>
+        </div>
+        <div class="filter-group">
+          <label for="filterStatus"><i class="fas fa-filter"></i> Status</label>
+          <select id="filterStatus" onchange="applyFilters()">
+            <option value="">All</option>
+            <option value="valid">Valid</option>
+            <option value="due-soon">Due Soon</option>
+            <option value="expired">Expired</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-secondary btn-sm" onclick="clearFilters()" title="Clear filters">
+            <i class="fas fa-times"></i> Clear
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="printFilteredTable()" title="Print table">
+            <i class="fas fa-print"></i> Print
           </button>
         </div>
       </div>
@@ -226,6 +255,7 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>

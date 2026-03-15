@@ -81,11 +81,12 @@ async function loadAdminPanel() {
   }
 }
 
-function renderAdminTable() {
+function renderAdminTable(list) {
+  const data = list || adminEquipment;
   const tbody = document.getElementById('adminTableBody');
   tbody.innerHTML = '';
 
-  adminEquipment.forEach(eq => {
+  data.forEach(eq => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${escapeHtml(eq.equipment_id)}</strong></td>
@@ -107,6 +108,117 @@ function renderAdminTable() {
     `;
     tbody.appendChild(tr);
   });
+}
+
+// ─── Filters ────────────────────────────
+function applyFilters() {
+  const query = document.getElementById('filterEquipId').value.trim().toLowerCase();
+  const dueBefore = document.getElementById('filterDueDate').value;
+  const statusFilter = document.getElementById('filterStatus').value;
+
+  const filtered = adminEquipment.filter(eq => {
+    // Text search: equipment_id, name, serial_number
+    if (query) {
+      const match = eq.equipment_id.toLowerCase().includes(query)
+        || eq.name.toLowerCase().includes(query)
+        || eq.serial_number.toLowerCase().includes(query);
+      if (!match) return false;
+    }
+
+    // Due date filter
+    if (dueBefore && eq.calibration_due_date) {
+      if (eq.calibration_due_date > dueBefore) return false;
+    }
+
+    // Status filter
+    if (statusFilter) {
+      const { status } = getCalibrationStatus(eq.calibration_due_date);
+      if (status !== statusFilter) return false;
+    }
+
+    return true;
+  });
+
+  renderAdminTable(filtered);
+}
+
+function clearFilters() {
+  document.getElementById('filterEquipId').value = '';
+  if (window.dueDatePicker) window.dueDatePicker.clear();
+  document.getElementById('filterStatus').value = '';
+  renderAdminTable();
+}
+
+function printFilteredTable() {
+  const tbody = document.getElementById('adminTableBody');
+  const rows = tbody.querySelectorAll('tr');
+
+  if (rows.length === 0) {
+    alert('No equipment to print.');
+    return;
+  }
+
+  // Build filter summary
+  const query = document.getElementById('filterEquipId').value.trim();
+  const dueBefore = document.getElementById('filterDueDate').value;
+  const statusFilter = document.getElementById('filterStatus').value;
+  let filterText = '';
+  if (query) filterText += `Search: "${query}" | `;
+  if (dueBefore) filterText += `Due Before: ${dueBefore} | `;
+  if (statusFilter) filterText += `Status: ${statusFilter} | `;
+  if (filterText) filterText = filterText.slice(0, -3);
+
+  // Build table HTML from visible rows (exclude Actions column)
+  let tableHTML = '';
+  rows.forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    tableHTML += '<tr>';
+    for (let i = 0; i < cells.length - 1; i++) {
+      tableHTML += `<td>${cells[i].innerHTML}</td>`;
+    }
+    tableHTML += '</tr>';
+  });
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Equipment List — CalTrack</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    .meta { font-size: 12px; color: #666; margin-bottom: 20px; }
+    .filters { font-size: 12px; color: #555; margin-bottom: 16px; padding: 8px 12px; background: #f5f5f5; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+    th { background: #f0f0f0; font-weight: 600; }
+    .status-badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .status-badge.valid { background: #e6f4ea; color: #1a7f37; }
+    .status-badge.due-soon { background: #fff3e0; color: #e65100; }
+    .status-badge.expired { background: #fdecea; color: #c62828; }
+    @media print { body { margin: 20px; } }
+  </style>
+</head>
+<body>
+  <h1>${CONFIG.COMPANY_NAME} — Equipment List</h1>
+  <div class="meta">Printed on ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} | ${rows.length} record(s)</div>
+  ${filterText ? `<div class="filters">Filters: ${filterText}</div>` : ''}
+  <table>
+    <thead>
+      <tr>
+        <th>Equipment ID</th>
+        <th>Name</th>
+        <th>Serial Number</th>
+        <th>Due Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>${tableHTML}</tbody>
+  </table>
+</body>
+</html>`);
+  printWindow.document.close();
+  printWindow.onload = () => { printWindow.print(); };
 }
 
 // ─── Equipment Form ────────────────────────
@@ -338,6 +450,15 @@ function printQR() {
 
 // ─── Admin Init ────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Init Flatpickr on due date filter
+  window.dueDatePicker = flatpickr('#filterDueDate', {
+    dateFormat: 'Y-m-d',
+    altInput: true,
+    altFormat: 'd M Y',
+    allowInput: false,
+    onChange: function() { applyFilters(); }
+  });
+
   // Check for cached admin session
   const cached = sessionStorage.getItem('admin-auth');
   if (cached) {

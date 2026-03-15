@@ -841,6 +841,97 @@ body.dark-theme .hero {
   gap: 12px;
 }
 
+/* ─── Admin Filters ────────────────────── */
+.admin-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+}
+
+.admin-filters .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.admin-filters .filter-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-filters .filter-group label i {
+  color: var(--accent);
+  margin-right: 4px;
+}
+
+.admin-filters .filter-group input,
+.admin-filters .filter-group select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.admin-filters .filter-group input:focus,
+.admin-filters .filter-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.admin-filters .filter-actions {
+  display: flex;
+  gap: 8px;
+  align-self: flex-end;
+}
+
+.admin-filters .filter-actions .btn {
+  white-space: nowrap;
+}
+
+/* ─── Flatpickr Theme Override ──────────── */
+.dark-theme .flatpickr-calendar {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.dark-theme .flatpickr-months .flatpickr-month,
+.dark-theme .flatpickr-current-month .flatpickr-monthDropdown-months,
+.dark-theme .flatpickr-weekdays,
+.dark-theme span.flatpickr-weekday {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.dark-theme .flatpickr-day {
+  color: var(--text-primary);
+}
+.dark-theme .flatpickr-day:hover {
+  background: var(--border);
+  border-color: var(--border);
+}
+.dark-theme .flatpickr-day.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.dark-theme .flatpickr-months .flatpickr-prev-month svg,
+.dark-theme .flatpickr-months .flatpickr-next-month svg {
+  fill: var(--text-primary);
+}
+
 /* ─── Data Table ────────────────────────── */
 .table-container {
   overflow-x: auto;
