@@ -98,7 +98,7 @@ function renderAdminTable(list) {
         <button class="btn btn-secondary btn-sm" onclick="showEquipmentForm('${escapeHtml(eq.equipment_id)}')" title="Edit">
           <i class="fas fa-edit"></i>
         </button>
-        <button class="btn btn-secondary btn-sm" onclick="showQRModal('${escapeHtml(eq.equipment_id)}')" title="QR Code">
+        <button class="btn btn-secondary btn-sm" onclick="showQRModal('${escapeHtml(eq.equipment_id)}', '${escapeHtml(eq.name)}', '${escapeHtml(eq.serial_number)}')" title="QR Code">
           <i class="fas fa-qrcode"></i>
         </button>
         <button class="btn btn-danger btn-sm" onclick="showDeleteModal('${escapeHtml(eq.equipment_id)}')" title="Delete">
@@ -377,15 +377,19 @@ async function confirmDelete() {
 // ─── QR Code ───────────────────────────────
 let currentQR = null;
 
-function showQRModal(equipId) {
+function showQRModal(equipId, equipName, serialNumber) {
   const modal = document.getElementById('qrModal');
   const container = document.getElementById('qrCodeContainer');
   const urlEl = document.getElementById('qrUrl');
   const idEl = document.getElementById('qrEquipId');
+  const nameEl = document.getElementById('qrEquipName');
+  const serialEl = document.getElementById('qrEquipSerial');
 
   const url = `${CONFIG.BASE_URL}/equipment.html?id=${encodeURIComponent(equipId)}`;
 
   idEl.textContent = equipId;
+  nameEl.textContent = equipName || '';
+  serialEl.textContent = serialNumber ? `S/N: ${serialNumber}` : '';
   urlEl.textContent = url;
   container.innerHTML = '';
 
@@ -408,17 +412,63 @@ function closeQRModal() {
 }
 
 function downloadQR() {
-  const canvas = document.querySelector('#qrCodeContainer canvas');
-  if (!canvas) return;
+  const qrCanvas = document.querySelector('#qrCodeContainer canvas');
+  if (!qrCanvas) return;
+
+  const equipId = document.getElementById('qrEquipId').textContent;
+  const equipName = document.getElementById('qrEquipName').textContent;
+  const serialNumber = document.getElementById('qrEquipSerial').textContent;
+
+  // Create a new canvas with QR code + text labels
+  const padding = 20;
+  const textLineHeight = 22;
+  const lines = [equipId, equipName, serialNumber].filter(Boolean);
+  const totalHeight = qrCanvas.height + padding * 2 + lines.length * textLineHeight + 10;
+  const totalWidth = Math.max(qrCanvas.width + padding * 2, 260);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = totalWidth;
+  canvas.height = totalHeight;
+  const ctx = canvas.getContext('2d');
+
+  // White background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, totalWidth, totalHeight);
+
+  // Draw QR code centered
+  const qrX = (totalWidth - qrCanvas.width) / 2;
+  ctx.drawImage(qrCanvas, qrX, padding);
+
+  // Draw text labels below QR code
+  ctx.fillStyle = '#000000';
+  ctx.textAlign = 'center';
+  let y = padding + qrCanvas.height + 20;
+
+  // Equipment ID
+  ctx.font = 'bold 16px Arial, sans-serif';
+  ctx.fillText(equipId, totalWidth / 2, y);
+  y += textLineHeight;
+
+  if (equipName) {
+    ctx.font = 'bold 14px Arial, sans-serif';
+    ctx.fillText(equipName, totalWidth / 2, y);
+    y += textLineHeight;
+  }
+  if (serialNumber) {
+    ctx.font = '12px Arial, sans-serif';
+    ctx.fillText(serialNumber, totalWidth / 2, y);
+  }
 
   const link = document.createElement('a');
-  link.download = `QR-${document.getElementById('qrEquipId').textContent}.png`;
+  link.download = `QR-${equipId}.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
 
 function printQR() {
   const equipId = document.getElementById('qrEquipId').textContent;
+  const equipName = document.getElementById('qrEquipName').textContent;
+  const serialNumber = document.getElementById('qrEquipSerial').textContent;
   const canvas = document.querySelector('#qrCodeContainer canvas');
   if (!canvas) return;
 
@@ -432,12 +482,16 @@ function printQR() {
         body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: Arial, sans-serif; margin: 0; }
         img { width: 200px; height: 200px; }
         h2 { margin-top: 12px; font-size: 18px; }
+        .equip-name { font-size: 14px; font-weight: 600; color: #333; margin-top: 6px; }
+        .serial-number { font-size: 12px; color: #555; margin-top: 2px; }
         p { font-size: 11px; color: #666; margin-top: 4px; }
       </style>
     </head>
     <body>
       <img src="${canvas.toDataURL('image/png')}" alt="QR Code">
       <h2>${equipId}</h2>
+      ${equipName ? `<div class="equip-name">${equipName}</div>` : ''}
+      ${serialNumber ? `<div class="serial-number">${serialNumber}</div>` : ''}
       <p>${CONFIG.COMPANY_NAME}</p>
     </body>
     </html>

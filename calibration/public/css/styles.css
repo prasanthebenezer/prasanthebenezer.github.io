@@ -994,6 +994,12 @@ body.dark-theme .hero {
   color: var(--accent);
 }
 
+.qr-equip-detail {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 2px 0;
+}
+
 .qr-url {
   font-size: 0.78rem;
   color: var(--text-muted);
