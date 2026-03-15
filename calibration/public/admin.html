@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — CalTrack Demo</title>
+  <script>
+    (function() {
+      var theme = localStorage.getItem('cal-theme');
+      if (theme === 'dark') document.documentElement.classList.add('dark-theme-loading');
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="admin">
+  <!-- Nav -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <i class="fas fa-gauge-high"></i>
+        <span class="brand-text">CalTrack Demo</span>
+      </a>
+      <div class="nav-links">
+        <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+        <a href="admin.html" class="nav-link active"><i class="fas fa-lock"></i> Admin</a>
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <div class="mobile-menu">
+      <a href="/" class="nav-link" onclick="closeMobileMenu()"><i class="fas fa-home"></i> Home</a>
+      <a href="admin.html" class="nav-link active" onclick="closeMobileMenu()"><i class="fas fa-lock"></i> Admin</a>
+    </div>
+  </nav>
+
+  <!-- Login Gate -->
+  <main class="container admin-page">
+    <div id="loginGate" class="login-gate">
+      <div class="login-card">
+        <div class="login-icon"><i class="fas fa-shield-halved"></i></div>
+        <h2>Admin Access</h2>
+        <p>Enter the admin password to manage equipment.</p>
+        <form onsubmit="adminLogin(event)">
+          <div class="form-group">
+            <label for="adminPassword">Password</label>
+            <div class="password-input-wrap">
+              <input type="password" id="adminPassword" placeholder="Enter admin password" required autocomplete="off">
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('adminPassword')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <p class="form-error" id="adminLoginError" style="display:none;"></p>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+            <span class="btn-text">Login</span>
+            <span class="btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Admin Panel (hidden until login) -->
+    <div id="adminPanel" style="display:none;">
+      <div class="admin-header">
+        <h1><i class="fas fa-cogs"></i> Equipment Management</h1>
+        <div class="admin-actions">
+          <button class="btn btn-primary" onclick="showEquipmentForm()">
+            <i class="fas fa-plus"></i> Add Equipment
+          </button>
+          <button class="btn btn-secondary" onclick="adminLogout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </div>
+      </div>
+
+      <div id="adminLoading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading equipment...</p>
+      </div>
+
+      <div class="table-container" id="tableContainer" style="display:none;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Equipment ID</th>
+              <th>Name</th>
+              <th>Serial Number</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody"></tbody>
+        </table>
+      </div>
+
+      <div id="adminEmpty" class="empty-state" style="display:none;">
+        <i class="fas fa-box-open"></i>
+        <h3>No Equipment</h3>
+        <p>Click "Add Equipment" to get started.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Equipment Form Modal -->
+  <div class="modal-overlay" id="equipmentModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="formModalTitle"><i class="fas fa-plus"></i> Add Equipment</h3>
+        <button class="modal-close" onclick="closeEquipmentForm()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="equipmentForm" onsubmit="saveEquipment(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="formEquipId">Equipment ID *</label>
+              <input type="text" id="formEquipId" placeholder="e.g. EQUIP004" required>
+            </div>
+            <div class="form-group">
+              <label for="formSerial">Serial Number *</label>
+              <input type="text" id="formSerial" placeholder="e.g. SN-2024-0001" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="formName">Equipment Name *</label>
+            <input type="text" id="formName" placeholder="e.g. Pressure Transmitter PT-101" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="formRange">Calibration Range</label>
+              <input type="text" id="formRange" placeholder="e.g. 0 - 250 bar">
+            </div>
+            <div class="form-group">
+              <label for="formInterval">Interval (months)</label>
+              <input type="number" id="formInterval" placeholder="e.g. 12" min="1">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="formCalDate">Date of Calibration</label>
+              <input type="date" id="formCalDate">
+            </div>
+            <div class="form-group">
+              <label for="formDueDate">Calibration Due Date</label>
+              <input type="date" id="formDueDate">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="formCertNumber">Certificate Number</label>
+              <input type="text" id="formCertNumber" placeholder="e.g. CERT-2025-0001">
+            </div>
+            <div class="form-group">
+              <label for="formCertFile">Certificate PDF</label>
+              <input type="file" id="formCertFile" accept=".pdf">
+            </div>
+          </div>
+          <p class="form-error" id="formError" style="display:none;"></p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeEquipmentForm()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="formSubmitBtn">
+              <span class="btn-text">Save Equipment</span>
+              <span class="btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-exclamation-triangle" style="color: var(--status-expired);"></i> Confirm Delete</h3>
+        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete equipment <strong id="deleteEquipId"></strong>?</p>
+        <p class="text-muted">This action cannot be undone.</p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+          <button class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">
+            <span class="btn-text">Delete</span>
+            <span class="btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Code Modal -->
+  <div class="modal-overlay" id="qrModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-qrcode"></i> QR Code</h3>
+        <button class="modal-close" onclick="closeQRModal()">&times;</button>
+      </div>
+      <div class="modal-body qr-modal-body">
+        <p class="qr-equip-id" id="qrEquipId"></p>
+        <div id="qrCodeContainer" class="qr-container"></div>
+        <p class="qr-url" id="qrUrl"></p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="downloadQR()">
+            <i class="fas fa-download"></i> Download PNG
+          </button>
+          <button class="btn btn-primary" onclick="printQR()">
+            <i class="fas fa-print"></i> Print Label
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; <span id="footerYear"></span> CalTrack Demo. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

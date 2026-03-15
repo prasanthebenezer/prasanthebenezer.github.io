@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CalTrack Demo — Calibration Equipment Management</title>
+  <script>
+    (function() {
+      var theme = localStorage.getItem('cal-theme');
+      if (theme === 'dark') document.documentElement.classList.add('dark-theme-loading');
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="landing">
+  <!-- Nav -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <i class="fas fa-gauge-high"></i>
+        <span class="brand-text">CalTrack Demo</span>
+      </a>
+      <div class="nav-links">
+        <a href="/" class="nav-link active"><i class="fas fa-home"></i> Home</a>
+        <a href="admin.html" class="nav-link"><i class="fas fa-lock"></i> Admin</a>
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <div class="mobile-menu">
+      <a href="/" class="nav-link active" onclick="closeMobileMenu()"><i class="fas fa-home"></i> Home</a>
+      <a href="admin.html" class="nav-link" onclick="closeMobileMenu()"><i class="fas fa-lock"></i> Admin</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <h1><i class="fas fa-gauge-high hero-icon"></i> CalTrack Demo</h1>
+      <p class="hero-tagline">Calibration Equipment Management</p>
+      <div class="search-container">
+        <div class="search-bar">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="searchInput" placeholder="Search by Equipment ID, Serial Number, or Name..." autocomplete="off">
+          <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Equipment Grid -->
+  <main class="container">
+    <div class="section-header">
+      <h2>Equipment Registry</h2>
+      <span class="equipment-count" id="equipmentCount"></span>
+    </div>
+
+    <div id="loadingSpinner" class="loading">
+      <div class="spinner"></div>
+      <p>Loading equipment data...</p>
+    </div>
+
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <i class="fas fa-box-open"></i>
+      <h3>No Equipment Found</h3>
+      <p>No calibration equipment has been registered yet.</p>
+    </div>
+
+    <div id="noResults" class="empty-state" style="display:none;">
+      <i class="fas fa-search"></i>
+      <h3>No Results</h3>
+      <p>No equipment matches your search query.</p>
+    </div>
+
+    <div class="equipment-grid" id="equipmentGrid"></div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; <span id="footerYear"></span> CalTrack Demo. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -13,6 +13,24 @@ services:
     networks:
       - web
 
+  calibration:
+    build: ./calibration
+    container_name: calibration-app
+    restart: unless-stopped
+    environment:
+      - ADMIN_PASSWORD=admin123       # Change in production
+      - CERT_VIEW_PASSWORD=view123    # Change in production
+      - PORT=3000
+    volumes:
+      - calibration-data:/app/database
+      - calibration-certs:/app/certificates
+    networks:
+      - web
+
 networks:
   web:
     driver: bridge
+
+volumes:
+  calibration-data:
+  calibration-certs:

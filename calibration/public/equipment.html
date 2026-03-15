@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equipment Details — CalTrack Demo</title>
+  <script>
+    (function() {
+      var theme = localStorage.getItem('cal-theme');
+      if (theme === 'dark') document.documentElement.classList.add('dark-theme-loading');
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-page="equipment">
+  <!-- Nav -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <i class="fas fa-gauge-high"></i>
+        <span class="brand-text">CalTrack Demo</span>
+      </a>
+      <div class="nav-links">
+        <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+        <a href="admin.html" class="nav-link"><i class="fas fa-lock"></i> Admin</a>
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <div class="mobile-menu">
+      <a href="/" class="nav-link" onclick="closeMobileMenu()"><i class="fas fa-home"></i> Home</a>
+      <a href="admin.html" class="nav-link" onclick="closeMobileMenu()"><i class="fas fa-lock"></i> Admin</a>
+    </div>
+  </nav>
+
+  <!-- Equipment Detail -->
+  <main class="container detail-page">
+    <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Equipment List</a>
+
+    <div id="loadingSpinner" class="loading">
+      <div class="spinner"></div>
+      <p>Loading equipment details...</p>
+    </div>
+
+    <div id="errorState" class="empty-state" style="display:none;">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h3>Equipment Not Found</h3>
+      <p>The requested equipment could not be found.</p>
+      <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+
+    <div id="equipmentDetail" style="display:none;">
+      <div class="detail-header">
+        <div>
+          <h1 id="equipName"></h1>
+          <p class="equipment-id-label" id="equipId"></p>
+        </div>
+        <div id="statusBadgeContainer"></div>
+      </div>
+
+      <div class="detail-card">
+        <h2><i class="fas fa-info-circle"></i> Calibration Details</h2>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Equipment ID</label>
+            <span id="detailEquipId"></span>
+          </div>
+          <div class="detail-item">
+            <label>Serial Number</label>
+            <span id="detailSerial"></span>
+          </div>
+          <div class="detail-item">
+            <label>Calibration Range</label>
+            <span id="detailRange"></span>
+          </div>
+          <div class="detail-item">
+            <label>Calibration Interval</label>
+            <span id="detailInterval"></span>
+          </div>
+          <div class="detail-item">
+            <label>Date of Calibration</label>
+            <span id="detailCalDate"></span>
+          </div>
+          <div class="detail-item">
+            <label>Calibration Due Date</label>
+            <span id="detailDueDate"></span>
+          </div>
+          <div class="detail-item">
+            <label>Certificate Number</label>
+            <span id="detailCertNumber"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="certificate-section">
+        <button class="btn btn-primary btn-lg" id="viewCertBtn" onclick="handleCertificateView()">
+          <i class="fas fa-file-pdf"></i> View Calibration Certificate
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Password Modal -->
+  <div class="modal-overlay" id="passwordModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-lock"></i> Certificate Access</h3>
+        <button class="modal-close" onclick="closePasswordModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Enter the viewing password to access the calibration certificate.</p>
+        <form onsubmit="submitCertPassword(event)">
+          <div class="form-group">
+            <label for="certPassword">Password</label>
+            <div class="password-input-wrap">
+              <input type="password" id="certPassword" placeholder="Enter viewing password" required autocomplete="off">
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('certPassword')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <p class="form-error" id="certPasswordError" style="display:none;"></p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closePasswordModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="certSubmitBtn">
+              <span class="btn-text">View Certificate</span>
+              <span class="btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; <span id="footerYear"></span> CalTrack Demo. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
