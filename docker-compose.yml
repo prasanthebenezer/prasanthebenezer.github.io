@@ -27,6 +27,17 @@ services:
     networks:
       - web
 
+  maintenance:
+    build: ../maintenance-dashboard
+    container_name: maintenance-dashboard
+    restart: unless-stopped
+    environment:
+      - DB_PATH=/app/data/dashboard.db
+    volumes:
+      - maintenance-data:/app/data
+    networks:
+      - web
+
 networks:
   web:
     driver: bridge
@@ -34,3 +45,4 @@ networks:
 volumes:
   calibration-data:
   calibration-certs:
+  maintenance-data:
