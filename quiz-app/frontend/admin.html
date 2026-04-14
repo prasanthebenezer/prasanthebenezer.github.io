@@ -1,7 +1,40 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Admin · Quiz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=6"></head>
+<link rel="stylesheet" href="styles.css?v=6">
+<style>
+  .step-card { transition: opacity 0.2s; }
+  .step-card.locked { opacity: 0.55; }
+  .step-card.locked button:not(.always) { pointer-events: none; filter: grayscale(0.5); }
+  .section-head .num.done { background: var(--good); }
+  .status-row {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;
+    font-size: 13px; color: var(--muted);
+  }
+  .status-row b { color: var(--text); }
+  .preview-panel {
+    margin-top: 14px; padding: 16px; border-radius: 10px;
+    background: var(--bg-2); border: 1px solid var(--border);
+  }
+  .preview-panel h3 { margin: 0 0 8px; font-size: 15px; }
+  .preview-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 8px; margin: 10px 0;
+  }
+  .preview-grid .cell {
+    background: var(--card); padding: 10px; border-radius: 8px; text-align: center;
+  }
+  .preview-grid .cell .n { font-size: 22px; font-weight: 800; color: var(--text); }
+  .preview-grid .cell .l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .issue-list { margin: 8px 0 0; padding-left: 20px; font-size: 13px; color: var(--bad); }
+  .issue-list.warn { color: var(--warn); }
+  .confirm-box {
+    margin-top: 12px; padding: 12px; background: rgba(239,68,68,0.1);
+    border: 1px solid var(--bad); border-radius: 8px;
+  }
+  .confirm-box input { margin-top: 8px; }
+</style>
+</head>
 <body><div class="container">
 
   <div class="topbar">
@@ -24,15 +57,15 @@
 
   <div id="panel" style="display:none">
 
-    <div class="card">
-      <div class="section-head"><span class="num">1</span><h2>Download Excel Template</h2></div>
+    <div class="card" id="step1">
+      <div class="section-head"><span class="num" id="num1">1</span><h2>Download Excel Template</h2></div>
       <p class="muted">Sheets: Config, Teams, MCQ, RapidFire, PassQuestion, ImageRound, Rounds.
         <b>All round-type sheets are optional</b> — only fill in what you'll use, then list those rounds in the Rounds sheet.</p>
-      <a href="api/admin/template.xlsx"><button class="lg">⬇️ Download quiz_template.xlsx</button></a>
+      <a href="api/admin/template.xlsx"><button class="lg always" onclick="markTemplateDownloaded()">⬇️ Download quiz_template.xlsx</button></a>
     </div>
 
-    <div class="card">
-      <div class="section-head"><span class="num">2</span><h2>Upload Question Images</h2></div>
+    <div class="card step-card" id="step2">
+      <div class="section-head"><span class="num" id="num2">2</span><h2>Upload Question Images</h2></div>
       <p class="muted">Image filenames must match the <code>image</code> column in your Excel.</p>
       <div class="row">
         <input type="file" id="imgs" multiple accept="image/*">
@@ -41,19 +74,20 @@
       <div id="imglist" class="muted" style="margin-top:14px"></div>
     </div>
 
-    <div class="card">
-      <div class="section-head"><span class="num">3</span><h2>Import Questions (Excel)</h2></div>
-      <p class="muted">⚠️ Importing replaces all existing questions, teams, and scores.</p>
+    <div class="card step-card" id="step3">
+      <div class="section-head"><span class="num" id="num3">3</span><h2>Import Questions (Excel)</h2></div>
+      <p class="muted">Preview parses your file without touching the database. Import replaces all existing questions, teams, and scores.</p>
       <div class="row">
-        <input type="file" id="excel" accept=".xlsx">
-        <button onclick="importExcel()" style="flex:0 0 auto">Import</button>
+        <input type="file" id="excel" accept=".xlsx" onchange="clearPreview()">
+        <button onclick="previewImport()" class="ghost" style="flex:0 0 auto">👁 Preview</button>
       </div>
-      <div id="result" style="margin-top:14px"></div>
+      <div id="preview"></div>
     </div>
 
-    <div class="card">
-      <div class="section-head"><span class="num">4</span><h2>Session Controls</h2></div>
-      <div class="row tight">
+    <div class="card" id="step4">
+      <div class="section-head"><span class="num">4</span><h2>Session Status &amp; Controls</h2></div>
+      <div id="status" class="status-row"><i>Loading…</i></div>
+      <div class="row tight" style="margin-top:14px">
         <button class="warn" onclick="resetScores()">↻ Reset Scores</button>
         <button class="ghost" onclick="logout()">Logout</button>
       </div>
@@ -63,19 +97,21 @@
 </div>
 <div id="toast"></div>
 <script>
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(msg, bad){ const t=document.getElementById('toast');
-  t.innerHTML=`<div class="toast ${bad?'bad':''}">${msg}</div>`;
+  t.innerHTML=`<div class="toast ${bad?'bad':''}">${esc(msg)}</div>`;
   setTimeout(()=>t.innerHTML='',2500);
 }
 async function api(p, opts={}) {
   const r = await fetch('api'+p, { credentials:'same-origin', ...opts });
   return r.json();
 }
+
 async function check() {
   const me = await api('/auth/me');
   document.getElementById('login').style.display = me.authed ? 'none' : 'block';
   document.getElementById('panel').style.display = me.authed ? 'block' : 'none';
-  if (me.authed) loadImages();
+  if (me.authed) { loadImages(); loadStatus(); updateStepperLock(); }
 }
 async function login() {
   const pw = document.getElementById('pw').value;
@@ -84,6 +120,25 @@ async function login() {
   if (r.ok) check(); else document.getElementById('err').textContent = 'Wrong password';
 }
 async function logout() { await fetch('api/auth/logout',{method:'POST',credentials:'same-origin'}); check(); }
+
+const state = {
+  templateDownloaded: localStorage.getItem('quiz.adm.tpl') === '1',
+  hasImages: false,
+  hasImport: false,
+};
+function markTemplateDownloaded() {
+  state.templateDownloaded = true;
+  localStorage.setItem('quiz.adm.tpl', '1');
+  updateStepperLock();
+}
+function updateStepperLock() {
+  document.getElementById('num1').classList.toggle('done', state.templateDownloaded);
+  document.getElementById('num2').classList.toggle('done', state.hasImages);
+  document.getElementById('num3').classList.toggle('done', state.hasImport);
+  document.getElementById('step2').classList.toggle('locked', !state.templateDownloaded);
+  document.getElementById('step3').classList.toggle('locked', !state.templateDownloaded);
+}
+
 async function uploadImages() {
   const files = document.getElementById('imgs').files;
   if (!files.length) return toast('Pick files first', true);
@@ -94,29 +149,108 @@ async function uploadImages() {
 }
 async function loadImages() {
   const r = await api('/admin/images');
+  state.hasImages = r.files.length > 0;
   const html = r.files.length
-    ? r.files.map(f=>`<span class="badge gray" style="margin:2px">${f}</span>`).join(' ')
+    ? r.files.map(f=>`<span class="badge gray" style="margin:2px">${esc(f)}</span>`).join(' ')
     : '<i>No images uploaded yet.</i>';
-  document.getElementById('imglist').innerHTML = '<b>Uploaded images:</b><br>' + html;
+  document.getElementById('imglist').innerHTML = `<b>Uploaded images (${r.files.length}):</b><br>` + html;
+  updateStepperLock();
 }
-async function importExcel() {
+
+function fmtTime(iso) {
+  if (!iso) return 'never';
+  const d = new Date(iso);
+  const mins = Math.round((Date.now() - d.getTime()) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  if (mins < 24*60) return `${Math.round(mins/60)} h ago`;
+  return d.toLocaleString();
+}
+async function loadStatus() {
+  const s = await api('/admin/status');
+  state.hasImport = s.questions > 0;
+  document.getElementById('status').innerHTML = `
+    <span><b>${s.teams}</b> teams</span>
+    <span><b>${s.questions}</b> questions</span>
+    <span><b>${s.rounds}</b> rounds</span>
+    <span>Last import: <b>${esc(fmtTime(s.lastImportAt))}</b></span>`;
+  updateStepperLock();
+}
+
+function clearPreview() {
+  document.getElementById('preview').innerHTML = '';
+}
+
+async function previewImport() {
   const f = document.getElementById('excel').files[0];
   if (!f) return toast('Pick a file first', true);
+  const fd = new FormData(); fd.append('file', f);
+  const r = await fetch('api/admin/import-preview',{method:'POST',body:fd,credentials:'same-origin'});
+  const j = await r.json();
+  if (!r.ok) {
+    document.getElementById('preview').innerHTML =
+      `<div class="preview-panel"><h3 style="color:var(--bad)">Could not parse file</h3><p class="muted">${esc(j.error || 'Unknown error')}</p></div>`;
+    return;
+  }
+  renderPreview(j);
+}
+
+function renderPreview(j) {
+  const c = j.counts;
+  const cells = [
+    ['teams', c.teams], ['questions', c.questions], ['rounds', c.rounds],
+    ['mcq', c.mcq], ['rapidfire', c.rapidfire], ['pass', c.pass], ['image', c.image],
+  ].map(([l,n]) => `<div class="cell"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`).join('');
+
+  const blockers = j.issues || [];
+  const warnings = [];
+  if (j.missingImages?.length) warnings.push(`${j.missingImages.length} image(s) referenced but not uploaded: ${j.missingImages.slice(0,8).map(esc).join(', ')}${j.missingImages.length>8?'…':''}`);
+
+  const canImport = blockers.length === 0;
+  document.getElementById('preview').innerHTML = `
+    <div class="preview-panel">
+      <h3>Preview</h3>
+      <div class="preview-grid">${cells}</div>
+      ${blockers.length ? `<ul class="issue-list">${blockers.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>` : ''}
+      ${warnings.length ? `<ul class="issue-list warn">${warnings.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>` : ''}
+      ${canImport ? `
+        <div class="confirm-box">
+          <b>⚠️ Importing will wipe all existing questions, teams, and scores.</b>
+          <p class="muted" style="margin:6px 0">Type <code>IMPORT</code> below to enable the button.</p>
+          <input id="confirm_word" placeholder="IMPORT" oninput="document.getElementById('doImport').disabled = this.value.trim() !== 'IMPORT'">
+          <button id="doImport" class="bad" disabled style="margin-top:10px;width:100%" onclick="doImport()">Import &amp; Replace Data</button>
+        </div>
+      ` : `<p class="muted" style="margin-top:8px">Fix the issue(s) above and preview again.</p>`}
+    </div>`;
+}
+
+async function doImport() {
+  const f = document.getElementById('excel').files[0];
+  if (!f) return toast('File lost — pick it again', true);
+  const btn = document.getElementById('doImport');
+  btn.disabled = true; btn.textContent = 'Importing…';
   const fd = new FormData(); fd.append('file', f);
   const r = await fetch('api/admin/import-excel',{method:'POST',body:fd,credentials:'same-origin'});
   const j = await r.json();
   if (r.ok) {
-    document.getElementById('result').innerHTML =
-      `<div class="answer-box">✅ Imported — Teams: <b>${j.counts.teams}</b>, Questions: <b>${j.counts.questions}</b>, Rounds: <b>${j.counts.rounds}</b></div>`;
     toast('Import successful');
+    document.getElementById('preview').innerHTML =
+      `<div class="preview-panel"><h3 style="color:var(--good)">✅ Imported</h3>
+       <div class="status-row"><span><b>${j.counts.teams}</b> teams</span>
+       <span><b>${j.counts.questions}</b> questions</span>
+       <span><b>${j.counts.rounds}</b> rounds</span></div></div>`;
+    loadStatus();
   } else {
-    document.getElementById('result').innerHTML = `<div class="answer-box" style="background:rgba(239,68,68,0.15);border-color:var(--bad)">❌ ${j.error}</div>`;
+    toast(j.error || 'Import failed', true);
+    btn.disabled = false; btn.textContent = 'Import & Replace Data';
   }
 }
+
 async function resetScores() {
   if (!confirm('Reset all scores? Questions and teams stay.')) return;
   await fetch('api/admin/reset-scores',{method:'POST',credentials:'same-origin'});
   toast('Scores reset');
+  loadStatus();
 }
 check();
 </script>

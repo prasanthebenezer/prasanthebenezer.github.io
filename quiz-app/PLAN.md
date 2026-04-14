@@ -19,13 +19,16 @@ Goal: reduce friction during live quiz without large refactors.
 - [x] Softer page background gradient (`#111827 → #1a2236`).
 - [x] `prefers-reduced-motion` disables animations; `:focus-visible` rings added.
 
-## Phase B — Admin onboarding (PLANNED)
+## Phase B — Admin onboarding (DONE)
 
-- [ ] Stepper visual completion state (dim locked steps, check completed).
-- [ ] Import dry-run: preview counts + validation errors before wiping.
-- [ ] Typed-confirmation on Import (currently silent wipe).
-- [ ] Cross-check uploaded images vs. Excel `image` column; flag missing.
-- [ ] Show last-import timestamp.
+- [x] Stepper visual completion state (locked steps dimmed, green tick on done).
+- [x] Import dry-run (`POST /api/admin/import-preview`) returns counts, issues,
+      and missing-image refs without touching the database.
+- [x] Typed-confirmation ("IMPORT") required to enable the destructive button.
+- [x] Cross-check: preview lists image filenames referenced in Excel but not
+      present on disk.
+- [x] Last-import timestamp stored in `config.last_import_at` and surfaced in
+      Session Status card via `GET /api/admin/status`.
 
 ## Phase C — Display polish (PLANNED)
 
@@ -43,7 +46,8 @@ Goal: reduce friction during live quiz without large refactors.
 
 ## Completed
 
-- Phase A (host quick wins) — commit pending at time of writing.
+- Phase A (host quick wins) — commit `47eaab4`.
+- Phase B (admin onboarding) — commit pending at time of writing.
 
 ## Notes for resuming
 

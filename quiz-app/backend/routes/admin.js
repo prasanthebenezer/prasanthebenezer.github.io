@@ -32,6 +32,58 @@ const memUpload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
+// Parse an uploaded Excel and return counts + validation issues
+// without touching the database. Used by admin dry-run preview.
+function parseExcelSummary(buffer) {
+  const wb = xlsx.read(buffer, { type: 'buffer' });
+  const get = (n) => (wb.Sheets[n] ? xlsx.utils.sheet_to_json(wb.Sheets[n]) : []);
+  const teams = get('Teams').filter((r) => r.name);
+  const mcq = get('MCQ').filter((r) => r.question && r.correct != null);
+  const rapid = get('RapidFire').filter((r) => r.question && r.answer != null);
+  const pass = get('PassQuestion').filter((r) => r.question && r.answer != null);
+  const image = get('ImageRound').filter((r) => r.question && r.answer != null);
+  const rounds = get('Rounds').filter((r) => r.round_no && r.type);
+
+  const issues = [];
+  if (!teams.length) issues.push('No teams defined in the Teams sheet');
+  if (!rounds.length) issues.push('No rounds defined in the Rounds sheet');
+  const validTypes = new Set(['mcq', 'rapidfire', 'pass', 'image']);
+  for (const r of rounds) {
+    if (!validTypes.has(r.type)) issues.push(`Round ${r.round_no}: unknown type "${r.type}"`);
+  }
+
+  const refImages = new Set();
+  for (const r of [...mcq, ...rapid, ...pass, ...image]) {
+    if (r.image) refImages.add(String(r.image));
+  }
+
+  return {
+    counts: {
+      teams: teams.length,
+      mcq: mcq.length,
+      rapidfire: rapid.length,
+      pass: pass.length,
+      image: image.length,
+      questions: mcq.length + rapid.length + pass.length + image.length,
+      rounds: rounds.length,
+    },
+    issues,
+    imageRefs: [...refImages],
+  };
+}
+
+router.post('/import-preview', memUpload.single('file'), (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'file is required' });
+    const summary = parseExcelSummary(req.file.buffer);
+    const have = new Set(
+      fs.readdirSync(UPLOAD_DIR).filter((f) => /\.(png|jpe?g|gif|webp)$/i.test(f))
+    );
+    const missingImages = summary.imageRefs.filter((n) => !have.has(n));
+    res.json({ ok: true, counts: summary.counts, issues: summary.issues, missingImages });
+  } catch (e) { next(e); }
+});
+
 router.post('/import-excel', memUpload.single('file'), async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'file is required' });
@@ -112,6 +164,11 @@ router.post('/import-excel', memUpload.single('file'), async (req, res, next) =>
         client.query('SELECT COUNT(*) FROM questions'),
         client.query('SELECT COUNT(*) FROM rounds'),
       ]);
+      await client.query(
+        `INSERT INTO config(key,value) VALUES('last_import_at',$1)
+         ON CONFLICT(key) DO UPDATE SET value=$1`,
+        [JSON.stringify(new Date().toISOString())]
+      );
       return { teams: t.rows[0].count, questions: q.rows[0].count, rounds: rd.rows[0].count };
     });
 
@@ -154,6 +211,27 @@ router.post('/reset-scores', async (req, res, next) => {
     });
     req.app.get('broadcastState')?.();
     res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.get('/status', async (req, res, next) => {
+  try {
+    const [t, q, rd, cfg] = await Promise.all([
+      pool.query('SELECT COUNT(*) FROM teams'),
+      pool.query('SELECT COUNT(*) FROM questions'),
+      pool.query('SELECT COUNT(*) FROM rounds'),
+      pool.query("SELECT value FROM config WHERE key='last_import_at'"),
+    ]);
+    let lastImportAt = null;
+    if (cfg.rows[0]?.value) {
+      try { lastImportAt = JSON.parse(cfg.rows[0].value); } catch { lastImportAt = cfg.rows[0].value; }
+    }
+    res.json({
+      teams: +t.rows[0].count,
+      questions: +q.rows[0].count,
+      rounds: +rd.rows[0].count,
+      lastImportAt,
+    });
   } catch (e) { next(e); }
 });
 
