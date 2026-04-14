@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Host · Quiz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=4">
+<link rel="stylesheet" href="styles.css?v=6">
 <style>
   /* Phase 1 host-specific UI */
   .step-bar {
@@ -72,10 +72,43 @@
 
   .undo-btn { background: var(--card); }
 
+  /* Sticky control bar at viewport bottom */
+  .sticky-controls {
+    position: sticky; bottom: 0; z-index: 50;
+    margin: 16px -24px -24px;
+    padding: 12px 24px 16px;
+    background: linear-gradient(180deg, rgba(26,34,54,0) 0%, var(--bg-2) 22%);
+    backdrop-filter: blur(6px);
+  }
+  .sticky-controls::before {
+    content: ""; display: block; height: 1px;
+    background: var(--border); margin-bottom: 10px; opacity: 0.6;
+  }
+
+  /* Inline shortcut hint strip */
+  .hint-strip {
+    display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+    padding: 8px 10px; margin-top: 10px;
+    font-size: 12px; color: var(--muted);
+  }
+  .hint-strip span { white-space: nowrap; }
+  .hint-strip .kbd { margin-right: 4px; }
+
+  /* Host round-progress (compact) */
+  .host-progress { margin: 8px 0 14px; }
+  .host-progress .track { display: flex; gap: 4px; }
+  .host-progress .track .slot {
+    flex: 1; height: 6px; border-radius: 3px;
+    background: var(--bg-2); border: 1px solid var(--border);
+  }
+  .host-progress .track .slot.done { background: var(--good); border-color: var(--good); }
+  .host-progress .track .slot.current { background: var(--accent); border-color: var(--accent); }
+
   @media (max-width: 640px) {
     .zone { flex-direction: column; align-items: stretch; }
     .zone-label { min-width: 0; }
     .zone button { width: 100%; }
+    .sticky-controls { margin: 12px -16px -16px; padding: 10px 16px 12px; }
   }
 </style>
 </head>
@@ -112,6 +145,9 @@
         <span id="qcounter" class="muted"></span>
       </div>
       <div id="stepbar" class="step-bar" style="display:none"></div>
+      <div id="hostprogress" class="host-progress" style="display:none">
+        <div class="track" id="hostprogress-track"></div>
+      </div>
       <div id="timerbox"></div>
       <div id="qbox"></div>
 
@@ -120,7 +156,19 @@
         <div id="hintcontrols"></div>
       </details>
 
-      <div id="controls" class="control-zones"></div>
+      <div class="sticky-controls">
+        <div id="controls" class="control-zones"></div>
+        <div id="hintstrip" class="hint-strip" style="display:none">
+          <span><span class="kbd">C</span>Correct</span>
+          <span><span class="kbd">W</span>Wrong</span>
+          <span><span class="kbd">P</span>Pass</span>
+          <span><span class="kbd">␣</span>Timer</span>
+          <span><span class="kbd">R</span>Reveal</span>
+          <span><span class="kbd">→</span>Next</span>
+          <span><span class="kbd">U</span>Undo</span>
+          <span><span class="kbd">1</span>–<span class="kbd">9</span> Assign team</span>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -189,6 +237,18 @@ async function load() {
   sock.on('state', s => render(s));
 }
 async function refresh() { render(await api('/host/state')); }
+
+function renderHostProgress(s) {
+  const box = document.getElementById('hostprogress');
+  if (!s.round || !s.round.question_ids?.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  const ids = s.round.question_ids;
+  const curIdx = s.question ? ids.indexOf(s.question.id) : -1;
+  document.getElementById('hostprogress-track').innerHTML = ids.map((_, i) => {
+    const cls = i < curIdx ? 'done' : (i === curIdx ? 'current' : '');
+    return `<div class="slot ${cls}"></div>`;
+  }).join('');
+}
 
 function renderStepBar(s) {
   const bar = document.getElementById('stepbar');
@@ -292,6 +352,8 @@ function render(s) {
 
     renderTimer(s.state);
     renderStepBar(s);
+    renderHostProgress(s);
+    document.getElementById('hintstrip').style.display = 'flex';
 
     // Controls in three zones: primary judging, timer, navigation
     const attempted = s.state.attempted;
@@ -329,6 +391,8 @@ function render(s) {
     hintBox.innerHTML = '';
     document.getElementById('controls').innerHTML = '';
     document.getElementById('stepbar').style.display = 'none';
+    document.getElementById('hostprogress').style.display = 'none';
+    document.getElementById('hintstrip').style.display = 'none';
     counter.textContent = '';
   }
 
