@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Admin · Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3"></head>
+<body><div class="container">
+
+  <div class="topbar">
+    <div class="brand">🎯 Quiz</div>
+    <nav>
+      <a href=".">Home</a>
+      <a href="admin" class="active">Admin</a>
+      <a href="host">Host</a>
+      <a href="display" target="_blank">Display ↗</a>
+      <a href="scores" target="_blank">Scores ↗</a>
+    </nav>
+  </div>
+
+  <div id="login" class="login-box" style="display:none">
+    <h2 class="center">🔒 Admin Login</h2>
+    <input type="password" id="pw" placeholder="Admin password" onkeydown="if(event.key==='Enter')login()">
+    <button class="lg" style="width:100%;margin-top:12px;" onclick="login()">Login</button>
+    <p id="err" style="color:var(--bad);margin-top:12px;text-align:center"></p>
+  </div>
+
+  <div id="panel" style="display:none">
+
+    <div class="card">
+      <div class="section-head"><span class="num">1</span><h2>Download Excel Template</h2></div>
+      <p class="muted">Sheets: Config, Teams, MCQ, RapidFire, PassQuestion, ImageRound, Rounds.
+        <b>All round-type sheets are optional</b> — only fill in what you'll use, then list those rounds in the Rounds sheet.</p>
+      <a href="api/admin/template.xlsx"><button class="lg">⬇️ Download quiz_template.xlsx</button></a>
+    </div>
+
+    <div class="card">
+      <div class="section-head"><span class="num">2</span><h2>Upload Question Images</h2></div>
+      <p class="muted">Image filenames must match the <code>image</code> column in your Excel.</p>
+      <div class="row">
+        <input type="file" id="imgs" multiple accept="image/*">
+        <button onclick="uploadImages()" style="flex:0 0 auto">Upload</button>
+      </div>
+      <div id="imglist" class="muted" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-head"><span class="num">3</span><h2>Import Questions (Excel)</h2></div>
+      <p class="muted">⚠️ Importing replaces all existing questions, teams, and scores.</p>
+      <div class="row">
+        <input type="file" id="excel" accept=".xlsx">
+        <button onclick="importExcel()" style="flex:0 0 auto">Import</button>
+      </div>
+      <div id="result" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-head"><span class="num">4</span><h2>Session Controls</h2></div>
+      <div class="row tight">
+        <button class="warn" onclick="resetScores()">↻ Reset Scores</button>
+        <button class="ghost" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+function toast(msg, bad){ const t=document.getElementById('toast');
+  t.innerHTML=`<div class="toast ${bad?'bad':''}">${msg}</div>`;
+  setTimeout(()=>t.innerHTML='',2500);
+}
+async function api(p, opts={}) {
+  const r = await fetch('api'+p, { credentials:'same-origin', ...opts });
+  return r.json();
+}
+async function check() {
+  const me = await api('/auth/me');
+  document.getElementById('login').style.display = me.authed ? 'none' : 'block';
+  document.getElementById('panel').style.display = me.authed ? 'block' : 'none';
+  if (me.authed) loadImages();
+}
+async function login() {
+  const pw = document.getElementById('pw').value;
+  const r = await fetch('api/auth/login', { method:'POST', credentials:'same-origin',
+    headers:{'Content-Type':'application/json'}, body: JSON.stringify({password:pw})});
+  if (r.ok) check(); else document.getElementById('err').textContent = 'Wrong password';
+}
+async function logout() { await fetch('api/auth/logout',{method:'POST',credentials:'same-origin'}); check(); }
+async function uploadImages() {
+  const files = document.getElementById('imgs').files;
+  if (!files.length) return toast('Pick files first', true);
+  const fd = new FormData();
+  for (const f of files) fd.append('images', f);
+  const r = await fetch('api/admin/upload-images',{method:'POST',body:fd,credentials:'same-origin'});
+  if (r.ok) { toast('Images uploaded'); loadImages(); } else toast('Upload failed', true);
+}
+async function loadImages() {
+  const r = await api('/admin/images');
+  const html = r.files.length
+    ? r.files.map(f=>`<span class="badge gray" style="margin:2px">${f}</span>`).join(' ')
+    : '<i>No images uploaded yet.</i>';
+  document.getElementById('imglist').innerHTML = '<b>Uploaded images:</b><br>' + html;
+}
+async function importExcel() {
+  const f = document.getElementById('excel').files[0];
+  if (!f) return toast('Pick a file first', true);
+  const fd = new FormData(); fd.append('file', f);
+  const r = await fetch('api/admin/import-excel',{method:'POST',body:fd,credentials:'same-origin'});
+  const j = await r.json();
+  if (r.ok) {
+    document.getElementById('result').innerHTML =
+      `<div class="answer-box">✅ Imported — Teams: <b>${j.counts.teams}</b>, Questions: <b>${j.counts.questions}</b>, Rounds: <b>${j.counts.rounds}</b></div>`;
+    toast('Import successful');
+  } else {
+    document.getElementById('result').innerHTML = `<div class="answer-box" style="background:rgba(239,68,68,0.15);border-color:var(--bad)">❌ ${j.error}</div>`;
+  }
+}
+async function resetScores() {
+  if (!confirm('Reset all scores? Questions and teams stay.')) return;
+  await fetch('api/admin/reset-scores',{method:'POST',credentials:'same-origin'});
+  toast('Scores reset');
+}
+check();
+</script>
+</body></html>

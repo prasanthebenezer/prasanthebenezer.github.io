@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Scorecard · Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3"></head>
+<body><div class="container">
+
+  <div class="topbar">
+    <div class="brand">📊 Scorecard</div>
+    <nav>
+      <a href=".">Home</a>
+      <a href="admin">Admin</a>
+      <a href="host">Host</a>
+      <a href="display" target="_blank">Display ↗</a>
+      <a href="scores" class="active">Scores</a>
+    </nav>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><h2>Team Totals</h2></div>
+    <div id="totals" class="grid grid-3"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <h2>Detailed Scores</h2>
+      <button onclick="exportCSV()">⬇️ Export CSV</button>
+    </div>
+    <table><thead><tr>
+      <th>#</th><th>Round</th><th>Team</th><th>Question</th><th>Type</th>
+      <th>Result</th><th>Pass Lvl</th><th style="text-align:right">Pts</th>
+    </tr></thead><tbody id="rows"></tbody></table>
+  </div>
+</div>
+<script src="/quiz/socket.io/socket.io.js"></script>
+<script>
+let data = { teams: [], rows: [] };
+async function refresh() {
+  data = await fetch('api/public/scores',{credentials:'same-origin'}).then(r=>r.json());
+  document.getElementById('totals').innerHTML = data.teams.map(t =>
+    `<div class="team-card" style="border-color:${t.color}">
+      <div class="name"><span class="swatch" style="background:${t.color}"></span>${t.name}</div>
+      <div class="score">${t.score}</div>
+    </div>`).join('') || '<div class="empty">No teams yet</div>';
+  document.getElementById('rows').innerHTML = data.rows.map((r,i) => {
+    const cls = r.result==='correct'?'good':r.result==='wrong'?'bad':'gray';
+    return `<tr>
+      <td>${i+1}</td><td>${r.round_name||'-'}</td>
+      <td>${r.team_name||'-'}</td>
+      <td>${(r.question||r.note||'').slice(0,80)}</td>
+      <td><span class="badge gray">${r.qtype||'-'}</span></td>
+      <td><span class="badge ${cls}">${r.result}</span></td>
+      <td>${r.pass_level||0}</td>
+      <td style="text-align:right"><b>${r.points_awarded}</b></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan=8 class="muted center">No scores yet</td></tr>';
+}
+function exportCSV() {
+  const rows = [['#','Round','Team','Question','Type','Result','PassLevel','Points']];
+  data.rows.forEach((r,i) => rows.push([i+1, r.round_name||'', r.team_name||'',
+    (r.question||r.note||'').replace(/"/g,'""'), r.qtype||'', r.result, r.pass_level||0, r.points_awarded]));
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'scores.csv'; a.click();
+}
+const sock = io('/public', { path: '/quiz/socket.io' });
+sock.on('state', refresh);
+refresh();
+</script>
+</body></html>

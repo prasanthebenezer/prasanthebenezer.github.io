@@ -1,40 +1,5 @@
-services:
-  portfolio:
-    build: .
-    container_name: prasanth-portfolio
-    ports:
-      - "80:80"
-      - "443:443"
-    restart: unless-stopped
-    volumes:
-      - ./letsencrypt:/etc/letsencrypt:ro
-    networks:
-      - web
-
-  calibration:
-    build: ./calibration
-    container_name: calibration-app
-    restart: unless-stopped
-    environment:
-      - ADMIN_PASSWORD=admin123       # Change in production
-      - CERT_VIEW_PASSWORD=view123    # Change in production
-      - PORT=3000
-    volumes:
-      - calibration-data:/app/database
-      - calibration-certs:/app/certificates
-    networks:
-      - web
-
-  maintenance:
-    build: ../maintenance-dashboard
-    container_name: maintenance-dashboard
-    restart: unless-stopped
-    environment:
-      - DB_PATH=/app/data/dashboard.db
-    volumes:
-      - maintenance-data:/app/data
-    networks:
-      - web
+# Reference only. Real service lives in ../docker-compose.yml.
+# Secrets are sourced from ../.env — see ./.env.example.
 
   quiz:
     build: ./quiz-app
@@ -81,14 +46,3 @@ services:
       timeout: 3s
       retries: 10
       start_period: 10s
-
-networks:
-  web:
-    driver: bridge
-
-volumes:
-  calibration-data:
-  calibration-certs:
-  maintenance-data:
-  quiz-uploads:
-  quiz-db-data:

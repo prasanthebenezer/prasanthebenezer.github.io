@@ -4,7 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a static personal portfolio website for Prasanth Philip, deployed via GitHub Pages at `https://prasanthebenezer.github.io`. There is no build step, bundler, or package manager — all files are served directly.
+This repo serves two deployment targets from the same tree:
+
+1. **Static portfolio** — deployed via GitHub Pages at `https://prasanthebenezer.github.io` (root-level `index.html`, `styles.css`, `script.js`, `assets/`). No build step.
+2. **VPS multi-app stack** — deployed via Docker Compose at `https://prasanthebenezer.com` and subdomains, serving the portfolio plus several sibling apps behind nginx with Let's Encrypt TLS. See `VPS-DEPLOYMENT-GUIDE.md`.
 
 ## Git & Deployment
 
@@ -13,7 +16,7 @@ Always use the `gh` CLI for git authentication and push operations:
 gh auth setup-git && git push origin main
 ```
 
-Pushing to `main` triggers the GitHub Actions workflow (`.github/workflows/static.yml`), which deploys the entire repository root to GitHub Pages automatically. The live site reflects the root-level files (`index.html`, `styles.css`, `script.js`, `assets/`).
+Pushing to `main` triggers the GitHub Actions workflow (`.github/workflows/static.yml`), which deploys the repository root to GitHub Pages. The VPS stack is updated separately by pulling on the server and running `docker compose up -d --build`.
 
 To preview locally, serve the root directory with any static file server, e.g.:
 ```
@@ -22,13 +25,33 @@ python3 -m http.server 8000
 
 ## File Structure
 
-- **`index.html` / `styles.css` / `script.js`** — The current live site (root level). This is what gets deployed.
-- **`assets/Prasanth_Philip_CV.pdf`** — CV file linked from the nav and footer.
-- **`prasanth_portfolio_site/`** — Earlier version (v1) of the portfolio; kept for reference.
-- **`prasanth_portfolio_site_v2/`** — Intermediate version (v2); kept for reference.
-- **`index_old.html`, `index_y.html`, `styles_old.css`, `MyGit.html`** — Legacy/experimental files, not part of the live site.
+### Portfolio (GitHub Pages + nginx container root)
+- **`index.html` / `styles.css` / `script.js`** — Live portfolio site (root level).
+- **`assets/Prasanth_Philip_CV.pdf`** — CV linked from nav and footer.
+- **`Dockerfile` / `nginx.conf`** — nginx container that serves the static portfolio and reverse-proxies to the other apps on the VPS.
+- **`setup-ssl.sh` / `letsencrypt/`** — Let's Encrypt cert provisioning + volume mount (read-only into the portfolio container).
 
-When making changes, only edit the root-level files unless explicitly working on an archived version.
+### Sibling apps (each is its own Docker service)
+- **`calibration/`** — Calibration equipment management app. Container `calibration-app` on port 3000, served at `calibration.prasanthebenezer.com`. Env: `ADMIN_PASSWORD`, `CERT_VIEW_PASSWORD`. Volumes: `calibration-data` (SQLite), `calibration-certs`.
+- **`quiz-app/`** — Live quiz app for kids (host-driven, real-time, multi-team). Container `quiz-app` on port 3100 with Postgres sidecar `quiz-db`, served at `prasanthebenezer.com/quiz/`. Requires `.env` with `QUIZ_SESSION_SECRET`, `QUIZ_DB_PASSWORD`, and `QUIZ_ADMIN_PASSWORD` or `QUIZ_ADMIN_PASSWORD_HASH`. See `quiz-app/README.md` for the game-day workflow and round types.
+- **`maintenance`** service — built from `../maintenance-dashboard` (sibling repo, outside this tree). Served at `maintenance.prasanthebenezer.com`.
+
+### Legacy / reference (do not edit unless asked)
+- **`prasanth_portfolio_site/`**, **`prasanth_portfolio_site_v2/`** — earlier portfolio versions.
+- **`index_old.html`, `index_y.html`, `styles_old.css`, `MyGit.html`** — legacy/experimental files.
+
+When editing the portfolio, only touch root-level files. When editing a sibling app, stay within its subdirectory.
+
+## Docker Compose stack
+
+`docker-compose.yml` defines five services on a shared `web` network: `portfolio` (nginx, ports 80/443), `calibration`, `maintenance`, `quiz`, `quiz-db`. Named volumes persist data for each app. `.env` at repo root holds quiz secrets (gitignored). Common ops:
+```
+docker compose up -d --build <service>
+docker compose logs -f <service>
+docker compose exec portfolio nginx -s reload    # after nginx.conf edits
+```
+
+`nginx.conf` terminates TLS for `prasanthebenezer.com`, `www.`, `calibration.`, and `maintenance.` subdomains and proxies `/quiz/` to the quiz container. Certs live under `./letsencrypt/live/<domain>/`.
 
 ## Architecture
 

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Host · Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3"></head>
+<body><div class="container">
+
+  <div class="topbar">
+    <div class="brand">🎮 Host</div>
+    <nav>
+      <a href=".">Home</a>
+      <a href="admin">Admin</a>
+      <a href="host" class="active">Host</a>
+      <a href="display" target="_blank">Display ↗</a>
+      <a href="scores" target="_blank">Scores ↗</a>
+    </nav>
+  </div>
+
+  <div id="needauth" class="card" style="display:none">
+    <p>Please <a href="admin">login as admin</a> first.</p>
+  </div>
+
+  <div id="ui" style="display:none">
+
+    <div id="title" class="title-banner" style="display:none"></div>
+
+    <div class="card">
+      <div class="card-title"><h2>Rounds</h2><span class="muted">Pick any round in any order</span></div>
+      <div id="rounds" class="row tight"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <h2>Current Question</h2>
+        <span id="qcounter" class="muted"></span>
+      </div>
+      <div id="timerbox"></div>
+      <div id="qbox"></div>
+      <div id="hintcontrols"></div>
+      <div id="controls" class="controls"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><h2>Teams</h2><span class="muted">Click a team to assign the current question</span></div>
+      <div id="teams" class="grid grid-3"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><h2>Manual Score Adjust</h2></div>
+      <div class="row">
+        <select id="adj_team"></select>
+        <input type="number" id="adj_delta" placeholder="±points" value="5" style="max-width:120px">
+        <input id="adj_note" placeholder="reason (optional)">
+        <button onclick="adjust()" style="flex:0 0 auto">Apply</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><h2>Recent Activity</h2></div>
+      <table><thead><tr><th>Team</th><th>Result</th><th>Pts</th><th>Question / Note</th></tr></thead>
+        <tbody id="recent"></tbody></table>
+    </div>
+
+  </div>
+</div>
+<div id="toast"></div>
+<script src="/quiz/socket.io/socket.io.js"></script>
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m,bad){const t=document.getElementById('toast');
+  t.innerHTML=`<div class="toast ${bad?'bad':''}">${esc(m)}</div>`;setTimeout(()=>t.innerHTML='',1500);}
+let state = {};
+async function api(p, opts={}) {
+  const r = await fetch('api'+p, { credentials:'same-origin',
+    headers:{'Content-Type':'application/json'}, ...opts });
+  return r.json();
+}
+async function load() {
+  const me = await fetch('api/auth/me',{credentials:'same-origin'}).then(r=>r.json());
+  if (!me.authed) { document.getElementById('needauth').style.display='block'; return; }
+  document.getElementById('ui').style.display='block';
+  refresh();
+  const sock = io('/host', { path: '/quiz/socket.io', withCredentials: true });
+  sock.on('state', s => render(s));
+}
+async function refresh() { render(await api('/host/state')); }
+
+function render(s) {
+  state = s;
+
+  const titleEl = document.getElementById('title');
+  if (s.title) { titleEl.textContent = s.title; titleEl.style.display = 'block'; }
+  else titleEl.style.display = 'none';
+
+  document.getElementById('teams').innerHTML = s.teams.map(t => `
+    <div class="team-card ${s.state.current_team_id===t.id?'active':''}" style="border-color:${t.color}">
+      <div class="name"><span class="swatch" style="background:${t.color}"></span>${esc(t.name)}</div>
+      <div class="score">${t.score}</div>
+      <button onclick="assign(${t.id})">${s.state.current_team_id===t.id?'✓ Assigned':'Assign Question'}</button>
+    </div>`).join('');
+
+  document.getElementById('rounds').innerHTML = s.rounds.length
+    ? s.rounds.map(r => `<button class="${s.state.current_round_id===r.id?'':'ghost'}" onclick="selRound(${r.id})">
+        R${r.round_no}: ${esc(r.name)} <span class="badge ${s.state.current_round_id===r.id?'':'gray'}">${esc(r.type)}</span>
+      </button>`).join('')
+    : '<p class="muted">No rounds defined. Import an Excel file in Admin.</p>';
+
+  const qb = document.getElementById('qbox');
+  const counter = document.getElementById('qcounter');
+  const hintBox = document.getElementById('hintcontrols');
+  if (s.question) {
+    const q = s.question;
+    const wrongs = s.state.wrong_options || [];
+    const removed = s.state.removed_option;
+    let opts = '';
+    if (q.type === 'mcq' && q.options) {
+      const sel = s.state.selected_option;
+      opts = '<div class="options">' +
+        ['a','b','c','d'].filter(k=>q.options[k]).map(k => {
+          const cls = [];
+          if (s.state.revealed && q.answer===k) cls.push('correct');
+          else if (wrongs.includes(k)) cls.push('wrong');
+          if (sel===k) cls.push('selected');
+          if (removed===k) cls.push('removed');
+          return `<button class="option ${cls.join(' ')}" onclick="selOpt('${k}')"><span class="key">${k.toUpperCase()}.</span>${esc(q.options[k])}</button>`;
+        }).join('') + '</div>';
+    }
+    const idx = s.round ? s.round.question_ids.indexOf(q.id) + 1 : 0;
+    const total = s.round ? s.round.question_ids.length : 0;
+    counter.textContent = total ? `Question ${idx} of ${total}` : '';
+
+    const hintLvl = s.state.hint_level || 0;
+    const passLvl = s.state.pass_level || 0;
+    qb.innerHTML = `
+      <div class="q-card">
+        <div class="q-meta">
+          <span class="badge">${esc(q.type)}</span>
+          <span class="badge gray">Base ${q.points} pts</span>
+          ${passLvl>0?`<span class="badge warn">Pass ×${passLvl}</span>`:''}
+          ${hintLvl>0?`<span class="badge warn">Hint ×${hintLvl}</span>`:''}
+        </div>
+        <div class="q-text">${esc(q.question)}</div>
+        ${q.image ? `<img class="q-image" src="uploads/${esc(q.image)}">` : ''}
+        ${s.state.clue ? `<div class="clue-banner"><b>💡 Clue:</b> ${esc(s.state.clue)}</div>` : ''}
+        ${opts}
+        <div class="answer-box"><b>Answer (host only):</b> ${esc(q.answer)}</div>
+      </div>`;
+
+    // Hint controls (remove-option for MCQ; clue for all)
+    let hintHtml = '<div class="row tight" style="margin-top:12px;flex-wrap:wrap">';
+    if (q.type === 'mcq' && q.options) {
+      hintHtml += '<span class="muted" style="flex:0 0 auto">Remove option:</span>';
+      for (const k of ['a','b','c','d']) {
+        if (!q.options[k]) continue;
+        const active = removed === k;
+        hintHtml += `<button class="${active?'warn':'ghost'}" onclick="removeOpt('${k}')">${k.toUpperCase()}</button>`;
+      }
+      if (removed) hintHtml += `<button class="ghost" onclick="removeOpt('clear')">Clear removal</button>`;
+    }
+    hintHtml += `<input id="clue_text" placeholder="Clue for players (optional)" value="${esc(s.state.clue||'')}" style="flex:1;min-width:220px">`;
+    hintHtml += `<button class="warn" onclick="setClue()" style="flex:0 0 auto">💡 Set Clue</button>`;
+    if (s.state.clue) hintHtml += `<button class="ghost" onclick="clearClue()" style="flex:0 0 auto">Clear</button>`;
+    hintHtml += '</div>';
+    hintBox.innerHTML = hintHtml;
+
+    renderTimer(s.state);
+    const attempted = s.state.attempted;
+    const dis = attempted ? 'disabled style="opacity:0.4;cursor:not-allowed"' : '';
+    const timerBtn = s.state.timer_started_at
+      ? `<button class="warn" onclick="stopTimer()">⏸ Stop Timer</button>`
+      : `<button class="warn" onclick="startTimer()">⏱ Start Timer</button>`;
+    const autoBtn = (q.type==='mcq' && s.state.selected_option && !attempted)
+      ? `<button class="good" onclick="ans('auto')">⚡ Judge Selected</button>` : '';
+    document.getElementById('controls').innerHTML = `
+      ${timerBtn}
+      ${autoBtn}
+      <button class="good" onclick="ans('correct')" ${dis}>✓ Correct</button>
+      <button class="bad" onclick="ans('wrong')" ${dis}>✗ Wrong</button>
+      <button class="warn" onclick="pass()" ${dis}>↪ Pass (½)</button>
+      <button class="ghost" onclick="reveal()">👁 Reveal</button>
+      <button class="ghost" onclick="skip()">⤼ Skip</button>
+      <button onclick="next()">Next →</button>`;
+    if (attempted && !s.state.revealed) {
+      document.getElementById('controls').insertAdjacentHTML('beforebegin',
+        '<p class="muted" style="margin:8px 0">Team marked wrong — assign another team, Reveal, or Skip/Next.</p>');
+    }
+  } else {
+    qb.innerHTML = '<div class="empty"><div class="big">🎯</div>No question selected. Pick a round above.</div>';
+    hintBox.innerHTML = '';
+    document.getElementById('controls').innerHTML = '';
+    counter.textContent = '';
+  }
+
+  document.getElementById('adj_team').innerHTML =
+    s.teams.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+
+  document.getElementById('recent').innerHTML = (s.recent||[]).map(r => {
+    const cls = r.result==='correct'?'good':r.result==='wrong'?'bad':'gray';
+    return `<tr>
+      <td>${esc(r.team_name||'-')}</td>
+      <td><span class="badge ${cls}">${esc(r.result)}</span></td>
+      <td><b>${r.points_awarded}</b></td>
+      <td>${esc((r.question||r.note||'').slice(0,80))}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan=4 class="muted">No activity yet</td></tr>';
+}
+
+let timerTick = null;
+function renderTimer(st) {
+  const box = document.getElementById('timerbox');
+  if (!box) return;
+  if (timerTick) { clearInterval(timerTick); timerTick = null; }
+  if (!st || !st.timer_started_at) { box.innerHTML = ''; return; }
+  const start = new Date(st.timer_started_at).getTime();
+  const dur = st.timer_duration || 30;
+  const update = () => {
+    const left = Math.max(0, Math.ceil(dur - (Date.now()-start)/1000));
+    const color = left <= 5 ? 'var(--bad)' : left <= 10 ? 'var(--warn)' : 'var(--good)';
+    const pct = Math.max(0, Math.min(100, (left/dur)*100));
+    box.innerHTML = `
+      <div style="background:var(--bg-2);padding:16px;border-radius:12px;margin-bottom:16px;border:2px solid ${color}">
+        <div style="font-size:42px;font-weight:800;color:${color};text-align:center;line-height:1">⏱ ${left}s</div>
+        <div style="height:8px;background:var(--card);border-radius:4px;margin-top:10px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${color};transition:width 0.25s linear"></div>
+        </div>
+      </div>`;
+    if (left === 0) { clearInterval(timerTick); timerTick = null; }
+  };
+  update(); timerTick = setInterval(update, 250);
+}
+
+const post = async (p, body) => { const r = await api(p, { method:'POST', body: body?JSON.stringify(body):undefined });
+  if (r.error) toast(r.error, true); return r; };
+const selRound = id => post('/host/select-round/'+id);
+const assign = id => post('/host/assign-team/'+id);
+const ans = r => post('/host/answer/'+r);
+const pass = () => post('/host/pass');
+const skip = () => post('/host/skip');
+const next = () => post('/host/next');
+const reveal = () => post('/host/reveal');
+const selOpt = o => post('/host/select-option/'+o);
+const startTimer = () => post('/host/start-timer');
+const stopTimer = () => post('/host/stop-timer');
+const removeOpt = o => post('/host/remove-option/'+o);
+const setClue = () => post('/host/set-clue', { text: document.getElementById('clue_text').value.trim() });
+const clearClue = () => post('/host/set-clue', { text: '' });
+const adjust = () => post('/host/adjust', {
+  team_id: +document.getElementById('adj_team').value,
+  delta: +document.getElementById('adj_delta').value,
+  note: document.getElementById('adj_note').value
+}).then(()=>toast('Adjusted'));
+
+load();
+</script>
+</body></html>
