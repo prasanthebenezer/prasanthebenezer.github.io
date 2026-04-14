@@ -156,13 +156,22 @@ function renderTeams(s) {
   }
 
   const topScore = ranked[0]?.score ?? 0;
-  container.innerHTML = ranked.map((t, i) => {
-    const rank = i + 1;
-    const rankCls = rank <= 3 ? `r${rank}` : '';
-    // Crown only when there's an actual leader (top score > 0).
-    // Share the crown on ties so it doesn't look stuck on one team.
+  // Dense rank so tied teams share the same number (10,10,5 -> 1,1,2).
+  const rankByTeam = new Map();
+  let lastScore = null, denseRank = 0;
+  for (const t of ranked) {
+    if (t.score !== lastScore) { denseRank += 1; lastScore = t.score; }
+    rankByTeam.set(t.id, denseRank);
+  }
+
+  container.innerHTML = ranked.map((t) => {
+    const rank = rankByTeam.get(t.id);
     const isLeader = topScore > 0 && t.score === topScore;
-    const rankBadge = `<div class="rank ${rankCls}">${isLeader ? '👑' : '#'+rank}</div>`;
+    // Hide rank badges entirely when no one has scored yet.
+    const showBadge = topScore > 0;
+    const rankBadge = showBadge
+      ? `<div class="rank ${rank <= 3 ? 'r'+rank : ''}">${isLeader ? '👑' : '#'+rank}</div>`
+      : '';
     return `
       <div class="team-card ${assignedId===t.id?'active':''}" data-team="${t.id}" style="border-color:${t.color}">
         ${rankBadge}
