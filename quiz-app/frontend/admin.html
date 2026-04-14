@@ -157,11 +157,35 @@ async function uploadImages() {
 async function loadImages() {
   const r = await api('/admin/images');
   state.hasImages = r.files.length > 0;
-  const html = r.files.length
-    ? r.files.map(f=>`<span class="badge gray" style="margin:2px">${esc(f)}</span>`).join(' ')
+  const tiles = r.files.map(f => `
+    <span class="badge gray" style="margin:2px;display:inline-flex;align-items:center;gap:6px">
+      ${esc(f)}
+      <button class="ghost" style="padding:2px 8px;font-size:11px" title="Remove"
+        onclick="removeImage('${esc(f)}')">✕</button>
+    </span>`).join(' ');
+  const header = r.files.length
+    ? `<b>Uploaded images (${r.files.length}):</b>
+       <button class="ghost" style="margin-left:8px;padding:4px 10px;font-size:12px" onclick="removeAllImages()">Remove all</button>`
     : '<i>No images uploaded yet.</i>';
-  document.getElementById('imglist').innerHTML = `<b>Uploaded images (${r.files.length}):</b><br>` + html;
+  document.getElementById('imglist').innerHTML = header + (r.files.length ? '<br>' + tiles : '');
   updateStepperLock();
+}
+async function removeImage(name) {
+  if (!confirm(`Remove image "${name}"?`)) return;
+  const r = await fetch('api/admin/images/' + encodeURIComponent(name),
+    { method: 'DELETE', credentials: 'same-origin' });
+  if (r.ok) { toast('Removed ' + name); loadImages(); }
+  else toast('Remove failed', true);
+}
+async function removeAllImages() {
+  const r = await api('/admin/images');
+  if (!r.files.length) return;
+  if (!confirm(`Remove all ${r.files.length} uploaded image(s)? This cannot be undone.`)) return;
+  await Promise.all(r.files.map(f =>
+    fetch('api/admin/images/' + encodeURIComponent(f),
+      { method: 'DELETE', credentials: 'same-origin' })));
+  toast('All images removed');
+  loadImages();
 }
 
 function fmtTime(iso) {
