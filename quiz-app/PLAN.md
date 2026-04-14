@@ -49,7 +49,12 @@ Goal: reduce friction during live quiz without large refactors.
 
 - Phase A (host quick wins) — commit `47eaab4`.
 - Phase B (admin onboarding) — commit `7b9d1d2`.
-- Phase C (display polish) — commit pending at time of writing.
+- Phase C (display polish) — commit `5232914`.
+- Display fixes: crown tracks actual leader, rank badges unified and hidden
+  at 0-0, dense-rank so ties share a number.
+- Admin page fix: removed hard step-locking, Import Questions button now
+  visible up-front (disabled until a successful preview), file selection
+  auto-previews, typed IMPORT confirmation via prompt.
 
 ## Notes for resuming
 

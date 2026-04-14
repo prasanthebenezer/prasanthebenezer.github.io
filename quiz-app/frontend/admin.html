@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta http-equiv="Cache-Control" content="no-store, must-revalidate"><title>Admin · Quiz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=7">
+<link rel="stylesheet" href="styles.css?v=8">
 <style>
-  .step-card { transition: opacity 0.2s; }
-  .step-card.locked { opacity: 0.55; }
-  .step-card.locked button:not(.always) { pointer-events: none; filter: grayscale(0.5); }
   .section-head .num.done { background: var(--good); }
+  .file-row {
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  }
+  .file-row input[type=file] { flex: 1 1 260px; min-width: 0; }
+  .file-row button { flex: 0 0 auto; }
+  .action-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);
+  }
+  .action-row button { flex: 1 1 180px; }
   .status-row {
     display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;
     font-size: 13px; color: var(--muted);
@@ -64,22 +71,23 @@
       <a href="api/admin/template.xlsx"><button class="lg always" onclick="markTemplateDownloaded()">⬇️ Download quiz_template.xlsx</button></a>
     </div>
 
-    <div class="card step-card" id="step2">
+    <div class="card" id="step2">
       <div class="section-head"><span class="num" id="num2">2</span><h2>Upload Question Images</h2></div>
-      <p class="muted">Image filenames must match the <code>image</code> column in your Excel.</p>
-      <div class="row">
+      <p class="muted">Optional — only needed for image-round questions. Filenames must match the <code>image</code> column in your Excel.</p>
+      <div class="file-row">
         <input type="file" id="imgs" multiple accept="image/*">
-        <button onclick="uploadImages()" style="flex:0 0 auto">Upload</button>
+        <button onclick="uploadImages()">⬆️ Upload Images</button>
       </div>
       <div id="imglist" class="muted" style="margin-top:14px"></div>
     </div>
 
-    <div class="card step-card" id="step3">
-      <div class="section-head"><span class="num" id="num3">3</span><h2>Import Questions (Excel)</h2></div>
-      <p class="muted">Preview parses your file without touching the database. Import replaces all existing questions, teams, and scores.</p>
-      <div class="row">
-        <input type="file" id="excel" accept=".xlsx" onchange="clearPreview()">
-        <button onclick="previewImport()" class="ghost" style="flex:0 0 auto">👁 Preview</button>
+    <div class="card" id="step3">
+      <div class="section-head"><span class="num" id="num3">3</span><h2>Upload &amp; Import Questions</h2></div>
+      <p class="muted">Pick your filled-in Excel template. Preview runs automatically without touching the database; import replaces all existing questions, teams, and scores.</p>
+      <div class="file-row">
+        <input type="file" id="excel" accept=".xlsx" onchange="onExcelPicked()">
+        <button onclick="previewImport()" class="ghost">👁 Preview</button>
+        <button id="importBtn" class="bad" onclick="startImport()" disabled title="Preview first">⬆️ Import Questions</button>
       </div>
       <div id="preview"></div>
     </div>
@@ -125,6 +133,7 @@ const state = {
   templateDownloaded: localStorage.getItem('quiz.adm.tpl') === '1',
   hasImages: false,
   hasImport: false,
+  previewOk: false,
 };
 function markTemplateDownloaded() {
   state.templateDownloaded = true;
@@ -132,11 +141,9 @@ function markTemplateDownloaded() {
   updateStepperLock();
 }
 function updateStepperLock() {
-  document.getElementById('num1').classList.toggle('done', state.templateDownloaded);
+  document.getElementById('num1').classList.toggle('done', state.templateDownloaded || state.hasImport);
   document.getElementById('num2').classList.toggle('done', state.hasImages);
   document.getElementById('num3').classList.toggle('done', state.hasImport);
-  document.getElementById('step2').classList.toggle('locked', !state.templateDownloaded);
-  document.getElementById('step3').classList.toggle('locked', !state.templateDownloaded);
 }
 
 async function uploadImages() {
@@ -179,6 +186,22 @@ async function loadStatus() {
 
 function clearPreview() {
   document.getElementById('preview').innerHTML = '';
+  state.previewOk = false;
+  const btn = document.getElementById('importBtn');
+  btn.disabled = true; btn.title = 'Preview first';
+}
+
+function onExcelPicked() {
+  clearPreview();
+  // Auto-preview so the user sees counts without an extra click.
+  if (document.getElementById('excel').files[0]) previewImport();
+}
+
+function startImport() {
+  if (!state.previewOk) return toast('Preview the file first', true);
+  const word = prompt('This will WIPE all existing questions, teams, and scores.\nType IMPORT to confirm:');
+  if (word && word.trim() === 'IMPORT') doImport();
+  else if (word !== null) toast('Import cancelled', true);
 }
 
 async function previewImport() {
@@ -190,9 +213,16 @@ async function previewImport() {
   if (!r.ok) {
     document.getElementById('preview').innerHTML =
       `<div class="preview-panel"><h3 style="color:var(--bad)">Could not parse file</h3><p class="muted">${esc(j.error || 'Unknown error')}</p></div>`;
+    state.previewOk = false;
+    const btn = document.getElementById('importBtn');
+    btn.disabled = true; btn.title = 'Fix the file then preview again';
     return;
   }
   renderPreview(j);
+  state.previewOk = (j.issues || []).length === 0;
+  const btn = document.getElementById('importBtn');
+  btn.disabled = !state.previewOk;
+  btn.title = state.previewOk ? 'Click to import (requires typed confirmation)' : 'Fix the issues above first';
 }
 
 function renderPreview(j) {
@@ -213,21 +243,17 @@ function renderPreview(j) {
       <div class="preview-grid">${cells}</div>
       ${blockers.length ? `<ul class="issue-list">${blockers.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>` : ''}
       ${warnings.length ? `<ul class="issue-list warn">${warnings.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>` : ''}
-      ${canImport ? `
-        <div class="confirm-box">
-          <b>⚠️ Importing will wipe all existing questions, teams, and scores.</b>
-          <p class="muted" style="margin:6px 0">Type <code>IMPORT</code> below to enable the button.</p>
-          <input id="confirm_word" placeholder="IMPORT" oninput="document.getElementById('doImport').disabled = this.value.trim() !== 'IMPORT'">
-          <button id="doImport" class="bad" disabled style="margin-top:10px;width:100%" onclick="doImport()">Import &amp; Replace Data</button>
-        </div>
-      ` : `<p class="muted" style="margin-top:8px">Fix the issue(s) above and preview again.</p>`}
+      ${canImport
+        ? `<p class="muted" style="margin-top:8px">✅ Ready to import. Use the <b>Import Questions</b> button above — you'll be asked to confirm.</p>`
+        : `<p class="muted" style="margin-top:8px">Fix the issue(s) above and preview again.</p>`}
     </div>`;
 }
 
 async function doImport() {
   const f = document.getElementById('excel').files[0];
   if (!f) return toast('File lost — pick it again', true);
-  const btn = document.getElementById('doImport');
+  const btn = document.getElementById('importBtn');
+  const orig = btn.textContent;
   btn.disabled = true; btn.textContent = 'Importing…';
   const fd = new FormData(); fd.append('file', f);
   const r = await fetch('api/admin/import-excel',{method:'POST',body:fd,credentials:'same-origin'});
@@ -239,10 +265,11 @@ async function doImport() {
        <div class="status-row"><span><b>${j.counts.teams}</b> teams</span>
        <span><b>${j.counts.questions}</b> questions</span>
        <span><b>${j.counts.rounds}</b> rounds</span></div></div>`;
+    btn.textContent = orig;
     loadStatus();
   } else {
     toast(j.error || 'Import failed', true);
-    btn.disabled = false; btn.textContent = 'Import & Replace Data';
+    btn.disabled = false; btn.textContent = orig;
   }
 }
 
