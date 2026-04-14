@@ -1,12 +1,86 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Quiz Display</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=3"></head>
+<link rel="stylesheet" href="styles.css?v=5">
+<style>
+  /* Phase 2 display polish */
+  .round-progress {
+    max-width: 900px; margin: 0 auto 24px; padding: 0 24px;
+  }
+  .round-progress .track {
+    display: flex; gap: 6px; margin-top: 10px;
+  }
+  .round-progress .track .slot {
+    flex: 1; height: 10px; border-radius: 5px;
+    background: var(--bg-2); border: 1px solid var(--border);
+  }
+  .round-progress .track .slot.done { background: var(--good); border-color: var(--good); }
+  .round-progress .track .slot.current {
+    background: var(--accent); border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(99,102,241,0.6);
+    animation: pulseSlot 1.4s ease-in-out infinite;
+  }
+  @keyframes pulseSlot { 50% { opacity: 0.6; } }
+  .round-progress .label {
+    text-align: center; color: var(--muted); font-size: 20px; font-weight: 600;
+  }
+
+  /* Leaderboard rank badges on team cards */
+  .team-card { position: relative; }
+  .team-card .rank {
+    position: absolute; top: -14px; left: -14px;
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800; color: #1a1a1a;
+    background: var(--card); border: 3px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .team-card .rank.r1 { background: linear-gradient(135deg,#fde68a,#f59e0b); border-color: #f59e0b; }
+  .team-card .rank.r2 { background: linear-gradient(135deg,#e5e7eb,#9ca3af); border-color: #9ca3af; }
+  .team-card .rank.r3 { background: linear-gradient(135deg,#fbbf24,#b45309); border-color: #b45309; color: white; }
+
+  body.display .team-card .rank { width: 64px; height: 64px; font-size: 30px; top: -20px; left: -20px; border-width: 4px; }
+
+  /* Score delta flash */
+  .team-card .flash {
+    position: absolute; top: 10px; right: 14px;
+    font-size: 28px; font-weight: 800; color: var(--good);
+    pointer-events: none; opacity: 0;
+    animation: flashUp 1.6s ease-out forwards;
+  }
+  .team-card .flash.neg { color: var(--bad); }
+  body.display .team-card .flash { font-size: 56px; top: 16px; right: 20px; }
+  @keyframes flashUp {
+    0%   { opacity: 0; transform: translateY(8px) scale(0.8); }
+    15%  { opacity: 1; transform: translateY(0) scale(1.15); }
+    70%  { opacity: 1; transform: translateY(-20px) scale(1); }
+    100% { opacity: 0; transform: translateY(-48px) scale(0.95); }
+  }
+
+  .team-card.score-bump .score { animation: bumpScore 0.6s ease-out; }
+  @keyframes bumpScore {
+    0%, 100% { transform: scale(1); color: var(--text); }
+    40% { transform: scale(1.2); color: var(--good); }
+  }
+
+  /* Between-question leaderboard heading */
+  .leaderboard-title {
+    text-align: center; font-size: 42px; font-weight: 800; margin: 20px 0 8px;
+    background: linear-gradient(135deg,var(--accent),var(--accent-2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  body.display .leaderboard-title { font-size: 64px; }
+</style>
+</head>
 <body class="display"><div class="container">
 
   <div id="title" class="title-banner" style="display:none"></div>
 
   <div id="round" class="round-banner"></div>
+  <div id="progress" class="round-progress" style="display:none">
+    <div class="label"><span id="progress-label"></span></div>
+    <div class="track" id="progress-track"></div>
+  </div>
 
   <div id="timerbanner"></div>
 
@@ -19,25 +93,92 @@
 <script>
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+const prevScores = new Map(); // team_id -> last-seen score (for delta animation)
+
 async function refresh() {
   try {
     const s = await fetch('api/public/state',{credentials:'same-origin'}).then(r=>r.json());
     render(s);
   } catch(e) { console.error(e); }
 }
+
+function renderProgress(s) {
+  const box = document.getElementById('progress');
+  if (!s.round || !s.round.question_ids?.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  const ids = s.round.question_ids;
+  const curIdx = s.question ? ids.indexOf(s.question.id) : -1;
+  document.getElementById('progress-label').textContent =
+    s.question ? `Question ${curIdx+1} of ${ids.length}` : `${ids.length} questions`;
+  document.getElementById('progress-track').innerHTML = ids.map((_, i) => {
+    const cls = i < curIdx ? 'done' : (i === curIdx ? 'current' : '');
+    return `<div class="slot ${cls}"></div>`;
+  }).join('');
+}
+
+function renderTeams(s) {
+  const container = document.getElementById('teams');
+  // Rank by score desc, tie-break by original position
+  const ranked = [...s.teams].sort((a,b) => b.score - a.score || a.position - b.position);
+  const assignedId = s.state.current_team_id;
+
+  // Detect deltas vs previous snapshot
+  const deltas = new Map();
+  for (const t of ranked) {
+    const prev = prevScores.get(t.id);
+    if (prev !== undefined && prev !== t.score) deltas.set(t.id, t.score - prev);
+    prevScores.set(t.id, t.score);
+  }
+
+  container.innerHTML = ranked.map((t, i) => {
+    const rank = i + 1;
+    const rankCls = rank <= 3 ? `r${rank}` : '';
+    const rankBadge = `<div class="rank ${rankCls}">${rank === 1 ? '👑' : '#'+rank}</div>`;
+    return `
+      <div class="team-card ${assignedId===t.id?'active':''}" data-team="${t.id}" style="border-color:${t.color}">
+        ${rankBadge}
+        <div class="name"><span class="swatch" style="background:${t.color}"></span>${esc(t.name)}</div>
+        <div class="score">${t.score}</div>
+      </div>`;
+  }).join('') || '<div class="empty"><div class="big">👥</div>No teams loaded yet</div>';
+
+  // Attach flash + bump animations for teams whose score changed
+  for (const [teamId, delta] of deltas) {
+    const card = container.querySelector(`[data-team="${teamId}"]`);
+    if (!card) continue;
+    const flash = document.createElement('div');
+    flash.className = 'flash' + (delta < 0 ? ' neg' : '');
+    flash.textContent = (delta > 0 ? '+' : '') + delta;
+    card.appendChild(flash);
+    card.classList.add('score-bump');
+    setTimeout(() => {
+      flash.remove();
+      card.classList.remove('score-bump');
+    }, 1700);
+  }
+}
+
+function renderLeaderboardEmpty(s) {
+  // Shown between questions — keep audience engaged
+  const ranked = [...s.teams].sort((a,b) => b.score - a.score || a.position - b.position);
+  const hasScores = ranked.some(t => t.score !== 0);
+  document.getElementById('qbox').innerHTML = ranked.length && hasScores
+    ? `<div class="leaderboard-title">🏆 Leaderboard</div>
+       <div class="empty" style="border:none;background:transparent;padding:20px 0;font-size:22px">Get ready for the next question!</div>`
+    : '<div class="empty"><div class="big">🎯</div><h1>Get ready!</h1></div>';
+}
+
 function render(s) {
   const titleEl = document.getElementById('title');
   if (s.title) { titleEl.textContent = s.title; titleEl.style.display = 'block'; }
   else titleEl.style.display = 'none';
 
-  document.getElementById('teams').innerHTML = s.teams.map(t => `
-    <div class="team-card ${s.state.current_team_id===t.id?'active':''}" style="border-color:${t.color}">
-      <div class="name"><span class="swatch" style="background:${t.color}"></span>${esc(t.name)}</div>
-      <div class="score">${t.score}</div>
-    </div>`).join('') || '<div class="empty"><div class="big">👥</div>No teams loaded yet</div>';
+  renderTeams(s);
 
   document.getElementById('round').textContent = s.round
     ? `Round ${s.round.round_no} · ${s.round.name}` : '';
+
+  renderProgress(s);
 
   const qb = document.getElementById('qbox');
   if (s.question) {
@@ -92,7 +233,7 @@ function render(s) {
         ${q.answer && q.type !== 'mcq' ? `<div class="answer-box"><b>Answer:</b> ${esc(q.answer)}</div>` : ''}
       </div>`;
   } else {
-    qb.innerHTML = '<div class="empty"><div class="big">🎯</div><h1>Get ready!</h1></div>';
+    renderLeaderboardEmpty(s);
   }
   renderTimer(s.state);
 }

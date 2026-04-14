@@ -1,7 +1,84 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Host · Quiz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=3"></head>
+<link rel="stylesheet" href="styles.css?v=4">
+<style>
+  /* Phase 1 host-specific UI */
+  .step-bar {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+    padding: 12px 16px; background: var(--bg-2); border-radius: 12px;
+    border: 1px solid var(--border); font-size: 14px;
+  }
+  .step-bar .step {
+    display: flex; align-items: center; gap: 8px; padding: 4px 12px;
+    border-radius: 999px; color: var(--muted); font-weight: 600;
+    transition: all 0.2s;
+  }
+  .step-bar .step.active {
+    background: var(--accent); color: white;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+  }
+  .step-bar .step.done { color: var(--good); }
+  .step-bar .step .n {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--card); display:inline-flex; align-items:center; justify-content:center;
+    font-size: 11px; font-weight: 800;
+  }
+  .step-bar .step.active .n { background: rgba(255,255,255,0.25); }
+  .step-bar .sep { color: var(--border); align-self: center; }
+
+  .control-zones { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .zone {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    padding: 12px; background: var(--bg-2); border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .zone-label {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.6px; min-width: 72px;
+  }
+  .zone.primary button { padding: 16px 22px; font-size: 16px; flex: 1; min-width: 130px; }
+  .zone.nav button { flex: 0 1 auto; }
+  .zone.timer button { flex: 0 1 auto; }
+
+  .accordion summary {
+    cursor: pointer; font-weight: 600; padding: 4px 0;
+    list-style: none; display: flex; align-items: center; gap: 8px;
+  }
+  .accordion summary::-webkit-details-marker { display: none; }
+  .accordion summary::before { content: "▸"; transition: transform 0.15s; color: var(--muted); }
+  .accordion[open] summary::before { transform: rotate(90deg); }
+  .accordion[open] summary { margin-bottom: 12px; }
+
+  .kbd {
+    display: inline-block; padding: 2px 7px; background: var(--card);
+    border: 1px solid var(--border); border-bottom-width: 2px;
+    border-radius: 4px; font-family: ui-monospace, monospace;
+    font-size: 12px; font-weight: 600; color: var(--text);
+  }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 28px; max-width: 480px; width: 100%; box-shadow: var(--shadow);
+  }
+  .modal h3 { margin-top: 0; }
+  .shortcut-list { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 12px 0; }
+  .shortcut-list .kbd { justify-self: start; }
+
+  .undo-btn { background: var(--card); }
+
+  @media (max-width: 640px) {
+    .zone { flex-direction: column; align-items: stretch; }
+    .zone-label { min-width: 0; }
+    .zone button { width: 100%; }
+  }
+</style>
+</head>
 <body><div class="container">
 
   <div class="topbar">
@@ -13,6 +90,7 @@
       <a href="display" target="_blank">Display ↗</a>
       <a href="scores" target="_blank">Scores ↗</a>
     </nav>
+    <button class="ghost" onclick="openShortcuts()" title="Keyboard shortcuts" style="flex:0 0 auto">? Shortcuts</button>
   </div>
 
   <div id="needauth" class="card" style="display:none">
@@ -33,10 +111,16 @@
         <h2>Current Question</h2>
         <span id="qcounter" class="muted"></span>
       </div>
+      <div id="stepbar" class="step-bar" style="display:none"></div>
       <div id="timerbox"></div>
       <div id="qbox"></div>
-      <div id="hintcontrols"></div>
-      <div id="controls" class="controls"></div>
+
+      <details class="accordion" style="margin-top:12px">
+        <summary class="muted">Hints &amp; Clue</summary>
+        <div id="hintcontrols"></div>
+      </details>
+
+      <div id="controls" class="control-zones"></div>
     </div>
 
     <div class="card">
@@ -44,15 +128,15 @@
       <div id="teams" class="grid grid-3"></div>
     </div>
 
-    <div class="card">
-      <div class="card-title"><h2>Manual Score Adjust</h2></div>
+    <details class="card accordion">
+      <summary><h2 style="display:inline;margin:0">Manual Score Adjust</h2></summary>
       <div class="row">
         <select id="adj_team"></select>
         <input type="number" id="adj_delta" placeholder="±points" value="5" style="max-width:120px">
         <input id="adj_note" placeholder="reason (optional)">
         <button onclick="adjust()" style="flex:0 0 auto">Apply</button>
       </div>
-    </div>
+    </details>
 
     <div class="card">
       <div class="card-title"><h2>Recent Activity</h2></div>
@@ -62,13 +146,35 @@
 
   </div>
 </div>
+
+<div id="shortcuts" class="modal-backdrop" onclick="if(event.target===this)closeShortcuts()">
+  <div class="modal">
+    <h3>⌨️ Keyboard shortcuts</h3>
+    <div class="shortcut-list">
+      <span class="kbd">C</span><span>Mark Correct</span>
+      <span class="kbd">W</span><span>Mark Wrong</span>
+      <span class="kbd">P</span><span>Pass (½ points)</span>
+      <span class="kbd">Space</span><span>Start / Stop timer</span>
+      <span class="kbd">R</span><span>Reveal answer</span>
+      <span class="kbd">S</span><span>Skip question</span>
+      <span class="kbd">→</span><span>Next question</span>
+      <span class="kbd">U</span><span>Undo last action</span>
+      <span class="kbd">1</span>–<span class="kbd">9</span><span>Assign team #N</span>
+      <span class="kbd">?</span><span>Show this help</span>
+    </div>
+    <p class="muted" style="font-size:12px">Shortcuts are disabled when typing in a text field.</p>
+    <button onclick="closeShortcuts()" style="width:100%;margin-top:8px">Close</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 <script src="/quiz/socket.io/socket.io.js"></script>
 <script>
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(m,bad){const t=document.getElementById('toast');
-  t.innerHTML=`<div class="toast ${bad?'bad':''}">${esc(m)}</div>`;setTimeout(()=>t.innerHTML='',1500);}
+  t.innerHTML=`<div class="toast ${bad?'bad':''}">${esc(m)}</div>`;setTimeout(()=>t.innerHTML='', bad?4000:1800);}
 let state = {};
+let inflight = false;
 async function api(p, opts={}) {
   const r = await fetch('api'+p, { credentials:'same-origin',
     headers:{'Content-Type':'application/json'}, ...opts });
@@ -84,6 +190,26 @@ async function load() {
 }
 async function refresh() { render(await api('/host/state')); }
 
+function renderStepBar(s) {
+  const bar = document.getElementById('stepbar');
+  if (!s.question) { bar.style.display = 'none'; return; }
+  const hasTeam = !!s.state.current_team_id;
+  const timerOn = !!s.state.timer_started_at;
+  const attempted = !!s.state.attempted;
+  const revealed = !!s.state.revealed;
+  const steps = [
+    { n: 1, label: 'Assign team', active: !hasTeam, done: hasTeam },
+    { n: 2, label: 'Start timer', active: hasTeam && !timerOn && !attempted, done: timerOn || attempted },
+    { n: 3, label: 'Judge answer', active: hasTeam && !attempted, done: attempted },
+    { n: 4, label: 'Next question', active: attempted || revealed, done: false },
+  ];
+  bar.style.display = 'flex';
+  bar.innerHTML = steps.map((st,i) => `
+    <div class="step ${st.active?'active':''} ${st.done?'done':''}">
+      <span class="n">${st.done?'✓':st.n}</span>${esc(st.label)}
+    </div>${i<steps.length-1?'<span class="sep">›</span>':''}`).join('');
+}
+
 function render(s) {
   state = s;
 
@@ -91,9 +217,9 @@ function render(s) {
   if (s.title) { titleEl.textContent = s.title; titleEl.style.display = 'block'; }
   else titleEl.style.display = 'none';
 
-  document.getElementById('teams').innerHTML = s.teams.map(t => `
+  document.getElementById('teams').innerHTML = s.teams.map((t,i) => `
     <div class="team-card ${s.state.current_team_id===t.id?'active':''}" style="border-color:${t.color}">
-      <div class="name"><span class="swatch" style="background:${t.color}"></span>${esc(t.name)}</div>
+      <div class="name"><span class="swatch" style="background:${t.color}"></span>${esc(t.name)}${i<9?` <span class="kbd" style="margin-left:auto">${i+1}</span>`:''}</div>
       <div class="score">${t.score}</div>
       <button onclick="assign(${t.id})">${s.state.current_team_id===t.id?'✓ Assigned':'Assign Question'}</button>
     </div>`).join('');
@@ -145,24 +271,29 @@ function render(s) {
         <div class="answer-box"><b>Answer (host only):</b> ${esc(q.answer)}</div>
       </div>`;
 
-    // Hint controls (remove-option for MCQ; clue for all)
-    let hintHtml = '<div class="row tight" style="margin-top:12px;flex-wrap:wrap">';
+    // Hint / clue controls (inside accordion)
+    let hintHtml = '';
     if (q.type === 'mcq' && q.options) {
-      hintHtml += '<span class="muted" style="flex:0 0 auto">Remove option:</span>';
+      hintHtml += '<div class="row tight" style="flex-wrap:wrap;margin-bottom:10px"><span class="muted" style="flex:0 0 auto">Remove option:</span>';
       for (const k of ['a','b','c','d']) {
         if (!q.options[k]) continue;
         const active = removed === k;
         hintHtml += `<button class="${active?'warn':'ghost'}" onclick="removeOpt('${k}')">${k.toUpperCase()}</button>`;
       }
       if (removed) hintHtml += `<button class="ghost" onclick="removeOpt('clear')">Clear removal</button>`;
+      hintHtml += '</div>';
     }
-    hintHtml += `<input id="clue_text" placeholder="Clue for players (optional)" value="${esc(s.state.clue||'')}" style="flex:1;min-width:220px">`;
-    hintHtml += `<button class="warn" onclick="setClue()" style="flex:0 0 auto">💡 Set Clue</button>`;
-    if (s.state.clue) hintHtml += `<button class="ghost" onclick="clearClue()" style="flex:0 0 auto">Clear</button>`;
-    hintHtml += '</div>';
+    hintHtml += `<div class="row tight" style="flex-wrap:wrap">
+      <input id="clue_text" placeholder="Clue for players (optional)" value="${esc(s.state.clue||'')}" style="flex:1;min-width:220px">
+      <button class="warn" onclick="setClue()" style="flex:0 0 auto">💡 Set Clue</button>
+      ${s.state.clue?`<button class="ghost" onclick="clearClue()" style="flex:0 0 auto">Clear</button>`:''}
+    </div>`;
     hintBox.innerHTML = hintHtml;
 
     renderTimer(s.state);
+    renderStepBar(s);
+
+    // Controls in three zones: primary judging, timer, navigation
     const attempted = s.state.attempted;
     const dis = attempted ? 'disabled style="opacity:0.4;cursor:not-allowed"' : '';
     const timerBtn = s.state.timer_started_at
@@ -170,23 +301,34 @@ function render(s) {
       : `<button class="warn" onclick="startTimer()">⏱ Start Timer</button>`;
     const autoBtn = (q.type==='mcq' && s.state.selected_option && !attempted)
       ? `<button class="good" onclick="ans('auto')">⚡ Judge Selected</button>` : '';
+
     document.getElementById('controls').innerHTML = `
-      ${timerBtn}
-      ${autoBtn}
-      <button class="good" onclick="ans('correct')" ${dis}>✓ Correct</button>
-      <button class="bad" onclick="ans('wrong')" ${dis}>✗ Wrong</button>
-      <button class="warn" onclick="pass()" ${dis}>↪ Pass (½)</button>
-      <button class="ghost" onclick="reveal()">👁 Reveal</button>
-      <button class="ghost" onclick="skip()">⤼ Skip</button>
-      <button onclick="next()">Next →</button>`;
-    if (attempted && !s.state.revealed) {
-      document.getElementById('controls').insertAdjacentHTML('beforebegin',
-        '<p class="muted" style="margin:8px 0">Team marked wrong — assign another team, Reveal, or Skip/Next.</p>');
-    }
+      <div class="zone primary">
+        <span class="zone-label">Judge</span>
+        ${autoBtn}
+        <button class="good" onclick="ans('correct')" ${dis}>✓ Correct <span class="kbd">C</span></button>
+        <button class="bad"  onclick="ans('wrong')"   ${dis}>✗ Wrong <span class="kbd">W</span></button>
+        <button class="warn" onclick="pass()"          ${dis}>↪ Pass (½) <span class="kbd">P</span></button>
+      </div>
+      <div class="zone timer">
+        <span class="zone-label">Timer</span>
+        ${timerBtn}
+        <span class="muted" style="font-size:12px">Space to toggle</span>
+      </div>
+      <div class="zone nav">
+        <span class="zone-label">Navigate</span>
+        <button class="ghost" onclick="reveal()">👁 Reveal <span class="kbd">R</span></button>
+        <button class="ghost" onclick="skip()">⤼ Skip <span class="kbd">S</span></button>
+        <button onclick="next()">Next → <span class="kbd">→</span></button>
+        <button class="undo-btn" onclick="undoLast()" title="Reverse the last scoring action (60s window)">↶ Undo <span class="kbd">U</span></button>
+      </div>
+      ${attempted && !s.state.revealed ? '<p class="muted" style="margin:0">Team marked wrong — assign another team, Reveal, or Skip/Next.</p>' : ''}
+    `;
   } else {
     qb.innerHTML = '<div class="empty"><div class="big">🎯</div>No question selected. Pick a round above.</div>';
     hintBox.innerHTML = '';
     document.getElementById('controls').innerHTML = '';
+    document.getElementById('stepbar').style.display = 'none';
     counter.textContent = '';
   }
 
@@ -228,8 +370,15 @@ function renderTimer(st) {
   update(); timerTick = setInterval(update, 250);
 }
 
-const post = async (p, body) => { const r = await api(p, { method:'POST', body: body?JSON.stringify(body):undefined });
-  if (r.error) toast(r.error, true); return r; };
+const post = async (p, body) => {
+  if (inflight) return;
+  inflight = true;
+  try {
+    const r = await api(p, { method:'POST', body: body?JSON.stringify(body):undefined });
+    if (r.error) toast(r.error, true);
+    return r;
+  } finally { inflight = false; }
+};
 const selRound = id => post('/host/select-round/'+id);
 const assign = id => post('/host/assign-team/'+id);
 const ans = r => post('/host/answer/'+r);
@@ -243,11 +392,48 @@ const stopTimer = () => post('/host/stop-timer');
 const removeOpt = o => post('/host/remove-option/'+o);
 const setClue = () => post('/host/set-clue', { text: document.getElementById('clue_text').value.trim() });
 const clearClue = () => post('/host/set-clue', { text: '' });
+const undoLast = async () => {
+  const r = await post('/host/undo-last');
+  if (r && r.ok) toast(`Undid ${r.undone} (${r.pts>=0?'+':''}${r.pts} pts)`);
+};
 const adjust = () => post('/host/adjust', {
   team_id: +document.getElementById('adj_team').value,
   delta: +document.getElementById('adj_delta').value,
   note: document.getElementById('adj_note').value
 }).then(()=>toast('Adjusted'));
+
+// Keyboard shortcuts
+function openShortcuts() { document.getElementById('shortcuts').classList.add('open'); }
+function closeShortcuts() { document.getElementById('shortcuts').classList.remove('open'); }
+document.addEventListener('keydown', (e) => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const s = state;
+  if (!s || !s.state) return;
+  const attempted = s.state.attempted;
+  const key = e.key;
+  if (key === '?') { e.preventDefault(); openShortcuts(); return; }
+  if (key === 'Escape') { closeShortcuts(); return; }
+  if (!s.question && !['1','2','3','4','5','6','7','8','9'].includes(key)) return;
+  const k = key.toLowerCase();
+  if (k === 'c' && !attempted) { e.preventDefault(); ans('correct'); }
+  else if (k === 'w' && !attempted) { e.preventDefault(); ans('wrong'); }
+  else if (k === 'p' && !attempted) { e.preventDefault(); pass(); }
+  else if (k === 'r') { e.preventDefault(); reveal(); }
+  else if (k === 's') { e.preventDefault(); skip(); }
+  else if (k === 'u') { e.preventDefault(); undoLast(); }
+  else if (key === ' ') {
+    e.preventDefault();
+    s.state.timer_started_at ? stopTimer() : startTimer();
+  }
+  else if (key === 'ArrowRight') { e.preventDefault(); next(); }
+  else if (/^[1-9]$/.test(key)) {
+    const idx = parseInt(key, 10) - 1;
+    const t = s.teams?.[idx];
+    if (t) { e.preventDefault(); assign(t.id); }
+  }
+});
 
 load();
 </script>

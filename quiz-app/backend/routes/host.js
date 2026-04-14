@@ -122,14 +122,14 @@ router.post('/answer/:result', async (req, res, next) => {
       if (q?.type === 'mcq' && state.selected_option) {
         await pool.query(
           `UPDATE session_state
-             SET attempted=TRUE,
+             SET attempted=TRUE, revealed=TRUE,
                  wrong_options = CASE WHEN $1 = ANY(wrong_options) THEN wrong_options
                                       ELSE array_append(wrong_options, $1) END
            WHERE id=1`,
           [state.selected_option]
         );
       } else {
-        await pool.query('UPDATE session_state SET attempted=TRUE WHERE id=1');
+        await pool.query('UPDATE session_state SET attempted=TRUE, revealed=TRUE WHERE id=1');
       }
     }
     broadcast(req); res.json({ ok: true, pts, result: actual });
@@ -229,6 +229,42 @@ router.post('/set-clue', async (req, res, next) => {
       );
     }
     broadcast(req); res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.post('/undo-last', async (req, res, next) => {
+  try {
+    // Undo the most recent scores row created in the last 60s.
+    // Reverses team points and resets the "attempted" flag so the team can be re-judged.
+    const r = await pool.query(
+      `SELECT * FROM scores WHERE created_at > NOW() - INTERVAL '60 seconds'
+       ORDER BY id DESC LIMIT 1`
+    );
+    const row = r.rows[0];
+    if (!row) return res.status(400).json({ error: 'Nothing to undo (60s window)' });
+    if (row.points_awarded && row.team_id) {
+      await pool.query('UPDATE teams SET score=score-$1 WHERE id=$2', [row.points_awarded, row.team_id]);
+    }
+    await pool.query('DELETE FROM scores WHERE id=$1', [row.id]);
+
+    // If undoing a scoring event on the current question, reset attempted state
+    // so the team can attempt again or be reassigned.
+    const state = (await pool.query('SELECT * FROM session_state WHERE id=1')).rows[0];
+    if (row.question_id && row.question_id === state.current_question_id) {
+      if (row.result === 'wrong' && state.wrong_options?.length) {
+        await pool.query(
+          `UPDATE session_state
+             SET attempted=FALSE,
+                 wrong_options = wrong_options[1:array_length(wrong_options,1)-1]
+           WHERE id=1`
+        );
+      } else if (row.result === 'correct') {
+        await pool.query('UPDATE session_state SET attempted=FALSE, revealed=FALSE WHERE id=1');
+      } else {
+        await pool.query('UPDATE session_state SET attempted=FALSE WHERE id=1');
+      }
+    }
+    broadcast(req); res.json({ ok: true, undone: row.result, pts: row.points_awarded });
   } catch (e) { next(e); }
 });
 
