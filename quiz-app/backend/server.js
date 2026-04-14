@@ -84,6 +84,11 @@ app.get(`${BASE}/healthz`, async (req, res) => {
 app.use(`${BASE}`, express.static(path.join(__dirname, 'frontend'), {
   maxAge: IS_PROD ? '1h' : 0,
   index: false,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store, must-revalidate');
+    }
+  },
 }));
 app.use(`${BASE}/uploads`, express.static(process.env.UPLOAD_DIR || '/app/uploads', {
   maxAge: '1d',
@@ -97,7 +102,10 @@ app.use(`${BASE}/api/host`, require('./routes/host'));
 app.use(`${BASE}/api/public`, require('./routes/public'));
 
 // ---- HTML routes ----
-const sendPage = (file) => (req, res) => res.sendFile(path.join(__dirname, 'frontend', file));
+const sendPage = (file) => (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, must-revalidate');
+  res.sendFile(path.join(__dirname, 'frontend', file));
+};
 app.get(`${BASE}`, sendPage('index.html'));
 app.get(`${BASE}/`, sendPage('index.html'));
 app.get(`${BASE}/admin`, sendPage('admin.html'));
