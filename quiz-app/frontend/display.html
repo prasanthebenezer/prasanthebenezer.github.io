@@ -156,10 +156,14 @@ function renderTeams(s) {
     prevScores.set(t.id, t.score);
   }
 
+  const topScore = ranked[0]?.score ?? 0;
   container.innerHTML = ranked.map((t, i) => {
     const rank = i + 1;
     const rankCls = rank <= 3 ? `r${rank}` : '';
-    const rankBadge = `<div class="rank ${rankCls}">${rank === 1 ? '👑' : '#'+rank}</div>`;
+    // Crown only when there's an actual leader (top score > 0).
+    // Share the crown on ties so it doesn't look stuck on one team.
+    const isLeader = topScore > 0 && t.score === topScore;
+    const rankBadge = `<div class="rank ${rankCls}">${isLeader ? '👑' : '#'+rank}</div>`;
     return `
       <div class="team-card ${assignedId===t.id?'active':''}" data-team="${t.id}" style="border-color:${t.color}">
         ${rankBadge}
