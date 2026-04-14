@@ -125,7 +125,7 @@ body.display .team-card.active::before { font-size: 18px; padding: 6px 20px; top
   border: 1px solid var(--border);
 }
 .q-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-.q-text { font-size: 26px; font-weight: 600; margin: 16px 0 20px; line-height: 1.4; }
+.q-text { font-size: clamp(22px, 2.2vw, 30px); font-weight: 600; margin: 16px 0 20px; line-height: 1.4; }
 .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .option {
   padding: 16px 20px; background: var(--bg-2); border-radius: 10px;
@@ -197,10 +197,11 @@ body.display .clue-banner { font-size: 24px; padding: 18px 24px; }
 /* Display view (projector) */
 body.display .container { max-width: 1600px; }
 body.display .topbar { display: none; }
-body.display .team-card .score { font-size: 96px; }
-body.display .team-card .name { font-size: 28px; }
-body.display .q-text { font-size: 48px; }
-body.display .option { font-size: 26px; padding: 24px; }
+body.display .team-card .score { font-size: clamp(72px, 7vw, 104px); }
+body.display .team-card .name { font-size: clamp(26px, 2.3vw, 34px); font-weight: 800; }
+body.display .team-card .name .swatch { width: 10px; height: 10px; }
+body.display .q-text { font-size: clamp(36px, 3.6vw, 56px); }
+body.display .option { font-size: clamp(22px, 1.8vw, 28px); padding: 24px; }
 body.display .answer-box { font-size: 32px; }
 body.display img.q-image { max-height: 500px; }
 body.display .round-banner {

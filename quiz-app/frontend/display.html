@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Quiz Display</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=6">
+<link rel="stylesheet" href="styles.css?v=7">
 <style>
   /* Phase 2 display polish */
   .round-progress {
@@ -70,6 +70,32 @@
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
   body.display .leaderboard-title { font-size: 64px; }
+
+  /* Circular timer ring */
+  .timer-ring-wrap {
+    display: flex; justify-content: center; margin-bottom: 20px;
+  }
+  .timer-ring {
+    position: relative; width: clamp(160px, 16vw, 260px); aspect-ratio: 1;
+  }
+  .timer-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-ring .bg { stroke: var(--bg-2); }
+  .timer-ring .fg { stroke-linecap: round; transition: stroke-dashoffset 0.25s linear, stroke 0.3s; }
+  .timer-ring .txt {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; font-size: clamp(44px, 5vw, 80px);
+    font-weight: 800; letter-spacing: -2px;
+  }
+  .timer-ring.warn .fg { stroke: var(--warn); }
+  .timer-ring.warn .txt { color: var(--warn); }
+  .timer-ring.crit .fg { stroke: var(--bad); }
+  .timer-ring.crit .txt { color: var(--bad); }
+  .timer-ring.crit { animation: timerPulse 0.7s ease-in-out infinite; }
+  @keyframes timerPulse { 50% { transform: scale(1.06); } }
+
+  /* Question crossfade */
+  #qbox { transition: opacity 0.2s ease; }
+  #qbox.fading { opacity: 0; }
 </style>
 </head>
 <body class="display"><div class="container">
@@ -181,8 +207,19 @@ function render(s) {
   renderProgress(s);
 
   const qb = document.getElementById('qbox');
-  if (s.question) {
-    const q = s.question;
+  const nextQid = s.question ? s.question.id : null;
+  const applyBody = () => {
+    if (s.question) { renderQuestionBody(s); }
+    else { renderLeaderboardEmpty(s); }
+  };
+  maybeCrossfade(nextQid, applyBody);
+  renderTimer(s.state);
+}
+
+function renderQuestionBody(s) {
+  const qb = document.getElementById('qbox');
+  const q = s.question;
+  {
     const wrongs = s.state.wrong_options || [];
     const removed = s.state.removed_option;
     let opts = '';
@@ -232,12 +269,10 @@ function render(s) {
         ${opts}
         ${q.answer && q.type !== 'mcq' ? `<div class="answer-box"><b>Answer:</b> ${esc(q.answer)}</div>` : ''}
       </div>`;
-  } else {
-    renderLeaderboardEmpty(s);
   }
-  renderTimer(s.state);
 }
 let timerTick = null;
+const R = 46, C = 2 * Math.PI * R; // ring geometry (viewBox 100x100)
 function renderTimer(st) {
   const box = document.getElementById('timerbanner');
   if (!box) return;
@@ -245,20 +280,44 @@ function renderTimer(st) {
   if (!st || !st.timer_started_at) { box.innerHTML = ''; return; }
   const start = new Date(st.timer_started_at).getTime();
   const dur = st.timer_duration || 30;
+  box.innerHTML = `
+    <div class="timer-ring-wrap">
+      <div class="timer-ring" id="ring">
+        <svg viewBox="0 0 100 100">
+          <circle class="bg" cx="50" cy="50" r="${R}" fill="none" stroke-width="7"/>
+          <circle class="fg" cx="50" cy="50" r="${R}" fill="none" stroke="var(--good)" stroke-width="7"
+                  stroke-dasharray="${C}" stroke-dashoffset="0"/>
+        </svg>
+        <div class="txt">0</div>
+      </div>
+    </div>`;
+  const ring = document.getElementById('ring');
+  const fg = ring.querySelector('.fg');
+  const txt = ring.querySelector('.txt');
   const update = () => {
-    const left = Math.max(0, Math.ceil(dur - (Date.now()-start)/1000));
-    const color = left <= 5 ? 'var(--bad)' : left <= 10 ? 'var(--warn)' : 'var(--good)';
-    const pct = Math.max(0, Math.min(100, (left/dur)*100));
-    box.innerHTML = `
-      <div style="background:var(--surface);padding:24px;border-radius:16px;margin-bottom:20px;border:2px solid ${color};">
-        <div style="font-size:120px;font-weight:800;color:${color};text-align:center;line-height:1;letter-spacing:-4px">⏱ ${left}s</div>
-        <div style="height:12px;background:var(--bg-2);border-radius:6px;margin-top:16px;overflow:hidden">
-          <div style="height:100%;width:${pct}%;background:${color};transition:width 0.25s linear"></div>
-        </div>
-      </div>`;
-    if (left === 0) { clearInterval(timerTick); timerTick = null; }
+    const elapsed = (Date.now() - start) / 1000;
+    const left = Math.max(0, dur - elapsed);
+    const shown = Math.ceil(left);
+    const frac = Math.max(0, Math.min(1, left / dur));
+    fg.style.strokeDashoffset = String(C * (1 - frac));
+    txt.textContent = shown;
+    ring.classList.toggle('crit', shown <= 5 && shown > 0);
+    ring.classList.toggle('warn', shown > 5 && shown <= 10);
+    if (left <= 0) { clearInterval(timerTick); timerTick = null; }
   };
-  update(); timerTick = setInterval(update, 250);
+  update(); timerTick = setInterval(update, 100);
+}
+
+// Crossfade qbox when the question id changes
+let lastQid = null;
+function maybeCrossfade(nextQid, apply) {
+  const qb = document.getElementById('qbox');
+  if (lastQid !== null && lastQid !== nextQid) {
+    qb.classList.add('fading');
+    setTimeout(() => { apply(); qb.classList.remove('fading'); lastQid = nextQid; }, 200);
+  } else {
+    apply(); lastQid = nextQid;
+  }
 }
 const sock = io('/public', { path: '/quiz/socket.io' });
 sock.on('connect', () => console.log('connected'));

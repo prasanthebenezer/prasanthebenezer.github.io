@@ -30,12 +30,13 @@ Goal: reduce friction during live quiz without large refactors.
 - [x] Last-import timestamp stored in `config.last_import_at` and surfaced in
       Session Status card via `GET /api/admin/status`.
 
-## Phase C — Display polish (PLANNED)
+## Phase C — Display polish (DONE)
 
-- [ ] Large circular countdown timer with red pulse in final 5s.
-- [ ] 200ms crossfade between questions.
-- [ ] Fluid typography via `clamp()` shared between host and display.
-- [ ] Larger team names, smaller swatches on projector.
+- [x] Large circular SVG countdown ring; amber under 10s, red-pulse under 5s.
+- [x] 200ms crossfade on `#qbox` between question changes.
+- [x] Fluid typography via `clamp()` on `.q-text`, `.option`, projector team
+      name + score.
+- [x] Projector team cards: larger bolder names, smaller swatch.
 
 ## Phase D — Accessibility & theming (PLANNED)
 
@@ -47,7 +48,8 @@ Goal: reduce friction during live quiz without large refactors.
 ## Completed
 
 - Phase A (host quick wins) — commit `47eaab4`.
-- Phase B (admin onboarding) — commit pending at time of writing.
+- Phase B (admin onboarding) — commit `7b9d1d2`.
+- Phase C (display polish) — commit pending at time of writing.
 
 ## Notes for resuming
 
