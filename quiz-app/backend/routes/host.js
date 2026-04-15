@@ -17,7 +17,7 @@ router.get('/state', async (req, res, next) => {
 
 const RESET_Q_FIELDS = `pass_level=0, hint_level=0, revealed=FALSE, attempted=FALSE,
  selected_option=NULL, wrong_options='{}', removed_option=NULL, clue=NULL,
- timer_started_at=NULL, timer_duration=NULL`;
+ timer_started_at=NULL, timer_duration=NULL, original_team_id=NULL`;
 
 router.post('/select-round/:id', async (req, res, next) => {
   try {
@@ -145,9 +145,10 @@ router.post('/pass', async (req, res, next) => {
     const teams = (await pool.query('SELECT id FROM teams ORDER BY position,id')).rows;
     const idx = teams.findIndex((t) => t.id === state.current_team_id);
     const next = teams[(idx + 1) % teams.length];
+    const origTeam = state.original_team_id || state.current_team_id;
     await pool.query(
-      'UPDATE session_state SET current_team_id=$1, pass_level=pass_level+1, attempted=FALSE WHERE id=1',
-      [next.id]
+      'UPDATE session_state SET current_team_id=$1, pass_level=pass_level+1, attempted=FALSE, original_team_id=$2 WHERE id=1',
+      [next.id, origTeam]
     );
     broadcast(req); res.json({ ok: true });
   } catch (e) { next(e); }
@@ -179,12 +180,15 @@ async function advance(req) {
   const idx = ids.indexOf(state.current_question_id);
   const nextQ = idx >= 0 && idx < ids.length - 1 ? ids[idx + 1] : null;
 
-  // Auto-rotate team on advance (except rapidfire, which is host-paced per-team)
-  let nextTeam = state.current_team_id;
-  if (round.type !== 'rapidfire' && state.current_team_id) {
+  // Auto-rotate team on advance (except rapidfire, which is host-paced per-team).
+  // If the current question was passed, rotate based on the original pre-pass team
+  // so that the team after the passer gets the next question.
+  const rotateBase = state.original_team_id || state.current_team_id;
+  let nextTeam = rotateBase;
+  if (round.type !== 'rapidfire' && rotateBase) {
     const teams = (await pool.query('SELECT id FROM teams ORDER BY position,id')).rows;
     if (teams.length) {
-      const tIdx = teams.findIndex((t) => t.id === state.current_team_id);
+      const tIdx = teams.findIndex((t) => t.id === rotateBase);
       nextTeam = teams[(tIdx + 1) % teams.length].id;
     }
   }
@@ -234,14 +238,14 @@ router.post('/set-clue', async (req, res, next) => {
 
 router.post('/undo-last', async (req, res, next) => {
   try {
-    // Undo the most recent scores row created in the last 60s.
+    // Undo the most recent scores row created in the last 10 minutes.
     // Reverses team points and resets the "attempted" flag so the team can be re-judged.
     const r = await pool.query(
-      `SELECT * FROM scores WHERE created_at > NOW() - INTERVAL '60 seconds'
+      `SELECT * FROM scores WHERE created_at > NOW() - INTERVAL '10 minutes'
        ORDER BY id DESC LIMIT 1`
     );
     const row = r.rows[0];
-    if (!row) return res.status(400).json({ error: 'Nothing to undo (60s window)' });
+    if (!row) return res.status(400).json({ error: 'Nothing to undo (10 min window)' });
     if (row.points_awarded && row.team_id) {
       await pool.query('UPDATE teams SET score=score-$1 WHERE id=$2', [row.points_awarded, row.team_id]);
     }
@@ -260,6 +264,19 @@ router.post('/undo-last', async (req, res, next) => {
         );
       } else if (row.result === 'correct') {
         await pool.query('UPDATE session_state SET attempted=FALSE, revealed=FALSE WHERE id=1');
+      } else if (row.result === 'pass') {
+        // Revert: restore passer as current team, decrement pass_level,
+        // clear original_team_id if no more active passes remain.
+        const newLvl = Math.max((state.pass_level || 0) - 1, 0);
+        await pool.query(
+          `UPDATE session_state
+             SET current_team_id=$1,
+                 pass_level=$2,
+                 attempted=FALSE,
+                 original_team_id = CASE WHEN $2 = 0 THEN NULL ELSE original_team_id END
+           WHERE id=1`,
+          [row.team_id, newLvl]
+        );
       } else {
         await pool.query('UPDATE session_state SET attempted=FALSE WHERE id=1');
       }
