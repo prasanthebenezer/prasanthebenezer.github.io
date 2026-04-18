@@ -137,6 +137,9 @@
     <div class="card">
       <div class="card-title"><h2>Rounds</h2><span class="muted">Pick any round in any order</span></div>
       <div id="rounds" class="row tight"></div>
+      <div id="shuffle-box" style="display:none;margin-top:10px">
+        <button class="ghost" onclick="shuffleRound()" title="Randomise the question order for the current round">🔀 Shuffle Questions</button>
+      </div>
     </div>
 
     <div class="card">
@@ -289,6 +292,7 @@ function render(s) {
         R${r.round_no}: ${esc(r.name)} <span class="badge ${s.state.current_round_id===r.id?'':'gray'}">${esc(r.type)}</span>
       </button>`).join('')
     : '<p class="muted">No rounds defined. Import an Excel file in Admin.</p>';
+  document.getElementById('shuffle-box').style.display = s.state.current_round_id ? '' : 'none';
 
   const qb = document.getElementById('qbox');
   const counter = document.getElementById('qcounter');
@@ -444,6 +448,10 @@ const post = async (p, body) => {
   } finally { inflight = false; }
 };
 const selRound = id => post('/host/select-round/'+id);
+const shuffleRound = async () => {
+  const r = await post('/host/shuffle-round');
+  if (r && r.ok) toast('Questions shuffled');
+};
 const assign = id => post('/host/assign-team/'+id);
 const ans = r => post('/host/answer/'+r);
 const pass = () => post('/host/pass');

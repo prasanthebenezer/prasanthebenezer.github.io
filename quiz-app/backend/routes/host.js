@@ -33,6 +33,27 @@ router.post('/select-round/:id', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.post('/shuffle-round', async (req, res, next) => {
+  try {
+    const state = (await pool.query('SELECT current_round_id FROM session_state WHERE id=1')).rows[0];
+    if (!state?.current_round_id) return res.status(400).json({ error: 'no round selected' });
+    const r = await pool.query('SELECT * FROM rounds WHERE id=$1', [state.current_round_id]);
+    const round = r.rows[0];
+    if (!round) return res.status(404).json({ error: 'round not found' });
+    const ids = [...round.question_ids];
+    for (let i = ids.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+    }
+    await pool.query('UPDATE rounds SET question_ids=$1 WHERE id=$2', [ids, round.id]);
+    await pool.query(
+      `UPDATE session_state SET current_question_id=$1, ${RESET_Q_FIELDS} WHERE id=1`,
+      [ids[0] || null]
+    );
+    broadcast(req); res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 router.post('/select-question/:qid', async (req, res, next) => {
   try {
     await pool.query(
