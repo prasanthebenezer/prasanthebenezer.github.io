@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stroop Effect Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            max-width: 640px;
+        }
+
+        h1 {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        p.lead {
+            color: #555;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            background: #1d1d1f;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+        }
+
+        button:hover { background: #333; }
+        button:active { transform: scale(0.97); }
+
+        button.secondary {
+            background: white;
+            color: #1d1d1f;
+            border: 1px solid #d2d2d7;
+        }
+
+        button.secondary:hover { background: #eee; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem 1.5rem;
+            width: 100%;
+            max-width: 960px;
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .word {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 800;
+            text-align: center;
+            padding: 0.5rem;
+            user-select: none;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        footer {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #777;
+            text-align: center;
+            max-width: 520px;
+        }
+
+        a { color: #0071e3; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Stroop Effect Game</h1>
+        <p class="lead">Read the <strong>colour of the ink</strong>, not the word. Try going as fast as you can — your brain will fight you.</p>
+    </header>
+
+    <div class="controls">
+        <button id="shuffleBtn">Shuffle</button>
+        <button id="moreBtn" class="secondary">More words</button>
+    </div>
+
+    <div class="grid" id="grid" aria-label="Stroop words"></div>
+
+    <footer>
+        <p>The Stroop effect shows how automatic reading interferes with naming colours. <a href="index.html">← Back to portfolio</a></p>
+    </footer>
+
+    <script>
+        const COLOURS = [
+            { name: 'RED',    hex: '#e53935' },
+            { name: 'BLUE',   hex: '#1e88e5' },
+            { name: 'GREEN',  hex: '#2e7d32' },
+            { name: 'YELLOW', hex: '#fbc02d' },
+            { name: 'ORANGE', hex: '#fb8c00' },
+            { name: 'PURPLE', hex: '#8e24aa' },
+            { name: 'PINK',   hex: '#ec407a' },
+            { name: 'BLACK',  hex: '#111111' },
+            { name: 'BROWN',  hex: '#6d4c41' },
+            { name: 'GREY',   hex: '#757575' },
+        ];
+
+        const grid = document.getElementById('grid');
+        let wordCount = 18;
+
+        function pickMismatchedColour(wordName) {
+            const choices = COLOURS.filter(c => c.name !== wordName);
+            return choices[Math.floor(Math.random() * choices.length)];
+        }
+
+        function render() {
+            grid.innerHTML = '';
+            for (let i = 0; i < wordCount; i++) {
+                const word = COLOURS[Math.floor(Math.random() * COLOURS.length)];
+                const ink = pickMismatchedColour(word.name);
+                const span = document.createElement('span');
+                span.className = 'word';
+                span.textContent = word.name;
+                span.style.color = ink.hex;
+                grid.appendChild(span);
+            }
+        }
+
+        document.getElementById('shuffleBtn').addEventListener('click', render);
+        document.getElementById('moreBtn').addEventListener('click', () => {
+            wordCount += 6;
+            render();
+        });
+
+        render();
+    </script>
+</body>
+</html>
