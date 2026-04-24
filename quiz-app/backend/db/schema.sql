@@ -70,3 +70,4 @@ ALTER TABLE session_state ADD COLUMN IF NOT EXISTS removed_option TEXT;
 ALTER TABLE session_state ADD COLUMN IF NOT EXISTS clue           TEXT;
 ALTER TABLE session_state ADD COLUMN IF NOT EXISTS hint_level     INTEGER DEFAULT 0;
 ALTER TABLE session_state ADD COLUMN IF NOT EXISTS original_team_id INTEGER;
+ALTER TABLE questions     ADD COLUMN IF NOT EXISTS audio          TEXT;

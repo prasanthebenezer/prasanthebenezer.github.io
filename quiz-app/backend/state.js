@@ -28,7 +28,7 @@ async function snapshot({ redactAnswer = false } = {}) {
   let question = null, round = null;
   if (state.current_question_id) {
     question = (await pool.query(
-      'SELECT id,type,question,options,answer,points,time_sec,image FROM questions WHERE id=$1',
+      'SELECT id,type,question,options,answer,points,time_sec,image,audio FROM questions WHERE id=$1',
       [state.current_question_id]
     )).rows[0] || null;
     if (question && redactAnswer && !state.revealed) question.answer = null;

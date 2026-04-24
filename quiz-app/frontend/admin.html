@@ -66,7 +66,7 @@
 
     <div class="card" id="step1">
       <div class="section-head"><span class="num" id="num1">1</span><h2>Download Excel Template</h2></div>
-      <p class="muted">Sheets: Config, Teams, MCQ, RapidFire, PassQuestion, ImageRound, Rounds.
+      <p class="muted">Sheets: Config, Teams, MCQ, RapidFire, PassQuestion, ImageRound, Speaker, Rounds.
         <b>All round-type sheets are optional</b> — only fill in what you'll use, then list those rounds in the Rounds sheet.</p>
       <a href="api/admin/template.xlsx"><button class="lg always" onclick="markTemplateDownloaded()">⬇️ Download quiz_template.xlsx</button></a>
     </div>
@@ -79,6 +79,16 @@
         <button onclick="uploadImages()">⬆️ Upload Images</button>
       </div>
       <div id="imglist" class="muted" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card" id="step2b">
+      <div class="section-head"><span class="num" id="num2b">2b</span><h2>Upload Speaker Audio</h2></div>
+      <p class="muted">Optional — only needed for <b>Identify the Speaker</b> questions. Filenames must match the <code>audio</code> column in the <code>Speaker</code> sheet. Formats: mp3, wav, m4a, ogg, webm, aac (max 50&nbsp;MB each).</p>
+      <div class="file-row">
+        <input type="file" id="audios" multiple accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm,.aac">
+        <button onclick="uploadAudio()">⬆️ Upload Audio</button>
+      </div>
+      <div id="audiolist" class="muted" style="margin-top:14px"></div>
     </div>
 
     <div class="card" id="step3">
@@ -119,7 +129,7 @@ async function check() {
   const me = await api('/auth/me');
   document.getElementById('login').style.display = me.authed ? 'none' : 'block';
   document.getElementById('panel').style.display = me.authed ? 'block' : 'none';
-  if (me.authed) { loadImages(); loadStatus(); updateStepperLock(); }
+  if (me.authed) { loadImages(); loadAudio(); loadStatus(); updateStepperLock(); }
 }
 async function login() {
   const pw = document.getElementById('pw').value;
@@ -188,6 +198,57 @@ async function removeAllImages() {
   loadImages();
 }
 
+async function uploadAudio() {
+  const files = document.getElementById('audios').files;
+  if (!files.length) return toast('Pick audio files first', true);
+  const fd = new FormData();
+  for (const f of files) fd.append('audio', f);
+  const r = await fetch('api/admin/upload-audio',{method:'POST',body:fd,credentials:'same-origin'});
+  if (r.ok) { toast('Audio uploaded'); loadAudio(); }
+  else {
+    let msg = 'Upload failed';
+    try { msg = (await r.json()).error || msg; } catch {}
+    toast(msg, true);
+  }
+}
+async function loadAudio() {
+  const r = await api('/admin/audio');
+  const tiles = r.files.map(f => `
+    <span class="badge gray" style="margin:2px;display:inline-flex;align-items:center;gap:6px">
+      🔊 ${esc(f)}
+      <button class="ghost" style="padding:2px 8px;font-size:11px" title="Preview"
+        onclick="previewAudio('${esc(f)}')">▶</button>
+      <button class="ghost" style="padding:2px 8px;font-size:11px" title="Remove"
+        onclick="removeAudio('${esc(f)}')">✕</button>
+    </span>`).join(' ');
+  const header = r.files.length
+    ? `<b>Uploaded audio (${r.files.length}):</b>
+       <button class="ghost" style="margin-left:8px;padding:4px 10px;font-size:12px" onclick="removeAllAudio()">Remove all</button>`
+    : '<i>No audio uploaded yet.</i>';
+  document.getElementById('audiolist').innerHTML = header + (r.files.length ? '<br>' + tiles : '');
+}
+function previewAudio(name) {
+  const a = new Audio('uploads/' + encodeURIComponent(name));
+  a.play().catch(err => toast('Preview failed: ' + err.message, true));
+}
+async function removeAudio(name) {
+  if (!confirm(`Remove audio "${name}"?`)) return;
+  const r = await fetch('api/admin/audio/' + encodeURIComponent(name),
+    { method: 'DELETE', credentials: 'same-origin' });
+  if (r.ok) { toast('Removed ' + name); loadAudio(); }
+  else toast('Remove failed', true);
+}
+async function removeAllAudio() {
+  const r = await api('/admin/audio');
+  if (!r.files.length) return;
+  if (!confirm(`Remove all ${r.files.length} uploaded audio file(s)? This cannot be undone.`)) return;
+  await Promise.all(r.files.map(f =>
+    fetch('api/admin/audio/' + encodeURIComponent(f),
+      { method: 'DELETE', credentials: 'same-origin' })));
+  toast('All audio removed');
+  loadAudio();
+}
+
 function fmtTime(iso) {
   if (!iso) return 'never';
   const d = new Date(iso);
@@ -253,12 +314,13 @@ function renderPreview(j) {
   const c = j.counts;
   const cells = [
     ['teams', c.teams], ['questions', c.questions], ['rounds', c.rounds],
-    ['mcq', c.mcq], ['rapidfire', c.rapidfire], ['pass', c.pass], ['image', c.image],
+    ['mcq', c.mcq], ['rapidfire', c.rapidfire], ['pass', c.pass], ['image', c.image], ['speaker', c.speaker || 0],
   ].map(([l,n]) => `<div class="cell"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`).join('');
 
   const blockers = j.issues || [];
   const warnings = [];
   if (j.missingImages?.length) warnings.push(`${j.missingImages.length} image(s) referenced but not uploaded: ${j.missingImages.slice(0,8).map(esc).join(', ')}${j.missingImages.length>8?'…':''}`);
+  if (j.missingAudio?.length)  warnings.push(`${j.missingAudio.length} audio file(s) referenced but not uploaded: ${j.missingAudio.slice(0,8).map(esc).join(', ')}${j.missingAudio.length>8?'…':''}`);
 
   const canImport = blockers.length === 0;
   document.getElementById('preview').innerHTML = `

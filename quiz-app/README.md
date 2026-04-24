@@ -39,8 +39,8 @@ Or set `QUIZ_ADMIN_PASSWORD` for a plaintext fallback (not recommended).
 ## Workflow on quiz day
 
 1. Open `/quiz/admin`, login, download the Excel template.
-2. Fill in Teams (2 or 3), MCQ/RapidFire/PassQuestion/ImageRound sheets, define Rounds.
-3. Upload images (filenames must match the `image` column).
+2. Fill in Teams (2 or 3), MCQ/RapidFire/PassQuestion/ImageRound/Speaker sheets, define Rounds.
+3. Upload images (filenames must match the `image` column) and/or audio (match the `audio` column in the Speaker sheet).
 4. Import the Excel file (this wipes old data).
 5. Open `/quiz/host` on your laptop, `/quiz/display` on the projector.
 6. Pick a round → assign question to a team → Correct / Wrong / Pass / Skip / Next.
@@ -54,6 +54,7 @@ Or set `QUIZ_ADMIN_PASSWORD` for a plaintext fallback (not recommended).
 | `rapidfire` | Quick short-answer questions |
 | `pass` | Pass-through round (full pass-decay logic) |
 | `image` | Picture-based question |
+| `speaker` | Play an audio clip and identify the speaker |
 
 ## Reset between sessions
 

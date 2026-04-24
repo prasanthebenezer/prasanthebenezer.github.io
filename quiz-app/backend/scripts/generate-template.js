@@ -34,16 +34,22 @@ function generateTemplate(outPath) {
     ImageRound: [
       { id: 'I1', question: 'Identify this animal', answer: 'Lion', points: 15, time_sec: 20, image: 'lion.jpg' },
     ],
+    Speaker: [
+      { id: 'S1', question: 'Identify this speaker', answer: 'Martin Luther King Jr.', points: 20, time_sec: 30, audio: 'mlk-dream.mp3' },
+      { id: 'S2', question: 'Whose voice is this?', answer: 'David Attenborough', points: 20, time_sec: 30, audio: 'attenborough.mp3' },
+    ],
     Rounds: [
       { round_no: 1, round_name: 'MCQ Warmup', type: 'mcq', question_ids: 'M1,M2' },
       { round_no: 2, round_name: 'Rapid Fire', type: 'rapidfire', question_ids: 'R1,R2' },
       { round_no: 3, round_name: 'Pass Round', type: 'pass', question_ids: 'P1,P2' },
       { round_no: 4, round_name: 'Picture Round', type: 'image', question_ids: 'I1' },
+      { round_no: 5, round_name: 'Identify the Speaker', type: 'speaker', question_ids: 'S1,S2' },
     ],
     Instructions: [
-      { field: 'Sheets', detail: 'Config, Teams, MCQ, RapidFire, PassQuestion, ImageRound, Rounds' },
+      { field: 'Sheets', detail: 'Config, Teams, MCQ, RapidFire, PassQuestion, ImageRound, Speaker, Rounds' },
       { field: 'MCQ correct', detail: 'Use a, b, c, or d (lowercase)' },
       { field: 'image', detail: 'Filename only; upload images separately in Admin' },
+      { field: 'Speaker.audio', detail: 'Audio filename (mp3, wav, m4a, ogg, webm, aac); upload in Admin' },
       { field: 'Rounds.question_ids', detail: 'Comma-separated ext IDs from the matching sheet' },
       { field: 'pass_decay', detail: 'JSON array; index = pass count. [1,0.5,0.25,0] = full, half, quarter, zero' },
     ],

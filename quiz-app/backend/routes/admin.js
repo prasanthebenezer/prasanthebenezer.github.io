@@ -13,6 +13,9 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || '/app/uploads';
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const SAFE_NAME = /^[A-Za-z0-9._-]+\.(png|jpe?g|gif|webp)$/i;
+const SAFE_AUDIO = /^[A-Za-z0-9._-]+\.(mp3|wav|m4a|ogg|oga|webm|aac)$/i;
+const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp)$/i;
+const AUDIO_EXT_RE = /\.(mp3|wav|m4a|ogg|oga|webm|aac)$/i;
 const sanitize = (name) => path.basename(String(name || '')).replace(/[^A-Za-z0-9._-]/g, '_');
 
 const upload = multer({
@@ -25,6 +28,18 @@ const upload = multer({
     },
   }),
   limits: { fileSize: 25 * 1024 * 1024, files: 50 },
+});
+
+const audioUpload = multer({
+  storage: multer.diskStorage({
+    destination: UPLOAD_DIR,
+    filename: (req, file, cb) => {
+      const safe = sanitize(file.originalname);
+      if (!SAFE_AUDIO.test(safe)) return cb(new Error('Unsupported audio filename'));
+      cb(null, safe);
+    },
+  }),
+  limits: { fileSize: 50 * 1024 * 1024, files: 30 },
 });
 
 const memUpload = multer({
@@ -42,12 +57,13 @@ function parseExcelSummary(buffer) {
   const rapid = get('RapidFire').filter((r) => r.question && r.answer != null);
   const pass = get('PassQuestion').filter((r) => r.question && r.answer != null);
   const image = get('ImageRound').filter((r) => r.question && r.answer != null);
+  const speaker = get('Speaker').filter((r) => r.question && r.answer != null);
   const rounds = get('Rounds').filter((r) => r.round_no && r.type);
 
   const issues = [];
   if (!teams.length) issues.push('No teams defined in the Teams sheet');
   if (!rounds.length) issues.push('No rounds defined in the Rounds sheet');
-  const validTypes = new Set(['mcq', 'rapidfire', 'pass', 'image']);
+  const validTypes = new Set(['mcq', 'rapidfire', 'pass', 'image', 'speaker']);
   for (const r of rounds) {
     if (!validTypes.has(r.type)) issues.push(`Round ${r.round_no}: unknown type "${r.type}"`);
   }
@@ -55,6 +71,10 @@ function parseExcelSummary(buffer) {
   const refImages = new Set();
   for (const r of [...mcq, ...rapid, ...pass, ...image]) {
     if (r.image) refImages.add(String(r.image));
+  }
+  const refAudio = new Set();
+  for (const r of speaker) {
+    if (r.audio) refAudio.add(String(r.audio));
   }
 
   return {
@@ -64,11 +84,13 @@ function parseExcelSummary(buffer) {
       rapidfire: rapid.length,
       pass: pass.length,
       image: image.length,
-      questions: mcq.length + rapid.length + pass.length + image.length,
+      speaker: speaker.length,
+      questions: mcq.length + rapid.length + pass.length + image.length + speaker.length,
       rounds: rounds.length,
     },
     issues,
     imageRefs: [...refImages],
+    audioRefs: [...refAudio],
   };
 }
 
@@ -76,11 +98,18 @@ router.post('/import-preview', memUpload.single('file'), (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'file is required' });
     const summary = parseExcelSummary(req.file.buffer);
-    const have = new Set(
-      fs.readdirSync(UPLOAD_DIR).filter((f) => /\.(png|jpe?g|gif|webp)$/i.test(f))
-    );
-    const missingImages = summary.imageRefs.filter((n) => !have.has(n));
-    res.json({ ok: true, counts: summary.counts, issues: summary.issues, missingImages });
+    const files = fs.readdirSync(UPLOAD_DIR);
+    const haveImages = new Set(files.filter((f) => IMAGE_EXT_RE.test(f)));
+    const haveAudio  = new Set(files.filter((f) => AUDIO_EXT_RE.test(f)));
+    const missingImages = summary.imageRefs.filter((n) => !haveImages.has(n));
+    const missingAudio  = summary.audioRefs.filter((n) => !haveAudio.has(n));
+    res.json({
+      ok: true,
+      counts: summary.counts,
+      issues: summary.issues,
+      missingImages,
+      missingAudio,
+    });
   } catch (e) { next(e); }
 });
 
@@ -120,8 +149,8 @@ router.post('/import-excel', memUpload.single('file'), async (req, res, next) =>
       const insertQ = async (type, q) => {
         if (!q.question || q.answer == null) return;
         const r = await client.query(
-          `INSERT INTO questions(ext_id,type,question,options,answer,points,time_sec,image)
-           VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+          `INSERT INTO questions(ext_id,type,question,options,answer,points,time_sec,image,audio)
+           VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
           [
             String(q.id || ''),
             type,
@@ -131,6 +160,7 @@ router.post('/import-excel', memUpload.single('file'), async (req, res, next) =>
             q.points || 10,
             q.time_sec || 30,
             q.image || null,
+            q.audio || null,
           ]
         );
         idMap[`${type}:${q.id}`] = r.rows[0].id;
@@ -148,6 +178,7 @@ router.post('/import-excel', memUpload.single('file'), async (req, res, next) =>
         await insertQ('pass', { ...r, points: r.base_points || r.points });
       }
       for (const r of get('ImageRound')) await insertQ('image', r);
+      for (const r of get('Speaker')) await insertQ('speaker', r);
 
       for (const r of get('Rounds')) {
         const ids = String(r.question_ids || '')
@@ -184,7 +215,7 @@ router.post('/upload-images', upload.array('images', 50), (req, res) => {
 
 router.get('/images', (req, res, next) => {
   try {
-    const files = fs.readdirSync(UPLOAD_DIR).filter((f) => /\.(png|jpe?g|gif|webp)$/i.test(f));
+    const files = fs.readdirSync(UPLOAD_DIR).filter((f) => IMAGE_EXT_RE.test(f));
     res.json({ files });
   } catch (e) { next(e); }
 });
@@ -192,6 +223,26 @@ router.get('/images', (req, res, next) => {
 router.delete('/images/:name', (req, res) => {
   const safe = sanitize(req.params.name);
   if (!SAFE_NAME.test(safe)) return res.status(400).json({ error: 'invalid name' });
+  const p = path.join(UPLOAD_DIR, safe);
+  if (!p.startsWith(UPLOAD_DIR + path.sep)) return res.status(400).json({ error: 'invalid path' });
+  if (fs.existsSync(p)) fs.unlinkSync(p);
+  res.json({ ok: true });
+});
+
+router.post('/upload-audio', audioUpload.array('audio', 30), (req, res) => {
+  res.json({ ok: true, files: (req.files || []).map((f) => f.filename) });
+});
+
+router.get('/audio', (req, res, next) => {
+  try {
+    const files = fs.readdirSync(UPLOAD_DIR).filter((f) => AUDIO_EXT_RE.test(f));
+    res.json({ files });
+  } catch (e) { next(e); }
+});
+
+router.delete('/audio/:name', (req, res) => {
+  const safe = sanitize(req.params.name);
+  if (!SAFE_AUDIO.test(safe)) return res.status(400).json({ error: 'invalid name' });
   const p = path.join(UPLOAD_DIR, safe);
   if (!p.startsWith(UPLOAD_DIR + path.sep)) return res.status(400).json({ error: 'invalid path' });
   if (fs.existsSync(p)) fs.unlinkSync(p);
@@ -238,11 +289,9 @@ router.get('/status', async (req, res, next) => {
 router.get('/template.xlsx', (req, res, next) => {
   const file = path.join(__dirname, '..', 'scripts', 'quiz_template.xlsx');
   try {
-    if (!fs.existsSync(file)) {
-      // Generate on demand in a child process context rather than as a side-effect require
-      const { generateTemplate } = require('../scripts/generate-template');
-      generateTemplate(file);
-    }
+    // Always regenerate so updates to the template layout ship without a rebuild cycle.
+    const { generateTemplate } = require('../scripts/generate-template');
+    generateTemplate(file);
     res.download(file, 'quiz_template.xlsx');
   } catch (e) { next(e); }
 });

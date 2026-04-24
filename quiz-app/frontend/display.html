@@ -277,6 +277,7 @@ function renderQuestionBody(s) {
         </div>
         <div class="q-text">${esc(q.question)}</div>
         ${q.image ? `<img class="q-image" src="uploads/${esc(q.image)}">` : ''}
+        ${q.audio ? `<audio class="q-audio" controls preload="metadata" src="uploads/${esc(q.audio)}" style="width:100%;margin-top:14px"></audio>` : ''}
         ${s.state.clue ? `<div class="clue-banner"><b>💡 Clue:</b> ${esc(s.state.clue)}</div>` : ''}
         ${opts}
         ${q.answer && q.type !== 'mcq' ? `<div class="answer-box"><b>Answer:</b> ${esc(q.answer)}</div>` : ''}
