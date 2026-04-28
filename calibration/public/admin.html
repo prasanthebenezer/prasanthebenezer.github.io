@@ -75,6 +75,9 @@
           <button class="btn btn-primary" onclick="showEquipmentForm()">
             <i class="fas fa-plus"></i> Add Equipment
           </button>
+          <button class="btn btn-secondary" onclick="showChangePasswordsModal()">
+            <i class="fas fa-key"></i> Change Passwords
+          </button>
           <button class="btn btn-secondary" onclick="adminLogout()">
             <i class="fas fa-sign-out-alt"></i> Logout
           </button>
@@ -221,6 +224,75 @@
             <span class="btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change Passwords Modal -->
+  <div class="modal-overlay" id="changePasswordsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-key"></i> Change Passwords</h3>
+        <button class="modal-close" onclick="closeChangePasswordsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">Leave a field blank to keep that password unchanged. Minimum 6 characters.</p>
+        <form id="changePasswordsForm" onsubmit="submitChangePasswords(event)">
+          <div class="form-group">
+            <label for="cpCurrent">Current Admin Password *</label>
+            <div class="password-input-wrap">
+              <input type="password" id="cpCurrent" placeholder="Current admin password" required autocomplete="off">
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('cpCurrent')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cpNewAdmin">New Admin Password</label>
+            <div class="password-input-wrap">
+              <input type="password" id="cpNewAdmin" placeholder="Leave blank to keep current" autocomplete="new-password" minlength="6">
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('cpNewAdmin')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cpConfirmAdmin">Confirm New Admin Password</label>
+            <div class="password-input-wrap">
+              <input type="password" id="cpConfirmAdmin" placeholder="Repeat new admin password" autocomplete="new-password">
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('cpConfirmAdmin')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cpNewView">New Certificate Viewing Password</label>
+            <div class="password-input-wrap">
+              <input type="password" id="cpNewView" placeholder="Leave blank to keep current" autocomplete="new-password" minlength="6">
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('cpNewView')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cpConfirmView">Confirm New Viewing Password</label>
+            <div class="password-input-wrap">
+              <input type="password" id="cpConfirmView" placeholder="Repeat new viewing password" autocomplete="new-password">
+              <button type="button" class="password-toggle" onclick="togglePasswordVisibility('cpConfirmView')">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <p class="form-error" id="cpError" style="display:none;"></p>
+          <p class="form-success" id="cpSuccess" style="display:none; color: var(--status-valid, #1a7f37);"></p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeChangePasswordsModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="cpSubmitBtn">
+              <span class="btn-text">Update Passwords</span>
+              <span class="btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

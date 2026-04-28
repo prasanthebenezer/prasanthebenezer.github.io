@@ -7,8 +7,8 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-const CERT_VIEW_PASSWORD = process.env.CERT_VIEW_PASSWORD || 'view123';
+const INITIAL_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const INITIAL_CERT_VIEW_PASSWORD = process.env.CERT_VIEW_PASSWORD || 'view123';
 
 // Ensure directories exist
 const DB_DIR = path.join(__dirname, 'database');
@@ -31,8 +31,51 @@ db.exec(`
     date_of_calibration TEXT,
     calibration_due_date TEXT,
     certificate_number  TEXT
-  )
+  );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `);
+
+// ─── Password storage (scrypt-hashed in settings table) ───
+function hashPassword(plain) {
+  const salt = crypto.randomBytes(16);
+  const derived = crypto.scryptSync(plain, salt, 64);
+  return `scrypt$${salt.toString('hex')}$${derived.toString('hex')}`;
+}
+
+function verifyPassword(plain, stored) {
+  if (!stored || typeof stored !== 'string') return false;
+  const parts = stored.split('$');
+  if (parts.length !== 3 || parts[0] !== 'scrypt') return false;
+  const salt = Buffer.from(parts[1], 'hex');
+  const expected = Buffer.from(parts[2], 'hex');
+  const derived = crypto.scryptSync(plain, salt, expected.length);
+  return derived.length === expected.length && crypto.timingSafeEqual(derived, expected);
+}
+
+const getSetting = db.prepare('SELECT value FROM settings WHERE key = ?');
+const upsertSetting = db.prepare(`
+  INSERT INTO settings (key, value) VALUES (?, ?)
+  ON CONFLICT(key) DO UPDATE SET value = excluded.value
+`);
+
+function getStoredHash(key) {
+  const row = getSetting.get(key);
+  return row ? row.value : null;
+}
+
+// Seed from env vars on first boot only — subsequent changes happen via the admin UI
+if (!getStoredHash('admin_password')) {
+  upsertSetting.run('admin_password', hashPassword(INITIAL_ADMIN_PASSWORD));
+  console.log('Seeded admin password from ADMIN_PASSWORD env var');
+}
+if (!getStoredHash('cert_view_password')) {
+  upsertSetting.run('cert_view_password', hashPassword(INITIAL_CERT_VIEW_PASSWORD));
+  console.log('Seeded certificate viewing password from CERT_VIEW_PASSWORD env var');
+}
 
 // Seed data if empty
 const count = db.prepare('SELECT COUNT(*) as c FROM equipment').get();
@@ -77,7 +120,7 @@ const upload = multer({
 // Auth middleware
 function requireAdmin(req, res, next) {
   const password = req.headers['x-admin-password'];
-  if (!password || password !== ADMIN_PASSWORD) {
+  if (!password || !verifyPassword(password, getStoredHash('admin_password'))) {
     return res.status(401).json({ error: 'Invalid admin password' });
   }
   next();
@@ -85,7 +128,7 @@ function requireAdmin(req, res, next) {
 
 function requireCertPassword(req, res, next) {
   const password = req.headers['x-cert-password'];
-  if (!password || password !== CERT_VIEW_PASSWORD) {
+  if (!password || !verifyPassword(password, getStoredHash('cert_view_password'))) {
     return res.status(401).json({ error: 'Invalid certificate viewing password' });
   }
   next();
@@ -176,7 +219,7 @@ app.delete('/api/equipment/:id', requireAdmin, (req, res) => {
 // Verify certificate viewing password
 app.post('/api/verify-password', (req, res) => {
   const { password } = req.body;
-  if (password === CERT_VIEW_PASSWORD) {
+  if (verifyPassword(password, getStoredHash('cert_view_password'))) {
     res.json({ valid: true });
   } else {
     res.status(401).json({ valid: false, error: 'Invalid password' });
@@ -186,11 +229,42 @@ app.post('/api/verify-password', (req, res) => {
 // Admin login
 app.post('/api/admin-login', (req, res) => {
   const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
+  if (verifyPassword(password, getStoredHash('admin_password'))) {
     res.json({ valid: true });
   } else {
     res.status(401).json({ valid: false, error: 'Invalid admin password' });
   }
+});
+
+// Change admin and/or certificate viewing password
+app.post('/api/change-passwords', requireAdmin, (req, res) => {
+  const { current_password, new_admin_password, new_cert_view_password } = req.body || {};
+
+  if (!verifyPassword(current_password, getStoredHash('admin_password'))) {
+    return res.status(401).json({ error: 'Current admin password is incorrect' });
+  }
+
+  const updates = [];
+  if (new_admin_password !== undefined && new_admin_password !== null && new_admin_password !== '') {
+    if (typeof new_admin_password !== 'string' || new_admin_password.length < 6) {
+      return res.status(400).json({ error: 'New admin password must be at least 6 characters' });
+    }
+    upsertSetting.run('admin_password', hashPassword(new_admin_password));
+    updates.push('admin');
+  }
+  if (new_cert_view_password !== undefined && new_cert_view_password !== null && new_cert_view_password !== '') {
+    if (typeof new_cert_view_password !== 'string' || new_cert_view_password.length < 6) {
+      return res.status(400).json({ error: 'New certificate viewing password must be at least 6 characters' });
+    }
+    upsertSetting.run('cert_view_password', hashPassword(new_cert_view_password));
+    updates.push('cert_view');
+  }
+
+  if (updates.length === 0) {
+    return res.status(400).json({ error: 'Provide a new admin password, certificate viewing password, or both' });
+  }
+
+  res.json({ message: 'Password updated', updated: updates });
 });
 
 // Serve certificate PDF (password protected)

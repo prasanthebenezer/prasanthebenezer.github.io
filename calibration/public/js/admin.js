@@ -374,6 +374,105 @@ async function confirmDelete() {
   }
 }
 
+// ─── Change Passwords ──────────────────────
+function showChangePasswordsModal() {
+  const form = document.getElementById('changePasswordsForm');
+  form.reset();
+  document.getElementById('cpError').style.display = 'none';
+  document.getElementById('cpSuccess').style.display = 'none';
+  document.getElementById('changePasswordsModal').classList.add('open');
+}
+
+function closeChangePasswordsModal() {
+  document.getElementById('changePasswordsModal').classList.remove('open');
+}
+
+async function submitChangePasswords(e) {
+  e.preventDefault();
+  const errorEl = document.getElementById('cpError');
+  const successEl = document.getElementById('cpSuccess');
+  const btn = document.getElementById('cpSubmitBtn');
+
+  const current = document.getElementById('cpCurrent').value;
+  const newAdmin = document.getElementById('cpNewAdmin').value;
+  const confirmAdmin = document.getElementById('cpConfirmAdmin').value;
+  const newView = document.getElementById('cpNewView').value;
+  const confirmView = document.getElementById('cpConfirmView').value;
+
+  errorEl.style.display = 'none';
+  successEl.style.display = 'none';
+
+  if (!newAdmin && !newView) {
+    errorEl.textContent = 'Enter at least one new password to change.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (newAdmin && newAdmin !== confirmAdmin) {
+    errorEl.textContent = 'New admin password and confirmation do not match.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (newView && newView !== confirmView) {
+    errorEl.textContent = 'New viewing password and confirmation do not match.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (newAdmin && newAdmin.length < 6) {
+    errorEl.textContent = 'New admin password must be at least 6 characters.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (newView && newView.length < 6) {
+    errorEl.textContent = 'New viewing password must be at least 6 characters.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  btn.querySelector('.btn-text').style.display = 'none';
+  btn.querySelector('.btn-loading').style.display = 'inline';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${CONFIG.API_BASE}/change-passwords`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword,
+      },
+      body: JSON.stringify({
+        current_password: current,
+        new_admin_password: newAdmin || undefined,
+        new_cert_view_password: newView || undefined,
+      }),
+    });
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      errorEl.textContent = body.error || 'Failed to update passwords.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    // If admin password changed, the cached session credential is now stale.
+    if (newAdmin) {
+      adminPassword = newAdmin;
+      sessionStorage.setItem('admin-auth', newAdmin);
+    }
+
+    successEl.textContent = 'Passwords updated successfully.';
+    successEl.style.display = 'block';
+    document.getElementById('changePasswordsForm').reset();
+    setTimeout(closeChangePasswordsModal, 1500);
+  } catch (err) {
+    errorEl.textContent = 'Connection error. Please try again.';
+    errorEl.style.display = 'block';
+  } finally {
+    btn.querySelector('.btn-text').style.display = 'inline';
+    btn.querySelector('.btn-loading').style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
 // ─── QR Code ───────────────────────────────
 let currentQR = null;
 
