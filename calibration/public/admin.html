@@ -75,6 +75,9 @@
           <button class="btn btn-primary" onclick="showEquipmentForm()">
             <i class="fas fa-plus"></i> Add Equipment
           </button>
+          <button class="btn btn-secondary" onclick="showBulkUploadModal()">
+            <i class="fas fa-file-excel"></i> Bulk Upload
+          </button>
           <button class="btn btn-secondary" onclick="showChangePasswordsModal()">
             <i class="fas fa-key"></i> Change Passwords
           </button>
@@ -293,6 +296,62 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Upload Modal -->
+  <div class="modal-overlay" id="bulkUploadModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3><i class="fas fa-file-excel"></i> Bulk Upload Equipment</h3>
+        <button class="modal-close" onclick="closeBulkUploadModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">
+          Upload an Excel (.xlsx, .xls) or CSV file with the following columns:
+          <strong>Equipment ID</strong>, <strong>Equipment Name</strong>, <strong>Serial Number</strong>,
+          Calibration Range, Interval (months), Date of Calibration, Calibration Due Date.
+          Certificates can be uploaded later by editing each equipment record.
+        </p>
+        <p>
+          <a href="/api/bulk-template.xlsx" class="btn btn-secondary btn-sm" download>
+            <i class="fas fa-download"></i> Download Template
+          </a>
+        </p>
+        <form id="bulkUploadForm" onsubmit="submitBulkUpload(event)">
+          <div class="form-group">
+            <label for="bulkUploadFile">Spreadsheet file</label>
+            <input type="file" id="bulkUploadFile" accept=".xlsx,.xls,.csv" required>
+          </div>
+          <p class="form-error" id="bulkUploadError" style="display:none;"></p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeBulkUploadModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="bulkUploadSubmitBtn">
+              <span class="btn-text">Upload</span>
+              <span class="btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
+          </div>
+        </form>
+        <div id="bulkUploadResult" style="display:none; margin-top: 1.25rem;">
+          <div id="bulkUploadSummary" class="bulk-upload-summary"></div>
+          <div class="table-container" style="max-height: 320px; overflow-y: auto; margin-top: 0.75rem;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Row</th>
+                  <th>Equipment ID</th>
+                  <th>Status</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="bulkUploadResultBody"></tbody>
+            </table>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-primary" onclick="closeBulkUploadModal()">Done</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

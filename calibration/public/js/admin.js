@@ -473,6 +473,108 @@ async function submitChangePasswords(e) {
   }
 }
 
+// ─── Bulk Upload ───────────────────────────
+function showBulkUploadModal() {
+  const form = document.getElementById('bulkUploadForm');
+  form.reset();
+  form.style.display = 'block';
+  document.getElementById('bulkUploadError').style.display = 'none';
+  document.getElementById('bulkUploadResult').style.display = 'none';
+  document.getElementById('bulkUploadResultBody').innerHTML = '';
+  document.getElementById('bulkUploadSummary').innerHTML = '';
+  document.getElementById('bulkUploadModal').classList.add('open');
+}
+
+function closeBulkUploadModal() {
+  document.getElementById('bulkUploadModal').classList.remove('open');
+}
+
+async function submitBulkUpload(e) {
+  e.preventDefault();
+  const fileInput = document.getElementById('bulkUploadFile');
+  const errorEl = document.getElementById('bulkUploadError');
+  const btn = document.getElementById('bulkUploadSubmitBtn');
+  const file = fileInput.files[0];
+
+  errorEl.style.display = 'none';
+
+  if (!file) {
+    errorEl.textContent = 'Please choose a file to upload.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  btn.querySelector('.btn-text').style.display = 'none';
+  btn.querySelector('.btn-loading').style.display = 'inline';
+  btn.disabled = true;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${CONFIG.API_BASE}/bulk-upload-equipment`, {
+      method: 'POST',
+      headers: { 'x-admin-password': adminPassword },
+      body: formData,
+    });
+
+    const body = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      errorEl.textContent = body.error || 'Bulk upload failed.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    renderBulkUploadResult(body);
+    if (body.inserted > 0) {
+      await loadAdminPanel();
+    }
+  } catch (err) {
+    errorEl.textContent = 'Connection error. Please try again.';
+    errorEl.style.display = 'block';
+  } finally {
+    btn.querySelector('.btn-text').style.display = 'inline';
+    btn.querySelector('.btn-loading').style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
+function renderBulkUploadResult(body) {
+  document.getElementById('bulkUploadForm').style.display = 'none';
+  document.getElementById('bulkUploadResult').style.display = 'block';
+
+  const summary = document.getElementById('bulkUploadSummary');
+  summary.innerHTML = `
+    <p><strong>${body.total}</strong> row(s) processed —
+      <span style="color: var(--status-valid);"><i class="fas fa-circle-check"></i> ${body.inserted} inserted</span>,
+      <span style="color: #e65100;"><i class="fas fa-circle-minus"></i> ${body.skipped} skipped</span>,
+      <span style="color: var(--status-expired);"><i class="fas fa-circle-xmark"></i> ${body.errors} error(s)</span>
+    </p>
+  `;
+
+  const tbody = document.getElementById('bulkUploadResultBody');
+  tbody.innerHTML = '';
+  body.results.forEach(r => {
+    const tr = document.createElement('tr');
+    let badge;
+    if (r.status === 'inserted') {
+      badge = '<span class="status-badge valid"><i class="fas fa-circle-check"></i> Inserted</span>';
+    } else if (r.status === 'skipped') {
+      badge = '<span class="status-badge due-soon"><i class="fas fa-circle-minus"></i> Skipped</span>';
+    } else {
+      badge = '<span class="status-badge expired"><i class="fas fa-circle-xmark"></i> Error</span>';
+    }
+    tr.innerHTML = `
+      <td>${r.row}</td>
+      <td>${escapeHtml(r.equipment_id || '—')}</td>
+      <td>${badge}</td>
+      <td>${escapeHtml(r.message || '')}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 // ─── QR Code ───────────────────────────────
 let currentQR = null;
 
