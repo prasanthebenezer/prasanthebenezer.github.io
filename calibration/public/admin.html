@@ -328,11 +328,67 @@
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" onclick="closeBulkUploadModal()">Cancel</button>
             <button type="submit" class="btn btn-primary" id="bulkUploadSubmitBtn">
-              <span class="btn-text">Upload</span>
+              <span class="btn-text">Analyse</span>
               <span class="btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
             </button>
           </div>
         </form>
+
+        <div id="bulkUploadPreview" style="display:none; margin-top: 1.25rem;">
+          <h4 style="margin: 0 0 0.5rem 0;"><i class="fas fa-clipboard-check"></i> Review &amp; confirm</h4>
+          <div id="bulkUploadPreviewSummary" class="bulk-upload-summary"></div>
+
+          <div id="bulkUploadIdConflictBox" class="bulk-conflict-box" style="display:none;">
+            <p>
+              <i class="fas fa-triangle-exclamation"></i>
+              <strong><span id="bulkUploadIdConflictCount">0</span> row(s)</strong>
+              have an <strong>Equipment ID</strong> that already exists in the database.
+            </p>
+            <label class="bulk-conflict-toggle">
+              <input type="checkbox" id="bulkUploadOverwriteIds">
+              <span>Overwrite the existing equipment with the spreadsheet values</span>
+            </label>
+            <p class="bulk-conflict-note">If unchecked, these rows will be skipped.</p>
+          </div>
+
+          <div id="bulkUploadSerialConflictBox" class="bulk-conflict-box" style="display:none;">
+            <p>
+              <i class="fas fa-triangle-exclamation"></i>
+              <strong><span id="bulkUploadSerialConflictCount">0</span> row(s)</strong>
+              have a <strong>Serial Number</strong> that is already in use by another record.
+            </p>
+            <label class="bulk-conflict-toggle">
+              <input type="checkbox" id="bulkUploadAcceptSerial">
+              <span>I authorise saving these records with duplicate serial numbers</span>
+            </label>
+            <p class="bulk-conflict-note">If unchecked, these rows will be skipped.</p>
+          </div>
+
+          <div class="table-container" style="max-height: 320px; overflow-y: auto; margin-top: 0.75rem;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Row</th>
+                  <th>Equipment ID</th>
+                  <th>Serial Number</th>
+                  <th>Action</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="bulkUploadPreviewBody"></tbody>
+            </table>
+          </div>
+
+          <p class="form-error" id="bulkUploadCommitError" style="display:none;"></p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="resetBulkUpload()">Back</button>
+            <button type="button" class="btn btn-primary" id="bulkUploadConfirmBtn" onclick="commitBulkUpload()">
+              <span class="btn-text">Confirm Upload</span>
+              <span class="btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i></span>
+            </button>
+          </div>
+        </div>
+
         <div id="bulkUploadResult" style="display:none; margin-top: 1.25rem;">
           <div id="bulkUploadSummary" class="bulk-upload-summary"></div>
           <div class="table-container" style="max-height: 320px; overflow-y: auto; margin-top: 0.75rem;">

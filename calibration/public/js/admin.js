@@ -474,15 +474,30 @@ async function submitChangePasswords(e) {
 }
 
 // ─── Bulk Upload ───────────────────────────
+let bulkUploadFileCache = null;
+
 function showBulkUploadModal() {
+  resetBulkUpload();
+  document.getElementById('bulkUploadModal').classList.add('open');
+}
+
+function resetBulkUpload() {
+  bulkUploadFileCache = null;
   const form = document.getElementById('bulkUploadForm');
   form.reset();
   form.style.display = 'block';
   document.getElementById('bulkUploadError').style.display = 'none';
+  document.getElementById('bulkUploadCommitError').style.display = 'none';
+  document.getElementById('bulkUploadPreview').style.display = 'none';
   document.getElementById('bulkUploadResult').style.display = 'none';
+  document.getElementById('bulkUploadIdConflictBox').style.display = 'none';
+  document.getElementById('bulkUploadSerialConflictBox').style.display = 'none';
+  document.getElementById('bulkUploadOverwriteIds').checked = false;
+  document.getElementById('bulkUploadAcceptSerial').checked = false;
   document.getElementById('bulkUploadResultBody').innerHTML = '';
+  document.getElementById('bulkUploadPreviewBody').innerHTML = '';
   document.getElementById('bulkUploadSummary').innerHTML = '';
-  document.getElementById('bulkUploadModal').classList.add('open');
+  document.getElementById('bulkUploadPreviewSummary').innerHTML = '';
 }
 
 function closeBulkUploadModal() {
@@ -504,6 +519,8 @@ async function submitBulkUpload(e) {
     return;
   }
 
+  bulkUploadFileCache = file;
+
   btn.querySelector('.btn-text').style.display = 'none';
   btn.querySelector('.btn-loading').style.display = 'inline';
   btn.disabled = true;
@@ -511,6 +528,123 @@ async function submitBulkUpload(e) {
   try {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('mode', 'preview');
+
+    const res = await fetch(`${CONFIG.API_BASE}/bulk-upload-equipment`, {
+      method: 'POST',
+      headers: { 'x-admin-password': adminPassword },
+      body: formData,
+    });
+
+    const body = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      errorEl.textContent = body.error || 'Could not analyse the spreadsheet.';
+      errorEl.style.display = 'block';
+      bulkUploadFileCache = null;
+      return;
+    }
+
+    renderBulkUploadPreview(body);
+  } catch (err) {
+    errorEl.textContent = 'Connection error. Please try again.';
+    errorEl.style.display = 'block';
+    bulkUploadFileCache = null;
+  } finally {
+    btn.querySelector('.btn-text').style.display = 'inline';
+    btn.querySelector('.btn-loading').style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
+function renderBulkUploadPreview(body) {
+  document.getElementById('bulkUploadForm').style.display = 'none';
+  document.getElementById('bulkUploadResult').style.display = 'none';
+  document.getElementById('bulkUploadPreview').style.display = 'block';
+  document.getElementById('bulkUploadCommitError').style.display = 'none';
+
+  const s = body.summary;
+  document.getElementById('bulkUploadPreviewSummary').innerHTML = `
+    <p><strong>${s.total}</strong> row(s) parsed —
+      <span style="color: var(--status-valid);"><i class="fas fa-circle-check"></i> ${s.ready} clean</span>,
+      <span style="color: var(--status-due-soon);"><i class="fas fa-id-card"></i> ${s.id_conflicts} ID duplicate(s)</span>,
+      <span style="color: var(--status-due-soon);"><i class="fas fa-barcode"></i> ${s.serial_conflicts} serial duplicate(s)</span>,
+      <span style="color: var(--status-expired);"><i class="fas fa-circle-xmark"></i> ${s.errors} error(s)</span>
+    </p>
+  `;
+
+  const idBox = document.getElementById('bulkUploadIdConflictBox');
+  if (s.id_conflicts > 0) {
+    document.getElementById('bulkUploadIdConflictCount').textContent = s.id_conflicts;
+    idBox.style.display = 'block';
+  } else {
+    idBox.style.display = 'none';
+  }
+
+  const serialBox = document.getElementById('bulkUploadSerialConflictBox');
+  if (s.serial_conflicts > 0) {
+    document.getElementById('bulkUploadSerialConflictCount').textContent = s.serial_conflicts;
+    serialBox.style.display = 'block';
+  } else {
+    serialBox.style.display = 'none';
+  }
+
+  const tbody = document.getElementById('bulkUploadPreviewBody');
+  tbody.innerHTML = '';
+  body.rows.forEach(r => {
+    const flags = r.flags || [];
+    const idConflict = flags.includes('id_conflict');
+    const serialConflict = flags.includes('serial_conflict');
+
+    let actionHtml;
+    if (r.status === 'error') {
+      actionHtml = '<span class="status-badge expired"><i class="fas fa-circle-xmark"></i> Error</span>';
+    } else if (idConflict && serialConflict) {
+      actionHtml = '<span class="status-badge due-soon"><i class="fas fa-id-card"></i> ID exists</span> '
+        + '<span class="status-badge due-soon"><i class="fas fa-barcode"></i> Serial</span>';
+    } else if (idConflict) {
+      actionHtml = '<span class="status-badge due-soon"><i class="fas fa-id-card"></i> ID exists</span>';
+    } else if (serialConflict) {
+      actionHtml = '<span class="status-badge due-soon"><i class="fas fa-barcode"></i> Serial exists</span>';
+    } else {
+      actionHtml = '<span class="status-badge valid"><i class="fas fa-circle-check"></i> Insert</span>';
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.row}</td>
+      <td>${escapeHtml(r.equipment_id || '—')}</td>
+      <td>${escapeHtml(r.serial_number || '—')}</td>
+      <td>${actionHtml}</td>
+      <td>${escapeHtml(r.message || '')}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function commitBulkUpload() {
+  if (!bulkUploadFileCache) {
+    document.getElementById('bulkUploadCommitError').textContent = 'No file in memory; please re-select the spreadsheet.';
+    document.getElementById('bulkUploadCommitError').style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('bulkUploadConfirmBtn');
+  const errorEl = document.getElementById('bulkUploadCommitError');
+  const overwrite = document.getElementById('bulkUploadOverwriteIds').checked;
+  const acceptSerial = document.getElementById('bulkUploadAcceptSerial').checked;
+
+  errorEl.style.display = 'none';
+  btn.querySelector('.btn-text').style.display = 'none';
+  btn.querySelector('.btn-loading').style.display = 'inline';
+  btn.disabled = true;
+
+  try {
+    const formData = new FormData();
+    formData.append('file', bulkUploadFileCache);
+    formData.append('mode', 'commit');
+    formData.append('overwrite_ids', overwrite ? 'true' : 'false');
+    formData.append('accept_serial_warnings', acceptSerial ? 'true' : 'false');
 
     const res = await fetch(`${CONFIG.API_BASE}/bulk-upload-equipment`, {
       method: 'POST',
@@ -527,7 +661,7 @@ async function submitBulkUpload(e) {
     }
 
     renderBulkUploadResult(body);
-    if (body.inserted > 0) {
+    if ((body.inserted || 0) > 0 || (body.updated || 0) > 0) {
       await loadAdminPanel();
     }
   } catch (err) {
@@ -542,13 +676,16 @@ async function submitBulkUpload(e) {
 
 function renderBulkUploadResult(body) {
   document.getElementById('bulkUploadForm').style.display = 'none';
+  document.getElementById('bulkUploadPreview').style.display = 'none';
   document.getElementById('bulkUploadResult').style.display = 'block';
 
   const summary = document.getElementById('bulkUploadSummary');
+  const updated = body.updated || 0;
   summary.innerHTML = `
     <p><strong>${body.total}</strong> row(s) processed —
       <span style="color: var(--status-valid);"><i class="fas fa-circle-check"></i> ${body.inserted} inserted</span>,
-      <span style="color: #e65100;"><i class="fas fa-circle-minus"></i> ${body.skipped} skipped</span>,
+      <span style="color: var(--accent);"><i class="fas fa-rotate"></i> ${updated} updated</span>,
+      <span style="color: var(--status-due-soon);"><i class="fas fa-circle-minus"></i> ${body.skipped} skipped</span>,
       <span style="color: var(--status-expired);"><i class="fas fa-circle-xmark"></i> ${body.errors} error(s)</span>
     </p>
   `;
@@ -556,15 +693,17 @@ function renderBulkUploadResult(body) {
   const tbody = document.getElementById('bulkUploadResultBody');
   tbody.innerHTML = '';
   body.results.forEach(r => {
-    const tr = document.createElement('tr');
     let badge;
     if (r.status === 'inserted') {
       badge = '<span class="status-badge valid"><i class="fas fa-circle-check"></i> Inserted</span>';
+    } else if (r.status === 'updated') {
+      badge = '<span class="status-badge valid"><i class="fas fa-rotate"></i> Updated</span>';
     } else if (r.status === 'skipped') {
       badge = '<span class="status-badge due-soon"><i class="fas fa-circle-minus"></i> Skipped</span>';
     } else {
       badge = '<span class="status-badge expired"><i class="fas fa-circle-xmark"></i> Error</span>';
     }
+    const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${r.row}</td>
       <td>${escapeHtml(r.equipment_id || '—')}</td>

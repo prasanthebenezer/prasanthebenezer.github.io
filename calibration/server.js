@@ -404,29 +404,28 @@ app.get('/api/bulk-template.xlsx', (req, res) => {
   res.send(buf);
 });
 
-app.post('/api/bulk-upload-equipment', requireAdmin, bulkUpload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-
+// Parse + analyse an uploaded spreadsheet and produce per-row decisions.
+// Returns { ok: true, analysis, summary } or { ok: false, status, error }.
+function analyseBulkUploadFile(buffer) {
   let workbook;
   try {
-    workbook = XLSX.read(req.file.buffer, { type: 'buffer', cellDates: true });
+    workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
   } catch (err) {
-    return res.status(400).json({ error: 'Could not read spreadsheet — make sure it is a valid .xlsx, .xls, or .csv file' });
+    return { ok: false, status: 400, error: 'Could not read spreadsheet — make sure it is a valid .xlsx, .xls, or .csv file' };
   }
 
   const sheetName = workbook.SheetNames[0];
-  if (!sheetName) return res.status(400).json({ error: 'Spreadsheet contains no sheets' });
+  if (!sheetName) return { ok: false, status: 400, error: 'Spreadsheet contains no sheets' };
   const sheet = workbook.Sheets[sheetName];
 
   // Read header row explicitly so we don't miss columns whose first data cell is blank
   const headerMatrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
   if (headerMatrix.length < 2) {
-    return res.status(400).json({ error: 'Spreadsheet contains no data rows' });
+    return { ok: false, status: 400, error: 'Spreadsheet contains no data rows' };
   }
   const headerRow = (headerMatrix[0] || []).map(h => (h == null ? '' : String(h)));
   const rows = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: true });
 
-  // Map original header -> canonical field name
   const keyMap = {};
   for (const h of headerRow) {
     if (!h) continue;
@@ -436,87 +435,236 @@ app.post('/api/bulk-upload-equipment', requireAdmin, bulkUpload.single('file'), 
   const haveCanonical = new Set(Object.values(keyMap));
   const missingRequired = ['equipment_id', 'name', 'serial_number'].filter(c => !haveCanonical.has(c));
   if (missingRequired.length > 0) {
-    return res.status(400).json({
+    return {
+      ok: false,
+      status: 400,
       error: `Spreadsheet is missing required column(s): ${missingRequired.map(c => ({
         equipment_id: 'Equipment ID',
         name: 'Equipment Name',
         serial_number: 'Serial Number',
       })[c]).join(', ')}`,
+    };
+  }
+
+  // Pre-load existing records for fast lookup
+  const existingRows = db.prepare('SELECT equipment_id, serial_number FROM equipment').all();
+  const existingByEquipId = new Map(existingRows.map(r => [r.equipment_id, r]));
+  const existingBySerial = new Map();
+  for (const r of existingRows) {
+    if (!existingBySerial.has(r.serial_number)) existingBySerial.set(r.serial_number, []);
+    existingBySerial.get(r.serial_number).push(r.equipment_id);
+  }
+
+  const seenIdsInBatch = new Map();      // equipment_id -> first row number seen
+  const seenSerialsInBatch = new Map();  // serial_number -> first row number seen
+
+  const analysis = rows.map((row, idx) => {
+    const rowNum = idx + 2; // header is row 1; data rows start at 2
+    const canonical = {};
+    for (const [origKey, canonKey] of Object.entries(keyMap)) {
+      canonical[canonKey] = row[origKey];
+    }
+
+    const equipment_id = (canonical.equipment_id ?? '').toString().trim();
+    const name = (canonical.name ?? '').toString().trim();
+    const serial_number = (canonical.serial_number ?? '').toString().trim();
+
+    if (!equipment_id || !name || !serial_number) {
+      return {
+        row: rowNum,
+        equipment_id: equipment_id || null,
+        name: name || null,
+        serial_number: serial_number || null,
+        status: 'error',
+        flags: [],
+        message: 'Equipment ID, Equipment Name, and Serial Number are required',
+      };
+    }
+
+    const calibration_range = canonical.calibration_range != null
+      ? String(canonical.calibration_range).trim() || null
+      : null;
+
+    let interval_months = null;
+    if (canonical.interval_months != null && canonical.interval_months !== '') {
+      const n = parseInt(canonical.interval_months, 10);
+      interval_months = Number.isFinite(n) && n > 0 ? n : null;
+    }
+
+    const date_of_calibration = toIsoDate(canonical.date_of_calibration);
+    const calibration_due_date = toIsoDate(canonical.calibration_due_date);
+
+    // Within-batch Equipment ID duplicate is a hard error — there is no sensible
+    // automatic way to choose which row "wins", so the user must fix the sheet.
+    if (seenIdsInBatch.has(equipment_id)) {
+      return {
+        row: rowNum, equipment_id, name, serial_number,
+        calibration_range, interval_months, date_of_calibration, calibration_due_date,
+        status: 'error', flags: [],
+        message: `Equipment ID "${equipment_id}" is repeated in this spreadsheet (first seen on row ${seenIdsInBatch.get(equipment_id)})`,
+      };
+    }
+    seenIdsInBatch.set(equipment_id, rowNum);
+
+    const flags = [];
+    const messages = [];
+
+    const existingForId = existingByEquipId.get(equipment_id);
+    if (existingForId) {
+      flags.push('id_conflict');
+      messages.push(`Equipment ID exists in database (current serial: ${existingForId.serial_number})`);
+    }
+
+    // Serial duplicate: another existing record (with a different equipment_id) or
+    // an earlier row in this batch already uses this serial.
+    const dbSerialOwners = (existingBySerial.get(serial_number) || []).filter(eid => eid !== equipment_id);
+    const batchSerialOwner = seenSerialsInBatch.get(serial_number);
+    if (dbSerialOwners.length > 0 || batchSerialOwner) {
+      flags.push('serial_conflict');
+      const owners = dbSerialOwners.slice();
+      if (batchSerialOwner) owners.push(`row ${batchSerialOwner} of this spreadsheet`);
+      messages.push(`Serial number is also used by: ${owners.join(', ')}`);
+    }
+    if (!seenSerialsInBatch.has(serial_number)) seenSerialsInBatch.set(serial_number, rowNum);
+
+    return {
+      row: rowNum,
+      equipment_id, name, serial_number,
+      calibration_range, interval_months, date_of_calibration, calibration_due_date,
+      status: flags.length === 0 ? 'ready' : 'conflict',
+      flags,
+      message: messages.join('; '),
+    };
+  });
+
+  const summary = {
+    total: rows.length,
+    ready: analysis.filter(a => a.status === 'ready').length,
+    id_conflicts: analysis.filter(a => a.flags.includes('id_conflict')).length,
+    serial_conflicts: analysis.filter(a => a.flags.includes('serial_conflict')).length,
+    errors: analysis.filter(a => a.status === 'error').length,
+  };
+
+  return { ok: true, analysis, summary };
+}
+
+app.post('/api/bulk-upload-equipment', requireAdmin, bulkUpload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+  const result = analyseBulkUploadFile(req.file.buffer);
+  if (!result.ok) return res.status(result.status).json({ error: result.error });
+  const { analysis, summary } = result;
+
+  const mode = (req.body.mode || 'preview').toString();
+  if (mode === 'preview') {
+    return res.json({
+      phase: 'preview',
+      summary,
+      rows: analysis.map(a => ({
+        row: a.row,
+        equipment_id: a.equipment_id,
+        name: a.name,
+        serial_number: a.serial_number,
+        status: a.status,
+        flags: a.flags,
+        message: a.message,
+      })),
     });
   }
 
-  const checkExisting = db.prepare('SELECT equipment_id FROM equipment WHERE equipment_id = ?');
+  if (mode !== 'commit') {
+    return res.status(400).json({ error: `Unknown mode "${mode}"` });
+  }
+
+  const overwriteIds = req.body.overwrite_ids === 'true';
+  const acceptSerialWarnings = req.body.accept_serial_warnings === 'true';
+
+  // Block commit when conflicts exist but the corresponding decision was not made,
+  // unless every conflict row would be skipped silently — in that case we still
+  // run, but the user will see them in the result as "skipped".
+  // (We do not hard-block; the per-row result clearly explains what happened.)
+
   const insertEquipment = db.prepare(`
     INSERT INTO equipment (equipment_id, serial_number, name, calibration_range, interval_months, date_of_calibration, calibration_due_date, certificate_number)
     VALUES (?, ?, ?, ?, ?, ?, ?, NULL)
   `);
+  const updateEquipment = db.prepare(`
+    UPDATE equipment SET
+      serial_number = ?, name = ?, calibration_range = ?, interval_months = ?,
+      date_of_calibration = ?, calibration_due_date = ?
+    WHERE equipment_id = ?
+  `);
 
   const results = [];
   let inserted = 0;
+  let updated = 0;
+  let skipped = 0;
+  let errorsCount = 0;
 
   const runImport = db.transaction(() => {
-    rows.forEach((row, idx) => {
-      const rowNum = idx + 2; // +1 for header, +1 for 1-indexing
-      const canonical = {};
-      for (const [origKey, canonKey] of Object.entries(keyMap)) {
-        canonical[canonKey] = row[origKey];
+    for (const a of analysis) {
+      if (a.status === 'error') {
+        errorsCount++;
+        results.push({ row: a.row, equipment_id: a.equipment_id, status: 'error', message: a.message });
+        continue;
       }
 
-      const equipment_id = (canonical.equipment_id ?? '').toString().trim();
-      const name = (canonical.name ?? '').toString().trim();
-      const serial_number = (canonical.serial_number ?? '').toString().trim();
+      const idConflict = a.flags.includes('id_conflict');
+      const serialConflict = a.flags.includes('serial_conflict');
 
-      if (!equipment_id || !name || !serial_number) {
-        results.push({ row: rowNum, equipment_id: equipment_id || null, status: 'error', message: 'Equipment ID, Equipment Name, and Serial Number are required' });
-        return;
+      if (idConflict && !overwriteIds) {
+        skipped++;
+        results.push({
+          row: a.row, equipment_id: a.equipment_id, status: 'skipped',
+          message: 'Equipment ID already exists; overwrite was not authorised',
+        });
+        continue;
+      }
+      if (serialConflict && !acceptSerialWarnings) {
+        skipped++;
+        results.push({
+          row: a.row, equipment_id: a.equipment_id, status: 'skipped',
+          message: 'Duplicate serial number; serial-warning override was not authorised',
+        });
+        continue;
       }
 
-      if (checkExisting.get(equipment_id)) {
-        results.push({ row: rowNum, equipment_id, status: 'skipped', message: 'Equipment ID already exists' });
-        return;
-      }
-
-      const calibration_range = canonical.calibration_range != null
-        ? String(canonical.calibration_range).trim() || null
-        : null;
-
-      let interval_months = null;
-      if (canonical.interval_months != null && canonical.interval_months !== '') {
-        const n = parseInt(canonical.interval_months, 10);
-        interval_months = Number.isFinite(n) && n > 0 ? n : null;
-      }
-
-      const date_of_calibration = toIsoDate(canonical.date_of_calibration);
-      const calibration_due_date = toIsoDate(canonical.calibration_due_date);
+      const noteParts = [];
+      if (idConflict) noteParts.push('overwrote existing record');
+      if (serialConflict) noteParts.push('duplicate serial accepted');
 
       try {
-        insertEquipment.run(
-          equipment_id,
-          serial_number,
-          name,
-          calibration_range,
-          interval_months,
-          date_of_calibration,
-          calibration_due_date,
-        );
-        inserted++;
-        results.push({ row: rowNum, equipment_id, status: 'inserted' });
+        if (idConflict) {
+          updateEquipment.run(
+            a.serial_number, a.name, a.calibration_range, a.interval_months,
+            a.date_of_calibration, a.calibration_due_date, a.equipment_id,
+          );
+          updated++;
+          results.push({ row: a.row, equipment_id: a.equipment_id, status: 'updated', message: noteParts.join('; ') });
+        } else {
+          insertEquipment.run(
+            a.equipment_id, a.serial_number, a.name, a.calibration_range,
+            a.interval_months, a.date_of_calibration, a.calibration_due_date,
+          );
+          inserted++;
+          results.push({ row: a.row, equipment_id: a.equipment_id, status: 'inserted', message: noteParts.join('; ') });
+        }
       } catch (err) {
-        results.push({ row: rowNum, equipment_id, status: 'error', message: err.message });
+        errorsCount++;
+        results.push({ row: a.row, equipment_id: a.equipment_id, status: 'error', message: err.message });
       }
-    });
+    }
   });
 
   runImport();
 
-  const skipped = results.filter(r => r.status === 'skipped').length;
-  const errors = results.filter(r => r.status === 'error').length;
-
   res.json({
-    total: rows.length,
+    phase: 'commit',
+    total: analysis.length,
     inserted,
+    updated,
     skipped,
-    errors,
+    errors: errorsCount,
     results,
   });
 });
