@@ -306,6 +306,20 @@ router.post('/undo-last', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Switch what the projector shows: 'question' (normal), 'leaderboard'
+// (force-show ranked teams), or 'hidden' (clear question area). Affects
+// only the public broadcast — host view always sees the live question.
+router.post('/display-mode/:mode', async (req, res, next) => {
+  try {
+    const mode = String(req.params.mode || '').toLowerCase();
+    if (!['question', 'leaderboard', 'hidden'].includes(mode)) {
+      return res.status(400).json({ error: 'invalid display mode' });
+    }
+    await pool.query('UPDATE session_state SET display_mode=$1 WHERE id=1', [mode]);
+    broadcast(req); res.json({ ok: true, mode });
+  } catch (e) { next(e); }
+});
+
 router.post('/adjust', async (req, res, next) => {
   try {
     const { team_id, delta, note } = req.body || {};

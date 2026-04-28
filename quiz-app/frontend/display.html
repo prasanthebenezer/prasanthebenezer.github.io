@@ -248,6 +248,61 @@
     margin: 0;
   }
   body.display #qbox > .leaderboard-title { flex: 0 0 auto; margin: 8px 0; }
+
+  /* Smaller "Assigned to <team>" banner — was 32px font / 18px padding,
+     now compact so the question + image dominate the projector area. */
+  body.display .assigned-banner {
+    font-size: clamp(14px, 1.8vh, 20px);
+    padding: 6px 12px; margin: 0 0 8px;
+    border-width: 1px; border-radius: 8px;
+    gap: 8px;
+  }
+  body.display .assigned-banner .swatch { width: 12px; height: 12px; }
+  body.display .verdict {
+    font-size: clamp(12px, 1.6vh, 16px); padding: 3px 10px;
+  }
+
+  /* Forced "Leaderboard" mode — single column, large rows */
+  body.display #qbox > .lb-wrap {
+    flex: 1 1 0; min-height: 0;
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 8px;
+  }
+  body.display #qbox .lb-list {
+    flex: 1 1 0; min-height: 0;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  body.display #qbox .lb-row {
+    flex: 1 1 0; min-height: 0;
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    align-items: center; gap: 16px;
+    padding: 12px 24px;
+    background: var(--bg-2);
+    border: 3px solid var(--border);
+    border-radius: 14px;
+  }
+  body.display #qbox .lb-row.leader {
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.35);
+  }
+  body.display #qbox .lb-rank {
+    font-size: clamp(28px, 4vh, 56px); font-weight: 800; min-width: 60px; text-align: center;
+  }
+  body.display #qbox .lb-swatch {
+    width: clamp(18px, 2.5vh, 28px); height: clamp(18px, 2.5vh, 28px); border-radius: 6px;
+  }
+  body.display #qbox .lb-name {
+    font-size: clamp(24px, 3.5vh, 48px); font-weight: 700;
+  }
+  body.display #qbox .lb-score {
+    font-size: clamp(36px, 6vh, 80px); font-weight: 800; letter-spacing: -2px;
+  }
+
+  /* Forced "Hidden" mode — calm holding screen */
+  body.display #qbox > .hidden-screen .big { font-size: clamp(60px, 8vh, 120px); }
+  body.display #qbox > .hidden-screen h1 {
+    font-size: clamp(28px, 4vh, 56px); margin-top: 8px;
+  }
 </style>
 </head>
 <body class="display">
@@ -361,6 +416,37 @@ function renderLeaderboardEmpty(s) {
     : '<div class="empty"><div class="big">🎯</div><h1>Get ready!</h1></div>';
 }
 
+// Forced "leaderboard" mode: dedicated podium view triggered from the host.
+function renderLeaderboardForced(s) {
+  const ranked = [...s.teams].sort((a,b) => b.score - a.score || a.position - b.position);
+  const top = ranked[0]?.score ?? 0;
+  let lastScore = null, denseRank = 0;
+  const rows = ranked.map(t => {
+    if (t.score !== lastScore) { denseRank += 1; lastScore = t.score; }
+    const isLeader = top > 0 && t.score === top;
+    const rankLabel = top > 0 ? (isLeader ? '👑' : '#' + denseRank) : '·';
+    return `
+      <div class="lb-row ${isLeader ? 'leader' : ''}" style="border-color:${t.color}">
+        <span class="lb-rank">${rankLabel}</span>
+        <span class="lb-swatch" style="background:${t.color}"></span>
+        <span class="lb-name">${esc(t.name)}</span>
+        <span class="lb-score">${t.score}</span>
+      </div>`;
+  }).join('');
+  document.getElementById('qbox').innerHTML = `
+    <div class="lb-wrap">
+      <div class="leaderboard-title">🏆 Leaderboard</div>
+      <div class="lb-list">${rows || '<div class="empty"><div class="big">👥</div>No teams</div>'}</div>
+    </div>`;
+}
+
+// Forced "hidden" mode: clear the question region so the projector audience
+// just sees a calm holding screen while the host briefs the room.
+function renderHidden() {
+  document.getElementById('qbox').innerHTML = `
+    <div class="empty hidden-screen"><div class="big">⏸</div><h1>Stand by…</h1></div>`;
+}
+
 function render(s) {
   const titleEl = document.getElementById('title');
   if (s.title) { titleEl.textContent = s.title; titleEl.style.display = 'block'; }
@@ -373,14 +459,21 @@ function render(s) {
 
   renderProgress(s);
 
+  const mode = (s.state && s.state.display_mode) || 'question';
   const qb = document.getElementById('qbox');
-  const nextQid = s.question ? s.question.id : null;
+  // Use mode in the crossfade key so flipping host toggles always animates.
+  const fadeKey = mode === 'question'
+    ? (s.question ? `q:${s.question.id}` : 'empty')
+    : `mode:${mode}`;
   const applyBody = () => {
-    if (s.question) { renderQuestionBody(s); }
-    else { renderLeaderboardEmpty(s); }
+    if (mode === 'leaderboard') renderLeaderboardForced(s);
+    else if (mode === 'hidden') renderHidden();
+    else if (s.question) renderQuestionBody(s);
+    else renderLeaderboardEmpty(s);
   };
-  maybeCrossfade(nextQid, applyBody);
-  renderTimer(s.state);
+  maybeCrossfade(fadeKey, applyBody);
+  // Timer only shows during the live question view.
+  renderTimer(mode === 'question' ? s.state : null);
 }
 
 function renderQuestionBody(s) {

@@ -19,6 +19,61 @@
   .zone.nav button { flex: 0 1 auto; }
   .zone.timer button { flex: 0 1 auto; }
 
+  /* Two-column layout inside the Current Question card on wide screens */
+  .q-card-row {
+    display: grid;
+    grid-template-columns: 1fr clamp(240px, 26%, 320px);
+    gap: 16px;
+    align-items: start;
+  }
+  .q-card-row .q-main { min-width: 0; }
+  .q-side-panel {
+    position: sticky; top: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 12px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .q-side-panel .zone {
+    flex-direction: column; align-items: stretch;
+    padding: 8px; gap: 6px;
+    background: var(--card);
+  }
+  .q-side-panel .zone button {
+    width: 100%; text-align: left; padding: 10px 12px;
+    font-size: 14px;
+  }
+  .q-side-panel .zone-label {
+    min-width: 0; margin-bottom: 2px;
+  }
+  .q-side-panel .control-zones { gap: 8px; margin: 0; }
+
+  .display-controls {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 8px; border-radius: 8px;
+    background: var(--card);
+  }
+  .display-controls .display-buttons {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
+  .display-controls button {
+    padding: 9px 10px; font-size: 13px;
+  }
+  .display-controls button.active {
+    background: var(--warn); color: #1a1a1a; border-color: var(--warn);
+    box-shadow: 0 0 0 2px rgba(245,158,11,0.3);
+  }
+
+  /* Below 1000px the panel falls back under the question */
+  @media (max-width: 999px) {
+    .q-card-row { grid-template-columns: 1fr; }
+    .q-side-panel { position: static; }
+    .q-side-panel .zone {
+      flex-direction: row; flex-wrap: wrap;
+    }
+    .q-side-panel .zone button { width: auto; flex: 1 1 130px; text-align: center; }
+  }
+
   .accordion summary {
     cursor: pointer; font-weight: 600; padding: 4px 0;
     list-style: none; display: flex; align-items: center; gap: 8px;
@@ -49,19 +104,6 @@
   .shortcut-list .kbd { justify-self: start; }
 
   .undo-btn { background: var(--card); }
-
-  /* Sticky control bar at viewport bottom */
-  .sticky-controls {
-    position: sticky; bottom: 0; z-index: 50;
-    margin: 16px -24px -24px;
-    padding: 12px 24px 16px;
-    background: linear-gradient(180deg, rgba(26,34,54,0) 0%, var(--bg-2) 22%);
-    backdrop-filter: blur(6px);
-  }
-  .sticky-controls::before {
-    content: ""; display: block; height: 1px;
-    background: var(--border); margin-bottom: 10px; opacity: 0.6;
-  }
 
   /* Compact inline timer pill (host only — projector has the big ring) */
   .timer-pill {
@@ -157,7 +199,6 @@
     .zone { flex-direction: column; align-items: stretch; }
     .zone-label { min-width: 0; }
     .zone button { width: 100%; }
-    .sticky-controls { margin: 12px -16px -16px; padding: 10px 16px 12px; }
   }
 </style>
 </head>
@@ -199,15 +240,26 @@
           <span id="timerpill"></span>
         </span>
       </div>
-      <div id="qbox"></div>
 
-      <details class="accordion" style="margin-top:12px">
-        <summary class="muted">Hints &amp; Clue</summary>
-        <div id="hintcontrols"></div>
-      </details>
+      <div class="q-card-row">
+        <div class="q-main">
+          <div id="qbox"></div>
+          <details class="accordion" style="margin-top:12px">
+            <summary class="muted">Hints &amp; Clue</summary>
+            <div id="hintcontrols"></div>
+          </details>
+        </div>
 
-      <div class="sticky-controls">
-        <div id="controls" class="control-zones"></div>
+        <aside class="q-side-panel">
+          <div id="controls" class="control-zones"></div>
+          <div class="display-controls">
+            <span class="zone-label">Display</span>
+            <div class="display-buttons">
+              <button class="ghost" id="btn-leaderboard" onclick="setDisplayMode('leaderboard')" title="Show leaderboard on the projector">📊 Leaderboard</button>
+              <button class="ghost" id="btn-hidden" onclick="setDisplayMode('hidden')" title="Hide the question on the projector">🙈 Hide Q</button>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
 
@@ -422,6 +474,13 @@ function render(s) {
   document.getElementById('adj_team').innerHTML =
     s.teams.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
 
+  // Reflect projector display mode on the host toggle buttons
+  const mode = (s.state && s.state.display_mode) || 'question';
+  const btnLb = document.getElementById('btn-leaderboard');
+  const btnHide = document.getElementById('btn-hidden');
+  if (btnLb) btnLb.classList.toggle('active', mode === 'leaderboard');
+  if (btnHide) btnHide.classList.toggle('active', mode === 'hidden');
+
   document.getElementById('recent').innerHTML = (s.recent||[]).map(r => {
     const cls = r.result==='correct'?'good':r.result==='wrong'?'bad':'gray';
     return `<tr>
@@ -488,6 +547,12 @@ const clearClue = () => post('/host/set-clue', { text: '' });
 const undoLast = async () => {
   const r = await post('/host/undo-last');
   if (r && r.ok) toast(`Undid ${r.undone} (${r.pts>=0?'+':''}${r.pts} pts)`);
+};
+const setDisplayMode = mode => {
+  // Toggle off if pressing the currently-active mode
+  const current = (state && state.state && state.state.display_mode) || 'question';
+  const target = current === mode ? 'question' : mode;
+  return post('/host/display-mode/' + target);
 };
 const adjust = () => post('/host/adjust', {
   team_id: +document.getElementById('adj_team').value,
