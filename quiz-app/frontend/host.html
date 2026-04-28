@@ -5,29 +5,6 @@
 <script src="theme.js?v=1"></script>
 <style>
   /* Phase 1 host-specific UI */
-  .step-bar {
-    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
-    padding: 12px 16px; background: var(--bg-2); border-radius: 12px;
-    border: 1px solid var(--border); font-size: 14px;
-  }
-  .step-bar .step {
-    display: flex; align-items: center; gap: 8px; padding: 4px 12px;
-    border-radius: 999px; color: var(--muted); font-weight: 600;
-    transition: all 0.2s;
-  }
-  .step-bar .step.active {
-    background: var(--accent); color: white;
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
-  }
-  .step-bar .step.done { color: var(--good); }
-  .step-bar .step .n {
-    width: 20px; height: 20px; border-radius: 50%;
-    background: var(--card); display:inline-flex; align-items:center; justify-content:center;
-    font-size: 11px; font-weight: 800;
-  }
-  .step-bar .step.active .n { background: rgba(255,255,255,0.25); }
-  .step-bar .sep { color: var(--border); align-self: center; }
-
   .control-zones { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
   .zone {
     display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
@@ -86,24 +63,33 @@
     background: var(--border); margin-bottom: 10px; opacity: 0.6;
   }
 
-  /* Inline shortcut hint strip */
-  .hint-strip {
-    display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
-    padding: 8px 10px; margin-top: 10px;
-    font-size: 12px; color: var(--muted);
-  }
-  .hint-strip span { white-space: nowrap; }
-  .hint-strip .kbd { margin-right: 4px; }
-
-  /* Host round-progress (compact) */
-  .host-progress { margin: 8px 0 14px; }
-  .host-progress .track { display: flex; gap: 4px; }
-  .host-progress .track .slot {
-    flex: 1; height: 6px; border-radius: 3px;
+  /* Compact inline timer pill (host only — projector has the big ring) */
+  .timer-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 13px; font-weight: 700;
     background: var(--bg-2); border: 1px solid var(--border);
+    color: var(--good);
   }
-  .host-progress .track .slot.done { background: var(--good); border-color: var(--good); }
-  .host-progress .track .slot.current { background: var(--accent); border-color: var(--accent); }
+  .timer-pill.warn { color: var(--warn); border-color: var(--warn); }
+  .timer-pill.crit { color: var(--bad); border-color: var(--bad); }
+  .timer-pill .clock { font-size: 11px; }
+
+  .qcounter-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+
+  /* Host answer reveal — hidden by default, persists per session */
+  .answer-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 16px; padding: 6px 12px;
+    font-size: 12px; font-weight: 600;
+    background: var(--card); color: var(--ghost-text);
+    border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer; font-family: inherit;
+  }
+  .answer-toggle:hover { background: var(--bg-2); }
+  .answer-wrap.hidden .answer-box { display: none; }
 
   @media (max-width: 640px) {
     .zone { flex-direction: column; align-items: stretch; }
@@ -147,13 +133,11 @@
     <div class="card">
       <div class="card-title">
         <h2>Current Question</h2>
-        <span id="qcounter" class="muted"></span>
+        <span class="qcounter-row">
+          <span id="qcounter" class="muted"></span>
+          <span id="timerpill"></span>
+        </span>
       </div>
-      <div id="stepbar" class="step-bar" style="display:none"></div>
-      <div id="hostprogress" class="host-progress" style="display:none">
-        <div class="track" id="hostprogress-track"></div>
-      </div>
-      <div id="timerbox"></div>
       <div id="qbox"></div>
 
       <details class="accordion" style="margin-top:12px">
@@ -163,16 +147,6 @@
 
       <div class="sticky-controls">
         <div id="controls" class="control-zones"></div>
-        <div id="hintstrip" class="hint-strip" style="display:none">
-          <span><span class="kbd">C</span>Correct</span>
-          <span><span class="kbd">W</span>Wrong</span>
-          <span><span class="kbd">P</span>Pass</span>
-          <span><span class="kbd">␣</span>Timer</span>
-          <span><span class="kbd">R</span>Reveal</span>
-          <span><span class="kbd">→</span>Next</span>
-          <span><span class="kbd">U</span>Undo</span>
-          <span><span class="kbd">1</span>–<span class="kbd">9</span> Assign team</span>
-        </div>
       </div>
     </div>
 
@@ -243,38 +217,6 @@ async function load() {
 }
 async function refresh() { render(await api('/host/state')); }
 
-function renderHostProgress(s) {
-  const box = document.getElementById('hostprogress');
-  if (!s.round || !s.round.question_ids?.length) { box.style.display = 'none'; return; }
-  box.style.display = 'block';
-  const ids = s.round.question_ids;
-  const curIdx = s.question ? ids.indexOf(s.question.id) : -1;
-  document.getElementById('hostprogress-track').innerHTML = ids.map((_, i) => {
-    const cls = i < curIdx ? 'done' : (i === curIdx ? 'current' : '');
-    return `<div class="slot ${cls}"></div>`;
-  }).join('');
-}
-
-function renderStepBar(s) {
-  const bar = document.getElementById('stepbar');
-  if (!s.question) { bar.style.display = 'none'; return; }
-  const hasTeam = !!s.state.current_team_id;
-  const timerOn = !!s.state.timer_started_at;
-  const attempted = !!s.state.attempted;
-  const revealed = !!s.state.revealed;
-  const steps = [
-    { n: 1, label: 'Assign team', active: !hasTeam, done: hasTeam },
-    { n: 2, label: 'Start timer', active: hasTeam && !timerOn && !attempted, done: timerOn || attempted },
-    { n: 3, label: 'Judge answer', active: hasTeam && !attempted, done: attempted },
-    { n: 4, label: 'Next question', active: attempted || revealed, done: false },
-  ];
-  bar.style.display = 'flex';
-  bar.innerHTML = steps.map((st,i) => `
-    <div class="step ${st.active?'active':''} ${st.done?'done':''}">
-      <span class="n">${st.done?'✓':st.n}</span>${esc(st.label)}
-    </div>${i<steps.length-1?'<span class="sep">›</span>':''}`).join('');
-}
-
 function render(s) {
   state = s;
 
@@ -322,6 +264,7 @@ function render(s) {
 
     const hintLvl = s.state.hint_level || 0;
     const passLvl = s.state.pass_level || 0;
+    const showAnswer = sessionStorage.getItem('host.showAnswer') === '1';
     qb.innerHTML = `
       <div class="q-card">
         <div class="q-meta">
@@ -335,7 +278,12 @@ function render(s) {
         ${q.audio ? `<audio class="q-audio" controls preload="metadata" src="uploads/${esc(q.audio)}" style="width:100%;margin-top:10px"></audio>` : ''}
         ${s.state.clue ? `<div class="clue-banner"><b>💡 Clue:</b> ${esc(s.state.clue)}</div>` : ''}
         ${opts}
-        <div class="answer-box"><b>Answer (host only):</b> ${esc(q.answer)}</div>
+        <div class="answer-wrap ${showAnswer?'':'hidden'}">
+          <button type="button" class="answer-toggle" onclick="toggleAnswer()">
+            <span class="answer-toggle-label">${showAnswer?'🙈 Hide answer':'👁 Show answer'}</span>
+          </button>
+          <div class="answer-box"><b>Answer (host only):</b> ${esc(q.answer)}</div>
+        </div>
       </div>`;
 
     // Hint / clue controls (inside accordion)
@@ -358,9 +306,6 @@ function render(s) {
     hintBox.innerHTML = hintHtml;
 
     renderTimer(s.state);
-    renderStepBar(s);
-    renderHostProgress(s);
-    document.getElementById('hintstrip').style.display = 'flex';
 
     // Controls in three zones: primary judging, timer, navigation
     const attempted = s.state.attempted;
@@ -397,10 +342,8 @@ function render(s) {
     qb.innerHTML = '<div class="empty"><div class="big">🎯</div>No question selected. Pick a round above.</div>';
     hintBox.innerHTML = '';
     document.getElementById('controls').innerHTML = '';
-    document.getElementById('stepbar').style.display = 'none';
-    document.getElementById('hostprogress').style.display = 'none';
-    document.getElementById('hintstrip').style.display = 'none';
     counter.textContent = '';
+    document.getElementById('timerpill').innerHTML = '';
   }
 
   document.getElementById('adj_team').innerHTML =
@@ -419,26 +362,28 @@ function render(s) {
 
 let timerTick = null;
 function renderTimer(st) {
-  const box = document.getElementById('timerbox');
-  if (!box) return;
+  const pill = document.getElementById('timerpill');
+  if (!pill) return;
   if (timerTick) { clearInterval(timerTick); timerTick = null; }
-  if (!st || !st.timer_started_at) { box.innerHTML = ''; return; }
+  if (!st || !st.timer_started_at) { pill.innerHTML = ''; return; }
   const start = new Date(st.timer_started_at).getTime();
   const dur = st.timer_duration || 30;
   const update = () => {
     const left = Math.max(0, Math.ceil(dur - (Date.now()-start)/1000));
-    const color = left <= 5 ? 'var(--bad)' : left <= 10 ? 'var(--warn)' : 'var(--good)';
-    const pct = Math.max(0, Math.min(100, (left/dur)*100));
-    box.innerHTML = `
-      <div style="background:var(--bg-2);padding:16px;border-radius:12px;margin-bottom:16px;border:2px solid ${color}">
-        <div style="font-size:42px;font-weight:800;color:${color};text-align:center;line-height:1">⏱ ${left}s</div>
-        <div style="height:8px;background:var(--card);border-radius:4px;margin-top:10px;overflow:hidden">
-          <div style="height:100%;width:${pct}%;background:${color};transition:width 0.25s linear"></div>
-        </div>
-      </div>`;
+    const cls = left <= 5 ? 'crit' : left <= 10 ? 'warn' : '';
+    pill.innerHTML = `<span class="timer-pill ${cls}"><span class="clock">⏱</span>${left}s</span>`;
     if (left === 0) { clearInterval(timerTick); timerTick = null; }
   };
   update(); timerTick = setInterval(update, 250);
+}
+
+function toggleAnswer() {
+  const wrap = document.querySelector('.answer-wrap');
+  if (!wrap) return;
+  const showing = !wrap.classList.toggle('hidden');
+  sessionStorage.setItem('host.showAnswer', showing ? '1' : '0');
+  const label = wrap.querySelector('.answer-toggle-label');
+  if (label) label.textContent = showing ? '🙈 Hide answer' : '👁 Show answer';
 }
 
 const post = async (p, body) => {
