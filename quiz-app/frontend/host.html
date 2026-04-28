@@ -79,6 +79,68 @@
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   }
 
+  /* Team pill strip — replaces the big team-card grid for the host */
+  .team-strip {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin: 0 0 16px;
+  }
+  .team-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 12px 7px 10px; border-radius: 999px;
+    background: var(--bg-2); border: 2px solid var(--border);
+    color: var(--text); font-weight: 600; font-size: 14px;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .team-pill:hover { background: var(--card); transform: translateY(-1px); }
+  .team-pill .pill-swatch { width: 12px; height: 12px; border-radius: 3px; }
+  .team-pill .pill-name { white-space: nowrap; }
+  .team-pill .pill-score {
+    background: var(--card); padding: 2px 9px; border-radius: 999px;
+    font-weight: 800; font-size: 13px; min-width: 28px; text-align: center;
+  }
+  .team-pill .kbd { margin-left: 2px; }
+  .team-pill.active {
+    border-color: var(--warn);
+    background: linear-gradient(135deg, rgba(245,158,11,0.28) 0%, rgba(245,158,11,0.10) 100%);
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.22);
+  }
+  .team-pill.active::after {
+    content: "▶"; color: var(--warn); font-weight: 800;
+  }
+
+  /* Slim round-tab strip — replaces the rounds card */
+  .round-strip {
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+    margin: 0 0 16px;
+    padding: 8px 12px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .round-strip .round-strip-label {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.6px; margin-right: 4px;
+  }
+  .round-tab {
+    flex: 0 0 auto; padding: 7px 12px;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .round-tab:hover { background: var(--bg-2); }
+  .round-tab.active {
+    background: var(--accent); color: white; border-color: var(--accent);
+  }
+  .round-tab .badge { font-size: 10px; padding: 2px 6px; }
+  .round-tab.active .badge { background: rgba(255,255,255,0.25); }
+  .round-strip .shuffle-btn {
+    margin-left: auto; padding: 6px 10px; font-size: 12px;
+    background: var(--card); color: var(--ghost-text);
+    border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer; font-family: inherit; font-weight: 600;
+  }
+  .round-strip .shuffle-btn:hover { background: var(--bg-2); }
+
   /* Host answer reveal — hidden by default, persists per session */
   .answer-toggle {
     display: inline-flex; align-items: center; gap: 6px;
@@ -122,13 +184,12 @@
 
     <div id="title" class="title-banner" style="display:none"></div>
 
-    <div class="card">
-      <div class="card-title"><h2>Rounds</h2><span class="muted">Pick any round in any order</span></div>
-      <div id="rounds" class="row tight"></div>
-      <div id="shuffle-box" style="display:none;margin-top:10px">
-        <button class="ghost" onclick="shuffleRound()" title="Randomise the question order for the current round">🔀 Shuffle Questions</button>
-      </div>
+    <div class="round-strip" id="round-strip">
+      <span class="round-strip-label">Round</span>
+      <span id="rounds" style="display:contents"></span>
     </div>
+
+    <div class="team-strip" id="team-strip"></div>
 
     <div class="card">
       <div class="card-title">
@@ -150,14 +211,9 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title"><h2>Teams</h2><span class="muted">Click a team to assign the current question</span></div>
-      <div id="teams" class="grid grid-3"></div>
-    </div>
-
     <details class="card accordion">
       <summary><h2 style="display:inline;margin:0">Manual Score Adjust</h2></summary>
-      <div class="row">
+      <div class="row" style="margin-top:12px">
         <select id="adj_team"></select>
         <input type="number" id="adj_delta" placeholder="±points" value="5" style="max-width:120px">
         <input id="adj_note" placeholder="reason (optional)">
@@ -165,11 +221,11 @@
       </div>
     </details>
 
-    <div class="card">
-      <div class="card-title"><h2>Recent Activity</h2></div>
-      <table><thead><tr><th>Team</th><th>Result</th><th>Pts</th><th>Question / Note</th></tr></thead>
+    <details class="card accordion">
+      <summary><h2 style="display:inline;margin:0">Recent Activity</h2></summary>
+      <table style="margin-top:12px"><thead><tr><th>Team</th><th>Result</th><th>Pts</th><th>Question / Note</th></tr></thead>
         <tbody id="recent"></tbody></table>
-    </div>
+    </details>
 
   </div>
 </div>
@@ -224,19 +280,36 @@ function render(s) {
   if (s.title) { titleEl.textContent = s.title; titleEl.style.display = 'block'; }
   else titleEl.style.display = 'none';
 
-  document.getElementById('teams').innerHTML = s.teams.map((t,i) => `
-    <div class="team-card ${s.state.current_team_id===t.id?'active':''}" style="border-color:${t.color}">
-      <div class="name"><span class="swatch" style="background:${t.color}"></span>${esc(t.name)}${i<9?` <span class="kbd" style="margin-left:auto">${i+1}</span>`:''}</div>
-      <div class="score">${t.score}</div>
-      <button onclick="assign(${t.id})">${s.state.current_team_id===t.id?'✓ Assigned':'Assign Question'}</button>
-    </div>`).join('');
+  document.getElementById('team-strip').innerHTML = s.teams.map((t,i) => `
+    <button class="team-pill ${s.state.current_team_id===t.id?'active':''}" onclick="assign(${t.id})" title="Assign current question to ${esc(t.name)}">
+      <span class="pill-swatch" style="background:${t.color}"></span>
+      <span class="pill-name">${esc(t.name)}</span>
+      <span class="pill-score">${t.score}</span>
+      ${i<9?`<span class="kbd">${i+1}</span>`:''}
+    </button>`).join('') || '<span class="muted" style="font-size:13px">No teams loaded yet</span>';
 
-  document.getElementById('rounds').innerHTML = s.rounds.length
-    ? s.rounds.map(r => `<button class="${s.state.current_round_id===r.id?'':'ghost'}" onclick="selRound(${r.id})">
-        R${r.round_no}: ${esc(r.name)} <span class="badge ${s.state.current_round_id===r.id?'':'gray'}">${esc(r.type)}</span>
-      </button>`).join('')
-    : '<p class="muted">No rounds defined. Import an Excel file in Admin.</p>';
-  document.getElementById('shuffle-box').style.display = s.state.current_round_id ? '' : 'none';
+  const roundsEl = document.getElementById('rounds');
+  const strip = document.getElementById('round-strip');
+  // Remove any previously appended shuffle button so we don't dupe on re-render
+  const oldShuffle = strip.querySelector('.shuffle-btn');
+  if (oldShuffle) oldShuffle.remove();
+  if (s.rounds.length) {
+    roundsEl.innerHTML = s.rounds.map(r => `
+      <button class="round-tab ${s.state.current_round_id===r.id?'active':''}" onclick="selRound(${r.id})">
+        R${r.round_no}: ${esc(r.name)}
+        <span class="badge ${s.state.current_round_id===r.id?'':'gray'}">${esc(r.type)}</span>
+      </button>`).join('');
+    if (s.state.current_round_id) {
+      const sb = document.createElement('button');
+      sb.className = 'shuffle-btn';
+      sb.title = 'Randomise the question order for the current round';
+      sb.textContent = '🔀 Shuffle';
+      sb.onclick = () => shuffleRound();
+      strip.appendChild(sb);
+    }
+  } else {
+    roundsEl.innerHTML = '<span class="muted" style="font-size:13px">No rounds defined. Import an Excel file in Admin.</span>';
+  }
 
   const qb = document.getElementById('qbox');
   const counter = document.getElementById('qcounter');

@@ -96,6 +96,56 @@
   /* Question crossfade */
   #qbox { transition: opacity 0.2s ease; }
   #qbox.fading { opacity: 0; }
+
+  /* Bound the projector layout to one screen. The question region
+     absorbs whatever vertical space is left between the header rows
+     and the team strip pinned at the bottom. */
+  body.display, html { height: 100%; }
+  body.display { overflow: hidden; }
+  body.display .container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px 28px;
+  }
+  body.display .container > #title,
+  body.display .container > #round,
+  body.display .container > #progress,
+  body.display .container > #timerbanner,
+  body.display .container > #teams { flex: 0 0 auto; }
+  body.display .container > #qbox {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
+  }
+  body.display #qbox > .q-card { margin: 0; }
+  /* Compact projector team strip — keep the big scoreboard look, but cap
+     the row height so the question region always has room. */
+  body.display #teams.grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-top: 0 !important;
+    padding-top: 14px;
+    border-top: 2px solid var(--border);
+  }
+  body.display .team-card {
+    padding: 14px 18px;
+    gap: 4px;
+  }
+  body.display .team-card .name {
+    font-size: clamp(22px, 1.9vw, 30px);
+  }
+  body.display .team-card .score {
+    font-size: clamp(48px, 5vw, 76px);
+  }
+  body.display .team-card .rank {
+    width: 48px; height: 48px; font-size: 22px;
+    top: -16px; left: -16px; border-width: 3px;
+  }
+  /* Scale media down so q-card never bullies the layout */
+  body.display img.q-image { max-height: 36vh; }
+  body.display .timer-ring { width: clamp(140px, 13vw, 220px); }
 </style>
 </head>
 <body class="display">
