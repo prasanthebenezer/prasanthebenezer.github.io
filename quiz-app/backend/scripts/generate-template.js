@@ -8,7 +8,8 @@ function generateTemplate(outPath) {
     Config: [
       { key: 'quiz_title', value: 'Kids Quiz Night' },
       { key: 'default_time_sec', value: 30 },
-      { key: 'pass_decay', value: '[1, 0.5, 0.25, 0]' },
+      { key: 'pass_decay', value: '[1, 0.5]' },
+      { key: 'timer_enabled', value: true },
     ],
     Teams: [
       { name: 'Team Red', color: '#ef4444' },
@@ -64,7 +65,8 @@ function generateTemplate(outPath) {
       { field: 'Buzzer', detail: 'Captains buzz in from /quiz/buzzer on their phone. Wrong answers subtract the question points; passing is free.' },
       { field: 'Rounds.question_ids', detail: 'Comma-separated ext IDs from the matching sheet' },
       { field: 'Rounds.rules', detail: 'Optional. Multi-line text shown to the audience before the round starts. Lines starting with -, *, • or "1." render as a bullet list.' },
-      { field: 'pass_decay', detail: 'JSON array; index = pass count. [1,0.5,0.25,0] = full, half, quarter, zero' },
+      { field: 'pass_decay', detail: 'JSON array; index = pass count. [1,0.5] = original full, every pass 50%' },
+      { field: 'timer_enabled', detail: 'true/false. When true, host sees timer controls; first pass halves the timer for the next team.' },
     ],
   };
   for (const [name, data] of Object.entries(sheets)) {

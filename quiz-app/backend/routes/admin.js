@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { pool, withTransaction } = require('../db');
 const { requireAuth } = require('./auth');
+const { getTimerEnabled } = require('../state');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -271,11 +272,12 @@ router.post('/reset-scores', async (req, res, next) => {
 
 router.get('/status', async (req, res, next) => {
   try {
-    const [t, q, rd, cfg] = await Promise.all([
+    const [t, q, rd, cfg, timerEnabled] = await Promise.all([
       pool.query('SELECT COUNT(*) FROM teams'),
       pool.query('SELECT COUNT(*) FROM questions'),
       pool.query('SELECT COUNT(*) FROM rounds'),
       pool.query("SELECT value FROM config WHERE key='last_import_at'"),
+      getTimerEnabled(),
     ]);
     let lastImportAt = null;
     if (cfg.rows[0]?.value) {
@@ -286,7 +288,25 @@ router.get('/status', async (req, res, next) => {
       questions: +q.rows[0].count,
       rounds: +rd.rows[0].count,
       lastImportAt,
+      timerEnabled,
     });
+  } catch (e) { next(e); }
+});
+
+router.post('/config/timer', async (req, res, next) => {
+  try {
+    const enabled = !!req.body?.enabled;
+    await pool.query(
+      `INSERT INTO config(key,value) VALUES('timer_enabled',$1)
+       ON CONFLICT(key) DO UPDATE SET value=$1`,
+      [JSON.stringify(enabled)]
+    );
+    // Stopping the timer when disabling, so a half-running timer doesn't linger.
+    if (!enabled) {
+      await pool.query('UPDATE session_state SET timer_started_at=NULL, timer_duration=NULL WHERE id=1');
+    }
+    req.app.get('broadcastState')?.();
+    res.json({ ok: true, enabled });
   } catch (e) { next(e); }
 });
 

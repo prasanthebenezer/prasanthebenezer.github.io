@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta http-equiv="Cache-Control" content="no-store, must-revalidate"><title>Admin · Quiz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=10">
 <script src="theme.js?v=1"></script>
 <style>
   .section-head .num.done { background: var(--good); }
@@ -107,7 +107,14 @@
     <div class="card" id="step4">
       <div class="section-head"><span class="num">4</span><h2>Session Status &amp; Controls</h2></div>
       <div id="status" class="status-row"><i>Loading…</i></div>
-      <div class="row tight" style="margin-top:14px">
+      <div class="row tight" style="margin-top:14px;align-items:center;flex-wrap:wrap;gap:10px">
+        <label style="display:inline-flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;padding:8px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px">
+          <input type="checkbox" id="timer_toggle" onchange="setTimerEnabled(this.checked)" style="width:18px;height:18px;cursor:pointer">
+          ⏱ Timer enabled
+        </label>
+        <span class="muted" style="font-size:12px">Halves on first pass, stays halved after.</span>
+      </div>
+      <div class="row tight" style="margin-top:10px">
         <button class="warn" onclick="resetScores()">↻ Reset Scores</button>
         <button class="ghost" onclick="logout()">Logout</button>
       </div>
@@ -268,7 +275,19 @@ async function loadStatus() {
     <span><b>${s.questions}</b> questions</span>
     <span><b>${s.rounds}</b> rounds</span>
     <span>Last import: <b>${esc(fmtTime(s.lastImportAt))}</b></span>`;
+  const t = document.getElementById('timer_toggle');
+  if (t) t.checked = s.timerEnabled !== false;
   updateStepperLock();
+}
+
+async function setTimerEnabled(enabled) {
+  const r = await fetch('api/admin/config/timer', {
+    method: 'POST', credentials: 'same-origin',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ enabled })
+  });
+  if (r.ok) toast(`Timer ${enabled ? 'enabled' : 'disabled'}`);
+  else toast('Update failed', true);
 }
 
 function clearPreview() {

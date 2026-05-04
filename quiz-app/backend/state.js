@@ -1,6 +1,9 @@
 const { pool } = require('./db');
 
-const DEFAULT_DECAY = [1.0, 0.5, 0.25, 0];
+// Pass decay: original team gets full points, every pass thereafter is 50%.
+// (No further decay on subsequent passes — explicit tail of 0.5 ensures any
+// out-of-range index also lands on 50%.)
+const DEFAULT_DECAY = [1.0, 0.5];
 
 async function getDecay() {
   const r = await pool.query("SELECT value FROM config WHERE key='pass_decay'");
@@ -20,11 +23,23 @@ async function getConfigValue(key) {
   return r.rows[0]?.value ?? null;
 }
 
+async function getTimerEnabled() {
+  const v = await getConfigValue('timer_enabled');
+  if (v === null || v === undefined) return true;
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'string') {
+    try { const p = JSON.parse(v); if (typeof p === 'boolean') return p; } catch {}
+    return v.toLowerCase() === 'true';
+  }
+  return Boolean(v);
+}
+
 async function snapshot({ redactAnswer = false } = {}) {
   const teams   = (await pool.query('SELECT id,name,color,score,position FROM teams ORDER BY position,id')).rows;
   const rounds  = (await pool.query('SELECT id,round_no,name,type,question_ids,rules FROM rounds ORDER BY round_no')).rows;
   const state   = (await pool.query('SELECT * FROM session_state WHERE id=1')).rows[0];
   const title   = await getConfigValue('quiz_title');
+  const timerEnabled = await getTimerEnabled();
   let question = null, round = null;
   if (state.current_question_id) {
     question = (await pool.query(
@@ -48,7 +63,7 @@ async function snapshot({ redactAnswer = false } = {}) {
        LEFT JOIN questions q ON q.id=s.question_id
       ORDER BY s.id DESC LIMIT 10`
   )).rows;
-  return { title, teams, rounds, state, question, round, recent };
+  return { title, teams, rounds, state, question, round, recent, config: { timer_enabled: timerEnabled } };
 }
 
 function makeBroadcaster(io, logger) {
@@ -66,4 +81,4 @@ function makeBroadcaster(io, logger) {
   };
 }
 
-module.exports = { getDecay, snapshot, makeBroadcaster, DEFAULT_DECAY };
+module.exports = { getDecay, getTimerEnabled, snapshot, makeBroadcaster, DEFAULT_DECAY };

@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('../db');
 const { requireAuth } = require('./auth');
-const { snapshot, getDecay } = require('../state');
+const { snapshot, getDecay, getTimerEnabled } = require('../state');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -121,10 +121,13 @@ router.post('/select-option/:opt', async (req, res, next) => {
 
 router.post('/start-timer', async (req, res, next) => {
   try {
+    if (!(await getTimerEnabled())) return res.status(400).json({ error: 'timer disabled' });
     const state = (await pool.query('SELECT * FROM session_state WHERE id=1')).rows[0];
     if (!state.current_question_id) return res.status(400).json({ error: 'no question' });
     const q = (await pool.query('SELECT time_sec FROM questions WHERE id=$1', [state.current_question_id])).rows[0];
-    const dur = q?.time_sec || 30;
+    const base = q?.time_sec || 30;
+    // First pass halves the timer; subsequent passes keep that halved value.
+    const dur = (state.pass_level || 0) >= 1 ? Math.max(1, Math.ceil(base / 2)) : base;
     await pool.query('UPDATE session_state SET timer_started_at=NOW(), timer_duration=$1 WHERE id=1', [dur]);
     broadcast(req); res.json({ ok: true });
   } catch (e) { next(e); }
@@ -195,13 +198,32 @@ router.post('/pass', async (req, res, next) => {
     const state = (await pool.query('SELECT * FROM session_state WHERE id=1')).rows[0];
     if (!state.current_question_id || !state.current_team_id) return res.status(400).json({ error: 'no question/team selected' });
     if (state.attempted) return res.status(400).json({ error: 'team already attempted — cannot pass' });
-    await award(state, state.current_team_id, 'pass', { note: 'passed' });
     const teams = (await pool.query('SELECT id FROM teams ORDER BY position,id')).rows;
+    // Pass cannot loop — every team gets at most one chance per question.
+    // After (teams.length - 1) passes the next pass would wrap back to the
+    // original team, so block it.
+    if ((state.pass_level || 0) >= Math.max(0, teams.length - 1)) {
+      return res.status(400).json({ error: 'all teams have had a chance — cannot pass further' });
+    }
+    await award(state, state.current_team_id, 'pass', { note: 'passed' });
     const idx = teams.findIndex((t) => t.id === state.current_team_id);
     const next = teams[(idx + 1) % teams.length];
     const origTeam = state.original_team_id || state.current_team_id;
+
+    // Timer policy: if the timer was running and the timer feature is on,
+    // restart it with a halved duration for the next team. (First pass halves
+    // it; later passes keep the same halved value.)
+    let timerSql = '';
+    const timerEnabled = await getTimerEnabled();
+    if (timerEnabled && state.timer_started_at) {
+      const q = (await pool.query('SELECT time_sec FROM questions WHERE id=$1', [state.current_question_id])).rows[0];
+      const base = q?.time_sec || state.timer_duration || 30;
+      const halved = Math.max(1, Math.ceil(base / 2));
+      timerSql = `, timer_started_at=NOW(), timer_duration=${halved}`;
+    }
+
     await pool.query(
-      'UPDATE session_state SET current_team_id=$1, pass_level=pass_level+1, attempted=FALSE, original_team_id=$2 WHERE id=1',
+      `UPDATE session_state SET current_team_id=$1, pass_level=pass_level+1, attempted=FALSE, original_team_id=$2${timerSql} WHERE id=1`,
       [next.id, origTeam]
     );
     broadcast(req); res.json({ ok: true });

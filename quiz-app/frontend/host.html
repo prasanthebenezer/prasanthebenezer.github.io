@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta http-equiv="Cache-Control" content="no-store, must-revalidate"><title>Host · Quiz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=10">
 <script src="theme.js?v=1"></script>
 <style>
   /* Phase 1 host-specific UI */
@@ -491,11 +491,22 @@ function render(s) {
     // Controls in three zones: primary judging, timer, navigation
     const attempted = s.state.attempted;
     const dis = attempted ? 'disabled style="opacity:0.4;cursor:not-allowed"' : '';
-    const timerBtn = s.state.timer_started_at
-      ? `<button class="warn" onclick="stopTimer()">⏸ Stop Timer</button>`
-      : `<button class="warn" onclick="startTimer()">⏱ Start Timer</button>`;
+    const timerEnabled = !s.config || s.config.timer_enabled !== false;
+    const timerBtn = !timerEnabled
+      ? ''
+      : s.state.timer_started_at
+        ? `<button class="warn" onclick="stopTimer()">⏸ Stop Timer</button>`
+        : `<button class="warn" onclick="startTimer()">⏱ Start Timer</button>`;
     const autoBtn = (q.type==='mcq' && s.state.selected_option && !attempted)
       ? `<button class="good" onclick="ans('auto')">⚡ Judge Selected</button>` : '';
+
+    // Pass cannot loop — once every team has had a chance, block the Pass button.
+    const teamsCount = (s.teams || []).length;
+    const passLevel = s.state.pass_level || 0;
+    const passExhausted = teamsCount > 0 && passLevel >= Math.max(0, teamsCount - 1);
+    const passDis = (attempted || passExhausted) ? 'disabled style="opacity:0.4;cursor:not-allowed"' : '';
+    const passLabel = passExhausted ? '↪ Pass (no more)' : '↪ Pass (½)';
+    const passTitle = passExhausted ? 'All teams have had a chance — pass disabled' : 'Halve points and rotate to next team';
 
     const isBuzzer = s.round && s.round.type === 'buzzer';
     const judgeZone = isBuzzer
@@ -507,16 +518,23 @@ function render(s) {
            ${autoBtn}
            <button class="good" onclick="ans('correct')" ${dis}>✓ Correct <span class="kbd">C</span></button>
            <button class="bad"  onclick="ans('wrong')"   ${dis}>✗ Wrong <span class="kbd">W</span></button>
-           <button class="warn" onclick="pass()"          ${dis}>↪ Pass (½) <span class="kbd">P</span></button>
+           <button class="warn" onclick="pass()" ${passDis} title="${passTitle}">${passLabel} <span class="kbd">P</span></button>
+         </div>`;
+
+    const timerZone = timerEnabled
+      ? `<div class="zone timer">
+           <span class="zone-label">Timer</span>
+           ${timerBtn}
+           <span class="muted" style="font-size:12px">${passLevel >= 1 ? 'Halved (passed)' : 'Space to toggle'}</span>
+         </div>`
+      : `<div class="zone timer">
+           <span class="zone-label">Timer</span>
+           <span class="muted" style="font-size:12px">Disabled in admin settings</span>
          </div>`;
 
     document.getElementById('controls').innerHTML = `
       ${judgeZone}
-      <div class="zone timer">
-        <span class="zone-label">Timer</span>
-        ${timerBtn}
-        <span class="muted" style="font-size:12px">Space to toggle</span>
-      </div>
+      ${timerZone}
       <div class="zone nav">
         <span class="zone-label">Navigate</span>
         <button class="ghost" onclick="reveal()">👁 Reveal <span class="kbd">R</span></button>
@@ -788,13 +806,17 @@ document.addEventListener('keydown', (e) => {
     if (k === 'c' && lockedId)    { e.preventDefault(); buzzerJudge('correct'); return; }
     if (k === 'w' && lockedId)    { e.preventDefault(); buzzerJudge('wrong'); return; }
   }
+  const teamsCount = (s.teams || []).length;
+  const passLevel = s.state.pass_level || 0;
+  const passExhausted = teamsCount > 0 && passLevel >= Math.max(0, teamsCount - 1);
+  const timerEnabled = !s.config || s.config.timer_enabled !== false;
   if (k === 'c' && !attempted && !isBuzzer) { e.preventDefault(); ans('correct'); }
   else if (k === 'w' && !attempted && !isBuzzer) { e.preventDefault(); ans('wrong'); }
-  else if (k === 'p' && !attempted && !isBuzzer) { e.preventDefault(); pass(); }
+  else if (k === 'p' && !attempted && !isBuzzer && !passExhausted) { e.preventDefault(); pass(); }
   else if (k === 'r') { e.preventDefault(); reveal(); }
   else if (k === 's') { e.preventDefault(); skip(); }
   else if (k === 'u') { e.preventDefault(); undoLast(); }
-  else if (key === ' ') {
+  else if (key === ' ' && timerEnabled) {
     e.preventDefault();
     s.state.timer_started_at ? stopTimer() : startTimer();
   }
