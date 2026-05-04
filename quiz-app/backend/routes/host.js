@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('../db');
 const { requireAuth } = require('./auth');
-const { snapshot, getDecay, getTimerEnabled } = require('../state');
+const { snapshot, getTimerEnabled } = require('../state');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -169,9 +169,12 @@ router.post('/stop-timer', async (req, res, next) => {
 
 async function award(state, teamId, result, opts = {}) {
   const q = (await pool.query('SELECT * FROM questions WHERE id=$1', [state.current_question_id])).rows[0];
-  const decay = await getDecay();
   const lvl = (state.pass_level || 0) + (state.hint_level || 0);
-  const factor = decay[Math.min(lvl, decay.length - 1)] || 0;
+  // Pass decay is one-shot: original team gets full points; the moment any
+  // pass (or hint) is used, points drop to 50% and stay there — further
+  // passes never decay deeper. Hardcoded so a stale [1,0.5,0.25,0] from an
+  // older template import can't reintroduce quartering.
+  const factor = lvl >= 1 ? 0.5 : 1.0;
   let pts = 0;
   if (result === 'correct') pts = Math.round((q.points || 0) * factor);
   if (result === 'wrong')   pts = opts.negative ? -Math.round((q.points || 0) * factor) : 0;
@@ -198,8 +201,14 @@ router.post('/answer/:result', async (req, res, next) => {
       actual = (state.selected_option && q && state.selected_option.toLowerCase() === String(q.answer).toLowerCase()) ? 'correct' : 'wrong';
     }
     const pts = await award(state, state.current_team_id, actual);
+    // Stop the timer once the team has been judged. It will only restart on
+    // a pass (halved) or when the host advances to the next question.
     if (actual === 'correct') {
-      await pool.query('UPDATE session_state SET revealed=TRUE, attempted=TRUE WHERE id=1');
+      await pool.query(
+        `UPDATE session_state SET revealed=TRUE, attempted=TRUE,
+                                  timer_started_at=NULL, timer_duration=NULL
+          WHERE id=1`
+      );
     } else {
       // Track wrong MCQ option so it renders yellow for subsequent teams
       const q = (await pool.query('SELECT type FROM questions WHERE id=$1', [state.current_question_id])).rows[0];
@@ -207,13 +216,18 @@ router.post('/answer/:result', async (req, res, next) => {
         await pool.query(
           `UPDATE session_state
              SET attempted=TRUE, revealed=TRUE,
+                 timer_started_at=NULL, timer_duration=NULL,
                  wrong_options = CASE WHEN $1 = ANY(wrong_options) THEN wrong_options
                                       ELSE array_append(wrong_options, $1) END
            WHERE id=1`,
           [state.selected_option]
         );
       } else {
-        await pool.query('UPDATE session_state SET attempted=TRUE, revealed=TRUE WHERE id=1');
+        await pool.query(
+          `UPDATE session_state SET attempted=TRUE, revealed=TRUE,
+                                    timer_started_at=NULL, timer_duration=NULL
+            WHERE id=1`
+        );
       }
     }
     broadcast(req); res.json({ ok: true, pts, result: actual });
