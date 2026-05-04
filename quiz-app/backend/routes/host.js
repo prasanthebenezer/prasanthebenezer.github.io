@@ -26,6 +26,30 @@ const RESET_Q_FIELDS = `pass_level=0, hint_level=0, revealed=FALSE, attempted=FA
 // rules / leaderboard / hidden modes pulls the buzzer down (and clears any
 // stale lock) so captains can't buzz on a screen they aren't supposed to be
 // answering. Manual disarm is still possible via /buzzer/disarm.
+// When the global timer toggle is on, auto-start the countdown for any
+// question that has time_sec set. Called after every transition that
+// puts a question on the projector. No-op if timer disabled, no current
+// question, no time_sec, or projector isn't on the question screen.
+// First pass halves the duration; subsequent passes keep it halved.
+async function autoStartTimer() {
+  if (!(await getTimerEnabled())) return;
+  const r = await pool.query(`
+    SELECT ss.current_question_id, ss.display_mode, ss.pass_level, q.time_sec
+      FROM session_state ss
+      LEFT JOIN questions q ON q.id = ss.current_question_id
+     WHERE ss.id = 1`);
+  const row = r.rows[0];
+  if (!row || !row.current_question_id) return;
+  if (row.display_mode !== 'question') return;
+  if (!row.time_sec || row.time_sec <= 0) return;
+  const base = row.time_sec;
+  const dur = (row.pass_level || 0) >= 1 ? Math.max(1, Math.ceil(base / 2)) : base;
+  await pool.query(
+    'UPDATE session_state SET timer_started_at=NOW(), timer_duration=$1 WHERE id=1',
+    [dur]
+  );
+}
+
 const SYNC_BUZZER_SQL = `
   UPDATE session_state ss SET
     buzzer_armed = (
@@ -60,6 +84,7 @@ router.post('/select-round/:id', async (req, res, next) => {
       [round.id, firstQ, startMode]
     );
     await syncBuzzer();
+    await autoStartTimer();
     broadcast(req); res.json({ ok: true, mode: startMode });
   } catch (e) { next(e); }
 });
@@ -82,6 +107,7 @@ router.post('/shuffle-round', async (req, res, next) => {
       [ids[0] || null]
     );
     await syncBuzzer();
+    await autoStartTimer();
     broadcast(req); res.json({ ok: true });
   } catch (e) { next(e); }
 });
@@ -93,6 +119,7 @@ router.post('/select-question/:qid', async (req, res, next) => {
       [req.params.qid]
     );
     await syncBuzzer();
+    await autoStartTimer();
     broadcast(req); res.json({ ok: true });
   } catch (e) { next(e); }
 });
@@ -209,23 +236,12 @@ router.post('/pass', async (req, res, next) => {
     const idx = teams.findIndex((t) => t.id === state.current_team_id);
     const next = teams[(idx + 1) % teams.length];
     const origTeam = state.original_team_id || state.current_team_id;
-
-    // Timer policy: if the timer was running and the timer feature is on,
-    // restart it with a halved duration for the next team. (First pass halves
-    // it; later passes keep the same halved value.)
-    let timerSql = '';
-    const timerEnabled = await getTimerEnabled();
-    if (timerEnabled && state.timer_started_at) {
-      const q = (await pool.query('SELECT time_sec FROM questions WHERE id=$1', [state.current_question_id])).rows[0];
-      const base = q?.time_sec || state.timer_duration || 30;
-      const halved = Math.max(1, Math.ceil(base / 2));
-      timerSql = `, timer_started_at=NOW(), timer_duration=${halved}`;
-    }
-
     await pool.query(
-      `UPDATE session_state SET current_team_id=$1, pass_level=pass_level+1, attempted=FALSE, original_team_id=$2${timerSql} WHERE id=1`,
+      `UPDATE session_state SET current_team_id=$1, pass_level=pass_level+1, attempted=FALSE, original_team_id=$2 WHERE id=1`,
       [next.id, origTeam]
     );
+    // pass_level just incremented to >= 1, so autoStartTimer halves the duration.
+    await autoStartTimer();
     broadcast(req); res.json({ ok: true });
   } catch (e) { next(e); }
 });
@@ -274,6 +290,7 @@ async function advance(req) {
     [nextQ, nextTeam]
   );
   await syncBuzzer();
+  await autoStartTimer();
   broadcast(req);
 }
 
@@ -374,6 +391,12 @@ router.post('/display-mode/:mode', async (req, res, next) => {
     await pool.query('UPDATE session_state SET display_mode=$1 WHERE id=1', [mode]);
     // Mode change implicitly enables/disables the buzzer for buzzer rounds.
     await syncBuzzer();
+    // Stop the timer when leaving the question screen; start it when arriving.
+    if (mode === 'question') {
+      await autoStartTimer();
+    } else {
+      await pool.query('UPDATE session_state SET timer_started_at=NULL, timer_duration=NULL WHERE id=1');
+    }
     broadcast(req); res.json({ ok: true, mode });
   } catch (e) { next(e); }
 });

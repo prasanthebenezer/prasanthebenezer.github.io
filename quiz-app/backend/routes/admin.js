@@ -301,8 +301,25 @@ router.post('/config/timer', async (req, res, next) => {
        ON CONFLICT(key) DO UPDATE SET value=$1`,
       [JSON.stringify(enabled)]
     );
-    // Stopping the timer when disabling, so a half-running timer doesn't linger.
-    if (!enabled) {
+    if (enabled) {
+      // Kick off the countdown for the current question if one is showing.
+      const r = await pool.query(`
+        SELECT ss.current_question_id, ss.display_mode, ss.pass_level, q.time_sec
+          FROM session_state ss
+          LEFT JOIN questions q ON q.id = ss.current_question_id
+         WHERE ss.id = 1`);
+      const row = r.rows[0];
+      if (row && row.current_question_id && row.display_mode === 'question'
+          && row.time_sec && row.time_sec > 0) {
+        const dur = (row.pass_level || 0) >= 1
+          ? Math.max(1, Math.ceil(row.time_sec / 2)) : row.time_sec;
+        await pool.query(
+          'UPDATE session_state SET timer_started_at=NOW(), timer_duration=$1 WHERE id=1',
+          [dur]
+        );
+      }
+    } else {
+      // Stop any running countdown when disabling.
       await pool.query('UPDATE session_state SET timer_started_at=NULL, timer_duration=NULL WHERE id=1');
     }
     req.app.get('broadcastState')?.();
