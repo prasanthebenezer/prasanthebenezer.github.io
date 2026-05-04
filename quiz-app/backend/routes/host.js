@@ -434,7 +434,8 @@ router.post('/adjust', async (req, res, next) => {
 //
 // Flow: host arms the buzzer for the current question → captains' phones light
 // up → first valid press atomically locks the buzzer to that team → host
-// judges. Correct adds points; Wrong subtracts; Pass is free.
+// judges. Correct = +full points; Wrong = −half points (calibrated guess
+// penalty); Pass is free.
 
 router.post('/buzzer/arm', async (req, res, next) => {
   try {
@@ -477,7 +478,9 @@ router.post('/buzzer/judge/:result', async (req, res, next) => {
     if (!teamId) return res.status(400).json({ error: 'no team locked' });
     const q = (await pool.query('SELECT * FROM questions WHERE id=$1', [state.current_question_id])).rows[0];
     const base = q?.points || 0;
-    const pts = result === 'correct' ? base : -base;
+    // Correct = +full points; wrong = −half points (less harsh than the full
+    // negative the question is worth, so a guess on a buzzer is calibrated).
+    const pts = result === 'correct' ? base : -Math.ceil(base / 2);
     await pool.query(
       `INSERT INTO scores(team_id,question_id,round_id,points_awarded,result,note)
        VALUES($1,$2,$3,$4,$5,$6)`,

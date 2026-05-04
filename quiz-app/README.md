@@ -57,7 +57,7 @@ Or set `QUIZ_ADMIN_PASSWORD` for a plaintext fallback (not recommended).
 | `pass` | Pass-through round (full pass-decay logic) |
 | `image` | Picture-based question |
 | `speaker` | Play an audio clip and identify the speaker |
-| `buzzer` | Captains buzz in from their phones at `/quiz/buzzer`. The buzzer auto-arms as soon as a buzzer-round question is on the projector. First press wins the chance to answer. Correct = +points, Wrong = −points, Pass = no penalty. |
+| `buzzer` | Captains buzz in from their phones at `/quiz/buzzer`. The buzzer auto-arms as soon as a buzzer-round question is on the projector. First press wins the chance to answer. Correct = +full points, Wrong = −half points, Pass = no penalty. |
 
 ## Round rules
 

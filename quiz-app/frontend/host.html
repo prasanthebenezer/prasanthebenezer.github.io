@@ -674,10 +674,14 @@ function renderBuzzerPanel(s) {
          </div>`;
 
   const judgeRow = lockedTeam
-    ? `<div class="buzzer-judge">
-         <button class="good" onclick="buzzerJudge('correct')">✓ Correct (+${s.question?.points||0})</button>
-         <button class="bad"  onclick="buzzerJudge('wrong')">✗ Wrong (−${s.question?.points||0})</button>
-       </div>`
+    ? (() => {
+        const base = s.question?.points || 0;
+        const penalty = Math.ceil(base / 2);
+        return `<div class="buzzer-judge">
+           <button class="good" onclick="buzzerJudge('correct')">✓ Correct (+${base})</button>
+           <button class="bad"  onclick="buzzerJudge('wrong')">✗ Wrong (−${penalty})</button>
+         </div>`;
+      })()
     : '';
 
   const teamChips = teams.map(t => {
