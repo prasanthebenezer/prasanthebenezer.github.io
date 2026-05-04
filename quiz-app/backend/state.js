@@ -22,7 +22,7 @@ async function getConfigValue(key) {
 
 async function snapshot({ redactAnswer = false } = {}) {
   const teams   = (await pool.query('SELECT id,name,color,score,position FROM teams ORDER BY position,id')).rows;
-  const rounds  = (await pool.query('SELECT id,round_no,name,type,question_ids FROM rounds ORDER BY round_no')).rows;
+  const rounds  = (await pool.query('SELECT id,round_no,name,type,question_ids,rules FROM rounds ORDER BY round_no')).rows;
   const state   = (await pool.query('SELECT * FROM session_state WHERE id=1')).rows[0];
   const title   = await getConfigValue('quiz_title');
   let question = null, round = null;
@@ -37,7 +37,7 @@ async function snapshot({ redactAnswer = false } = {}) {
   }
   if (state.current_round_id) {
     round = (await pool.query(
-      'SELECT id,round_no,name,type,question_ids FROM rounds WHERE id=$1',
+      'SELECT id,round_no,name,type,question_ids,rules FROM rounds WHERE id=$1',
       [state.current_round_id]
     )).rows[0] || null;
   }

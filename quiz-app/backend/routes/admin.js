@@ -187,9 +187,10 @@ router.post('/import-excel', memUpload.single('file'), async (req, res, next) =>
         const ids = String(r.question_ids || '')
           .split(',').map((s) => s.trim()).filter(Boolean)
           .map((qid) => idMap[`${r.type}:${qid}`]).filter(Boolean);
+        const rules = (r.rules == null || String(r.rules).trim() === '') ? null : String(r.rules);
         await client.query(
-          'INSERT INTO rounds(round_no,name,type,question_ids) VALUES($1,$2,$3,$4)',
-          [r.round_no, r.round_name, r.type, ids]
+          'INSERT INTO rounds(round_no,name,type,question_ids,rules) VALUES($1,$2,$3,$4,$5)',
+          [r.round_no, r.round_name, r.type, ids, rules]
         );
       }
 

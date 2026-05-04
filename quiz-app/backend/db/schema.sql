@@ -82,3 +82,7 @@ ALTER TABLE session_state ADD COLUMN IF NOT EXISTS buzzer_locked_team_id INTEGER
 ALTER TABLE session_state ADD COLUMN IF NOT EXISTS buzzer_locked_at     TIMESTAMPTZ;
 ALTER TABLE session_state ADD COLUMN IF NOT EXISTS buzzer_attempted     INTEGER[]   DEFAULT '{}';
 ALTER TABLE session_state ADD COLUMN IF NOT EXISTS buzzer_passed        INTEGER[]   DEFAULT '{}';
+
+-- Optional per-round rules text. When non-empty, the host can flip the
+-- projector to a "rules" display mode before starting the questions.
+ALTER TABLE rounds ADD COLUMN IF NOT EXISTS rules TEXT;

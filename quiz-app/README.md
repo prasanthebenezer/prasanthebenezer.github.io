@@ -57,7 +57,13 @@ Or set `QUIZ_ADMIN_PASSWORD` for a plaintext fallback (not recommended).
 | `pass` | Pass-through round (full pass-decay logic) |
 | `image` | Picture-based question |
 | `speaker` | Play an audio clip and identify the speaker |
-| `buzzer` | Captains buzz in from their phones at `/quiz/buzzer`. First press wins the chance to answer. Correct = +points, Wrong = −points, Pass = no penalty. |
+| `buzzer` | Captains buzz in from their phones at `/quiz/buzzer`. The buzzer auto-arms as soon as a buzzer-round question is on the projector. First press wins the chance to answer. Correct = +points, Wrong = −points, Pass = no penalty. |
+
+## Round rules
+
+Each row in the `Rounds` sheet can have an optional `rules` cell — multi-line text shown on the projector and on the captains' phones before the round starts. When you select a round that has rules, the projector flips to a "rules" screen automatically; press **Start Round** on the host to flip to questions (this is also when the buzzer auto-arms for buzzer rounds). You can re-show the rules at any time via the host's Display → 📋 Rules toggle.
+
+Lines starting with `-`, `*`, `•` or `1.` render as a bullet list; everything else is shown as plain text with line breaks preserved.
 
 ## Reset between sessions
 

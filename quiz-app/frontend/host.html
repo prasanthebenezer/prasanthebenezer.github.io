@@ -195,6 +195,21 @@
   .answer-toggle:hover { background: var(--bg-2); }
   .answer-wrap.hidden .answer-box { display: none; }
 
+  /* Host-side rules preview shown when display_mode === 'rules' */
+  .rules-card {
+    padding: 22px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--card) 0%, var(--surface) 100%);
+    border: 1px solid var(--border);
+  }
+  .rules-card .rules-meta { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .rules-card .rules-meta .rno { color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 12px; }
+  .rules-card .rules-meta .rname { font-size: 20px; font-weight: 800; }
+  .rules-card .rules-text { font-size: 16px; line-height: 1.55; white-space: pre-wrap; }
+  .rules-card .rules-text ul { padding-left: 1.4em; margin: 0; }
+  .rules-card .rules-text .empty-rules { color: var(--muted); font-style: italic; }
+  .rules-card .start-row { display: flex; gap: 10px; margin-top: 18px; }
+  .rules-card .start-row button { flex: 1 1 auto; padding: 14px 18px; font-size: 15px; }
+
   /* Buzzer-round host panel */
   .buzzer-panel {
     display: flex; flex-direction: column; gap: 10px;
@@ -290,6 +305,7 @@
           <div class="display-controls">
             <span class="zone-label">Display</span>
             <div class="display-buttons">
+              <button class="ghost" id="btn-rules" onclick="setDisplayMode('rules')" title="Show this round's rules on the projector">📋 Rules</button>
               <button class="ghost" id="btn-leaderboard" onclick="setDisplayMode('leaderboard')" title="Show leaderboard on the projector">📊 Leaderboard</button>
               <button class="ghost" id="btn-hidden" onclick="setDisplayMode('hidden')" title="Hide the question on the projector">🙈 Hide Q</button>
             </div>
@@ -402,7 +418,11 @@ function render(s) {
   const qb = document.getElementById('qbox');
   const counter = document.getElementById('qcounter');
   const hintBox = document.getElementById('hintcontrols');
-  if (s.question) {
+  const displayMode = (s.state && s.state.display_mode) || 'question';
+
+  if (displayMode === 'rules' && s.round) {
+    renderRulesView(s);
+  } else if (s.question) {
     const q = s.question;
     const wrongs = s.state.wrong_options || [];
     const removed = s.state.removed_option;
@@ -524,8 +544,14 @@ function render(s) {
   const mode = (s.state && s.state.display_mode) || 'question';
   const btnLb = document.getElementById('btn-leaderboard');
   const btnHide = document.getElementById('btn-hidden');
+  const btnRules = document.getElementById('btn-rules');
   if (btnLb) btnLb.classList.toggle('active', mode === 'leaderboard');
   if (btnHide) btnHide.classList.toggle('active', mode === 'hidden');
+  if (btnRules) {
+    btnRules.classList.toggle('active', mode === 'rules');
+    // Hide the Rules toggle when no round is selected — there's nothing to show.
+    btnRules.style.display = s.round ? '' : 'none';
+  }
 
   document.getElementById('recent').innerHTML = (s.recent||[]).map(r => {
     const cls = r.result==='correct'?'good':r.result==='wrong'?'bad':'gray';
@@ -541,6 +567,48 @@ function render(s) {
 function clearBuzzerPanel() {
   const el = document.getElementById('buzzerPanel');
   if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+}
+
+function rulesAsHtml(text) {
+  if (!text || !String(text).trim()) {
+    return '<div class="empty-rules">No rules set for this round. Add a <code>rules</code> cell in the Excel <code>Rounds</code> sheet.</div>';
+  }
+  const lines = String(text).split(/\r?\n/);
+  const bulletLine = /^\s*([-*•]|\d+[.)])\s+/;
+  const nonEmpty = lines.filter(l => l.trim());
+  const allBullets = nonEmpty.length > 0 && nonEmpty.every(l => bulletLine.test(l));
+  if (allBullets) {
+    return '<ul>' + nonEmpty.map(l => `<li>${esc(l.replace(bulletLine, ''))}</li>`).join('') + '</ul>';
+  }
+  return esc(text);
+}
+
+function renderRulesView(s) {
+  const round = s.round;
+  const qb = document.getElementById('qbox');
+  const hintBox = document.getElementById('hintcontrols');
+  const counter = document.getElementById('qcounter');
+  qb.innerHTML = `
+    <div class="rules-card">
+      <div class="rules-meta">
+        <span class="rno">Round ${round.round_no}</span>
+        <span class="rname">${esc(round.name)}</span>
+        <span class="badge gray">${esc(round.type)}</span>
+      </div>
+      <div class="rules-text">${rulesAsHtml(round.rules)}</div>
+      <div class="start-row">
+        <button class="good lg" onclick="startRound()">▶ Start Round</button>
+        <button class="ghost" onclick="setDisplayMode('hidden')">🙈 Hide</button>
+      </div>
+      <p class="muted" style="font-size:12px;margin:14px 0 0">
+        The projector is showing the rules. The buzzer stays disarmed until you press Start Round.
+      </p>
+    </div>`;
+  hintBox.innerHTML = '';
+  document.getElementById('controls').innerHTML = '';
+  counter.textContent = '';
+  document.getElementById('timerpill').innerHTML = '';
+  clearBuzzerPanel();
 }
 function renderBuzzerPanel(s) {
   const el = document.getElementById('buzzerPanel');
@@ -685,8 +753,9 @@ const buzzerDisarm  = () => post('/host/buzzer/disarm');
 const buzzerReset   = () => post('/host/buzzer/reset');
 const buzzerJudge   = (r) => post('/host/buzzer/judge/' + r);
 const buzzerPassTeam = (tid) => post('/host/buzzer/pass-team/' + tid);
+const startRound    = () => post('/host/display-mode/question');
 const setDisplayMode = mode => {
-  // Toggle off if pressing the currently-active mode
+  // Toggle off if pressing the currently-active mode (returns to questions).
   const current = (state && state.state && state.state.display_mode) || 'question';
   const target = current === mode ? 'question' : mode;
   return post('/host/display-mode/' + target);

@@ -165,6 +165,26 @@
     bottom: 80px; right: 50%; transform: translateX(50%);
     padding: 12px 22px; font-size: 16px; font-weight: 800;
   }
+
+  /* Rules screen on the captain's phone */
+  .bz-rules {
+    flex: 1 1 0; min-height: 0;
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 16px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 14px; overflow: auto;
+  }
+  .bz-rules .head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .bz-rules .rno { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; }
+  .bz-rules .rname {
+    font-size: 22px; font-weight: 800;
+    background: linear-gradient(135deg,var(--accent),var(--accent-2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .bz-rules .body { font-size: 15px; line-height: 1.5; white-space: pre-wrap; }
+  .bz-rules .body ul { padding-left: 1.4em; margin: 0; }
+  .bz-rules .body li { margin: 4px 0; }
+  .bz-rules .foot { color: var(--muted); font-size: 13px; text-align: center; padding-top: 6px; border-top: 1px solid var(--border); }
 </style>
 </head>
 <body class="buzzer">
@@ -193,9 +213,11 @@
 
     <div class="bz-status" id="bz-status">Standing by</div>
 
-    <div class="bz-stage">
+    <div class="bz-stage" id="bz-stage">
       <button class="bz-button" id="bz-btn" type="button" disabled>BUZZ</button>
     </div>
+
+    <div class="bz-rules" id="bz-rules-pane" style="display:none"></div>
   </div>
 
 </div>
@@ -217,6 +239,20 @@ let lastQuestionId = null;
 let pressInflight = false;
 
 const buttonEl = () => document.getElementById('bz-btn');
+
+function rulesAsHtml(text) {
+  if (!text || !String(text).trim()) {
+    return '<i style="color:var(--muted)">No rules set for this round.</i>';
+  }
+  const lines = String(text).split(/\r?\n/);
+  const bulletLine = /^\s*([-*•]|\d+[.)])\s+/;
+  const nonEmpty = lines.filter(l => l.trim());
+  const allBullets = nonEmpty.length > 0 && nonEmpty.every(l => bulletLine.test(l));
+  if (allBullets) {
+    return '<ul>' + nonEmpty.map(l => `<li>${esc(l.replace(bulletLine, ''))}</li>`).join('') + '</ul>';
+  }
+  return esc(text);
+}
 
 async function fetchState() {
   try {
@@ -261,6 +297,29 @@ function render(s) {
   const q = s.question;
   const isBuzzerRound = round && round.type === 'buzzer';
   const qBox = document.getElementById('bz-q');
+  const mode = (s.state && s.state.display_mode) || 'question';
+  const stage = document.getElementById('bz-stage');
+  const rulesPane = document.getElementById('bz-rules-pane');
+
+  if (mode === 'rules' && round) {
+    stage.style.display = 'none';
+    qBox.style.display = 'none';
+    rulesPane.style.display = 'flex';
+    rulesPane.innerHTML = `
+      <div class="head">
+        <span class="rno">Round ${round.round_no}</span>
+        <span class="rname">${esc(round.name)}</span>
+      </div>
+      <div class="body">${rulesAsHtml(round.rules)}</div>
+      <div class="foot">Read the rules — questions start when the host begins the round.</div>`;
+    document.getElementById('bz-status').className = 'bz-status';
+    document.getElementById('bz-status').textContent = 'Round rules';
+    return;
+  }
+
+  rulesPane.style.display = 'none';
+  qBox.style.display = '';
+  stage.style.display = '';
 
   if (!isBuzzerRound) {
     qBox.classList.add('empty');

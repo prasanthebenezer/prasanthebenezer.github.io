@@ -21,17 +21,46 @@ const RESET_Q_FIELDS = `pass_level=0, hint_level=0, revealed=FALSE, attempted=FA
  buzzer_armed=FALSE, buzzer_locked_team_id=NULL, buzzer_locked_at=NULL,
  buzzer_attempted='{}', buzzer_passed='{}'`;
 
+// Single source of truth for buzzer activation: the buzzer is live whenever a
+// buzzer-type question is the one being shown on the projector. Switching to
+// rules / leaderboard / hidden modes pulls the buzzer down (and clears any
+// stale lock) so captains can't buzz on a screen they aren't supposed to be
+// answering. Manual disarm is still possible via /buzzer/disarm.
+const SYNC_BUZZER_SQL = `
+  UPDATE session_state ss SET
+    buzzer_armed = (
+      ss.current_question_id IS NOT NULL
+      AND ss.display_mode = 'question'
+      AND ss.attempted = FALSE
+      AND (SELECT type FROM rounds WHERE id = ss.current_round_id) = 'buzzer'
+    ),
+    buzzer_locked_team_id = CASE
+      WHEN ss.display_mode <> 'question' OR ss.current_question_id IS NULL THEN NULL
+      ELSE ss.buzzer_locked_team_id
+    END,
+    buzzer_locked_at = CASE
+      WHEN ss.display_mode <> 'question' OR ss.current_question_id IS NULL THEN NULL
+      ELSE ss.buzzer_locked_at
+    END
+  WHERE id=1`;
+const syncBuzzer = () => pool.query(SYNC_BUZZER_SQL);
+
 router.post('/select-round/:id', async (req, res, next) => {
   try {
     const r = await pool.query('SELECT * FROM rounds WHERE id=$1', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ error: 'not found' });
     const round = r.rows[0];
     const firstQ = round.question_ids[0] || null;
+    // If the round has rules, start the projector on the rules screen so the
+    // host can brief the room before any question is revealed; otherwise jump
+    // straight into questions. Buzzer arm follows from display_mode below.
+    const startMode = (round.rules && String(round.rules).trim()) ? 'rules' : 'question';
     await pool.query(
-      `UPDATE session_state SET current_round_id=$1, current_question_id=$2, ${RESET_Q_FIELDS} WHERE id=1`,
-      [round.id, firstQ]
+      `UPDATE session_state SET current_round_id=$1, current_question_id=$2, display_mode=$3, ${RESET_Q_FIELDS} WHERE id=1`,
+      [round.id, firstQ, startMode]
     );
-    broadcast(req); res.json({ ok: true });
+    await syncBuzzer();
+    broadcast(req); res.json({ ok: true, mode: startMode });
   } catch (e) { next(e); }
 });
 
@@ -52,6 +81,7 @@ router.post('/shuffle-round', async (req, res, next) => {
       `UPDATE session_state SET current_question_id=$1, ${RESET_Q_FIELDS} WHERE id=1`,
       [ids[0] || null]
     );
+    await syncBuzzer();
     broadcast(req); res.json({ ok: true });
   } catch (e) { next(e); }
 });
@@ -62,6 +92,7 @@ router.post('/select-question/:qid', async (req, res, next) => {
       `UPDATE session_state SET current_question_id=$1, ${RESET_Q_FIELDS} WHERE id=1`,
       [req.params.qid]
     );
+    await syncBuzzer();
     broadcast(req); res.json({ ok: true });
   } catch (e) { next(e); }
 });
@@ -220,6 +251,7 @@ async function advance(req) {
     `UPDATE session_state SET current_question_id=$1, current_team_id=$2, ${RESET_Q_FIELDS} WHERE id=1`,
     [nextQ, nextTeam]
   );
+  await syncBuzzer();
   broadcast(req);
 }
 
@@ -314,10 +346,12 @@ router.post('/undo-last', async (req, res, next) => {
 router.post('/display-mode/:mode', async (req, res, next) => {
   try {
     const mode = String(req.params.mode || '').toLowerCase();
-    if (!['question', 'leaderboard', 'hidden'].includes(mode)) {
+    if (!['question', 'leaderboard', 'hidden', 'rules'].includes(mode)) {
       return res.status(400).json({ error: 'invalid display mode' });
     }
     await pool.query('UPDATE session_state SET display_mode=$1 WHERE id=1', [mode]);
+    // Mode change implicitly enables/disables the buzzer for buzzer rounds.
+    await syncBuzzer();
     broadcast(req); res.json({ ok: true, mode });
   } catch (e) { next(e); }
 });

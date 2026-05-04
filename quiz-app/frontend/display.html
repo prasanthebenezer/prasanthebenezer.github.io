@@ -304,6 +304,46 @@
     font-size: clamp(28px, 4vh, 56px); margin-top: 8px;
   }
 
+  /* Rules-mode projector screen — large heading, scrollable rules body. */
+  body.display #qbox > .rules-wrap {
+    flex: 1 1 0; min-height: 0;
+    display: flex; flex-direction: column; gap: 18px;
+    padding: 28px 36px;
+    background: linear-gradient(135deg, var(--card) 0%, var(--surface) 100%);
+    border: 1px solid var(--border); border-radius: 16px;
+  }
+  body.display #qbox .rules-head {
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border); padding-bottom: 14px;
+  }
+  body.display #qbox .rules-head .rno {
+    font-size: clamp(20px, 2.6vh, 32px); color: var(--muted); font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  body.display #qbox .rules-head .rname {
+    font-size: clamp(36px, 5.2vh, 72px); font-weight: 800; letter-spacing: -1px;
+    background: linear-gradient(135deg,var(--accent),var(--accent-2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  body.display #qbox .rules-head .rtype {
+    margin-left: auto; padding: 6px 14px; border-radius: 999px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    font-size: clamp(14px, 1.8vh, 20px); font-weight: 700;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 1px;
+  }
+  body.display #qbox .rules-body {
+    flex: 1 1 0; min-height: 0; overflow: auto;
+    font-size: clamp(20px, 3.2vh, 36px);
+    line-height: 1.5; white-space: pre-wrap;
+  }
+  body.display #qbox .rules-body ul { padding-left: 1.4em; margin: 0; }
+  body.display #qbox .rules-body li { margin: 6px 0; }
+  body.display #qbox .rules-foot {
+    text-align: center; font-size: clamp(18px, 2.4vh, 28px);
+    color: var(--muted); font-weight: 700;
+    padding-top: 8px; border-top: 1px solid var(--border);
+  }
+
   /* Buzzer-round status banner (sits above the question card on the projector). */
   .buzzer-banner {
     display: flex; align-items: center; gap: 14px;
@@ -476,6 +516,41 @@ function renderHidden() {
     <div class="empty hidden-screen"><div class="big">⏸</div><h1>Stand by…</h1></div>`;
 }
 
+// Plain text → bullet list when every non-empty line starts with a bullet
+// marker. Otherwise preserve newlines via white-space:pre-wrap.
+function renderRulesBody(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  const bulletLine = /^\s*([-*•]|\d+[.)])\s+/;
+  const nonEmpty = lines.filter(l => l.trim());
+  const allBullets = nonEmpty.length > 0 && nonEmpty.every(l => bulletLine.test(l));
+  if (allBullets) {
+    return '<ul>' + nonEmpty.map(l => `<li>${esc(l.replace(bulletLine, ''))}</li>`).join('') + '</ul>';
+  }
+  return esc(text || '');
+}
+
+function renderRules(s) {
+  const round = s.round;
+  if (!round) {
+    document.getElementById('qbox').innerHTML =
+      '<div class="empty"><div class="big">📋</div><h1>No round selected</h1></div>';
+    return;
+  }
+  const rules = (round.rules || '').trim();
+  document.getElementById('qbox').innerHTML = `
+    <div class="rules-wrap">
+      <div class="rules-head">
+        <span class="rno">Round ${round.round_no}</span>
+        <span class="rname">${esc(round.name)}</span>
+        <span class="rtype">${esc(round.type)}</span>
+      </div>
+      <div class="rules-body">
+        ${rules ? renderRulesBody(rules) : '<div class="empty"><div class="big">📋</div>No rules set for this round</div>'}
+      </div>
+      <div class="rules-foot">Get ready — questions coming up next ▶</div>
+    </div>`;
+}
+
 function render(s) {
   const titleEl = document.getElementById('title');
   if (s.title) { titleEl.textContent = s.title; titleEl.style.display = 'block'; }
@@ -497,6 +572,7 @@ function render(s) {
   const applyBody = () => {
     if (mode === 'leaderboard') renderLeaderboardForced(s);
     else if (mode === 'hidden') renderHidden();
+    else if (mode === 'rules') renderRules(s);
     else if (s.question) renderQuestionBody(s);
     else renderLeaderboardEmpty(s);
   };
