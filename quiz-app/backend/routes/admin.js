@@ -58,18 +58,19 @@ function parseExcelSummary(buffer) {
   const pass = get('PassQuestion').filter((r) => r.question && r.answer != null);
   const image = get('ImageRound').filter((r) => r.question && r.answer != null);
   const speaker = get('Speaker').filter((r) => r.question && r.answer != null);
+  const buzzer = get('Buzzer').filter((r) => r.question && r.answer != null);
   const rounds = get('Rounds').filter((r) => r.round_no && r.type);
 
   const issues = [];
   if (!teams.length) issues.push('No teams defined in the Teams sheet');
   if (!rounds.length) issues.push('No rounds defined in the Rounds sheet');
-  const validTypes = new Set(['mcq', 'rapidfire', 'pass', 'image', 'speaker']);
+  const validTypes = new Set(['mcq', 'rapidfire', 'pass', 'image', 'speaker', 'buzzer']);
   for (const r of rounds) {
     if (!validTypes.has(r.type)) issues.push(`Round ${r.round_no}: unknown type "${r.type}"`);
   }
 
   const refImages = new Set();
-  for (const r of [...mcq, ...rapid, ...pass, ...image]) {
+  for (const r of [...mcq, ...rapid, ...pass, ...image, ...buzzer]) {
     if (r.image) refImages.add(String(r.image));
   }
   const refAudio = new Set();
@@ -85,7 +86,8 @@ function parseExcelSummary(buffer) {
       pass: pass.length,
       image: image.length,
       speaker: speaker.length,
-      questions: mcq.length + rapid.length + pass.length + image.length + speaker.length,
+      buzzer: buzzer.length,
+      questions: mcq.length + rapid.length + pass.length + image.length + speaker.length + buzzer.length,
       rounds: rounds.length,
     },
     issues,
@@ -179,6 +181,7 @@ router.post('/import-excel', memUpload.single('file'), async (req, res, next) =>
       }
       for (const r of get('ImageRound')) await insertQ('image', r);
       for (const r of get('Speaker')) await insertQ('speaker', r);
+      for (const r of get('Buzzer')) await insertQ('buzzer', r);
 
       for (const r of get('Rounds')) {
         const ids = String(r.question_ids || '')

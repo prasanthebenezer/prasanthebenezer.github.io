@@ -9,6 +9,7 @@ Live quiz app for kids — host-driven, real-time, multi-team.
 - `https://prasanthebenezer.com/quiz/host` — host controller
 - `https://prasanthebenezer.com/quiz/display` — projector view
 - `https://prasanthebenezer.com/quiz/scores` — scorecard
+- `https://prasanthebenezer.com/quiz/buzzer` — captain's mobile buzzer (one device per team)
 
 ## First-time deploy on VPS
 
@@ -45,6 +46,7 @@ Or set `QUIZ_ADMIN_PASSWORD` for a plaintext fallback (not recommended).
 5. Open `/quiz/host` on your laptop, `/quiz/display` on the projector.
 6. Pick a round → assign question to a team → Correct / Wrong / Pass / Skip / Next.
 7. Pass logic: each pass halves the awarded points (configurable via `pass_decay` in Config sheet, default `[1, 0.5, 0.25, 0]`).
+8. **Buzzer rounds:** each team captain opens `/quiz/buzzer` on their phone (same Wi-Fi or public URL) and picks their team. The host arms the buzzer (`B` shortcut), captains tap to buzz in. First press wins; host marks Correct (+points) / Wrong (−points). Other teams can pass without penalty from the host's panel.
 
 ## Round types
 
@@ -55,6 +57,7 @@ Or set `QUIZ_ADMIN_PASSWORD` for a plaintext fallback (not recommended).
 | `pass` | Pass-through round (full pass-decay logic) |
 | `image` | Picture-based question |
 | `speaker` | Play an audio clip and identify the speaker |
+| `buzzer` | Captains buzz in from their phones at `/quiz/buzzer`. First press wins the chance to answer. Correct = +points, Wrong = −points, Pass = no penalty. |
 
 ## Reset between sessions
 

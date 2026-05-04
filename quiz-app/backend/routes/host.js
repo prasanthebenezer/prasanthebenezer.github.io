@@ -17,7 +17,9 @@ router.get('/state', async (req, res, next) => {
 
 const RESET_Q_FIELDS = `pass_level=0, hint_level=0, revealed=FALSE, attempted=FALSE,
  selected_option=NULL, wrong_options='{}', removed_option=NULL, clue=NULL,
- timer_started_at=NULL, timer_duration=NULL, original_team_id=NULL`;
+ timer_started_at=NULL, timer_duration=NULL, original_team_id=NULL,
+ buzzer_armed=FALSE, buzzer_locked_team_id=NULL, buzzer_locked_at=NULL,
+ buzzer_attempted='{}', buzzer_passed='{}'`;
 
 router.post('/select-round/:id', async (req, res, next) => {
   try {
@@ -330,6 +332,105 @@ router.post('/adjust', async (req, res, next) => {
     await pool.query(
       `INSERT INTO scores(team_id,points_awarded,result,note) VALUES($1,$2,'adjust',$3)`,
       [tid, d, note || 'manual adjust']
+    );
+    broadcast(req); res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// ---------- Buzzer round ----------
+//
+// Flow: host arms the buzzer for the current question → captains' phones light
+// up → first valid press atomically locks the buzzer to that team → host
+// judges. Correct adds points; Wrong subtracts; Pass is free.
+
+router.post('/buzzer/arm', async (req, res, next) => {
+  try {
+    const state = (await pool.query('SELECT current_question_id FROM session_state WHERE id=1')).rows[0];
+    if (!state.current_question_id) return res.status(400).json({ error: 'no question' });
+    await pool.query(
+      `UPDATE session_state SET buzzer_armed=TRUE, buzzer_locked_team_id=NULL, buzzer_locked_at=NULL WHERE id=1`
+    );
+    broadcast(req); res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.post('/buzzer/disarm', async (req, res, next) => {
+  try {
+    await pool.query(
+      `UPDATE session_state SET buzzer_armed=FALSE, buzzer_locked_team_id=NULL, buzzer_locked_at=NULL WHERE id=1`
+    );
+    broadcast(req); res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// Clear the lock without disarming, so the next-fastest team can buzz in
+// (used when the locked team passes).
+router.post('/buzzer/reset', async (req, res, next) => {
+  try {
+    await pool.query(
+      `UPDATE session_state SET buzzer_locked_team_id=NULL, buzzer_locked_at=NULL, buzzer_armed=TRUE WHERE id=1`
+    );
+    broadcast(req); res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.post('/buzzer/judge/:result', async (req, res, next) => {
+  try {
+    const result = req.params.result;
+    if (!['correct', 'wrong'].includes(result)) return res.status(400).json({ error: 'invalid result' });
+    const state = (await pool.query('SELECT * FROM session_state WHERE id=1')).rows[0];
+    if (!state.current_question_id) return res.status(400).json({ error: 'no question' });
+    const teamId = state.buzzer_locked_team_id;
+    if (!teamId) return res.status(400).json({ error: 'no team locked' });
+    const q = (await pool.query('SELECT * FROM questions WHERE id=$1', [state.current_question_id])).rows[0];
+    const base = q?.points || 0;
+    const pts = result === 'correct' ? base : -base;
+    await pool.query(
+      `INSERT INTO scores(team_id,question_id,round_id,points_awarded,result,note)
+       VALUES($1,$2,$3,$4,$5,$6)`,
+      [teamId, q.id, state.current_round_id, pts, result, 'buzzer']
+    );
+    if (pts) await pool.query('UPDATE teams SET score=score+$1 WHERE id=$2', [pts, teamId]);
+    if (result === 'correct') {
+      // Question is over — disarm and reveal so audience sees the answer.
+      await pool.query(
+        `UPDATE session_state
+           SET revealed=TRUE, attempted=TRUE, buzzer_armed=FALSE,
+               buzzer_locked_team_id=NULL, buzzer_locked_at=NULL,
+               buzzer_attempted = CASE WHEN $1 = ANY(buzzer_attempted) THEN buzzer_attempted
+                                        ELSE array_append(buzzer_attempted, $1) END
+         WHERE id=1`,
+        [teamId]
+      );
+    } else {
+      // Wrong — keep buzzer armed so other teams can try, but block this team.
+      await pool.query(
+        `UPDATE session_state
+           SET buzzer_locked_team_id=NULL, buzzer_locked_at=NULL, buzzer_armed=TRUE,
+               buzzer_attempted = CASE WHEN $1 = ANY(buzzer_attempted) THEN buzzer_attempted
+                                        ELSE array_append(buzzer_attempted, $1) END
+         WHERE id=1`,
+        [teamId]
+      );
+    }
+    broadcast(req); res.json({ ok: true, pts, team_id: teamId });
+  } catch (e) { next(e); }
+});
+
+// A team opts out of attempting on this question — no score change. They're
+// added to buzzer_passed so the buzzer disables on their phone for this Q.
+router.post('/buzzer/pass-team/:tid', async (req, res, next) => {
+  try {
+    const tid = parseInt(req.params.tid, 10);
+    if (!Number.isFinite(tid)) return res.status(400).json({ error: 'invalid team' });
+    await pool.query(
+      `UPDATE session_state
+         SET buzzer_passed = CASE WHEN $1 = ANY(buzzer_passed) THEN buzzer_passed
+                                   ELSE array_append(buzzer_passed, $1) END,
+             buzzer_locked_team_id = CASE WHEN buzzer_locked_team_id=$1 THEN NULL ELSE buzzer_locked_team_id END,
+             buzzer_locked_at      = CASE WHEN buzzer_locked_team_id=$1 THEN NULL ELSE buzzer_locked_at END
+       WHERE id=1`,
+      [tid]
     );
     broadcast(req); res.json({ ok: true });
   } catch (e) { next(e); }

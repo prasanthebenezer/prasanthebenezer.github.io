@@ -68,7 +68,7 @@
 
     <div class="card" id="step1">
       <div class="section-head"><span class="num" id="num1">1</span><h2>Download Excel Template</h2></div>
-      <p class="muted">Sheets: Config, Teams, MCQ, RapidFire, PassQuestion, ImageRound, Speaker, Rounds.
+      <p class="muted">Sheets: Config, Teams, MCQ, RapidFire, PassQuestion, ImageRound, Speaker, Buzzer, Rounds.
         <b>All round-type sheets are optional</b> — only fill in what you'll use, then list those rounds in the Rounds sheet.</p>
       <a href="api/admin/template.xlsx"><button class="lg always" onclick="markTemplateDownloaded()">⬇️ Download quiz_template.xlsx</button></a>
     </div>
@@ -316,7 +316,7 @@ function renderPreview(j) {
   const c = j.counts;
   const cells = [
     ['teams', c.teams], ['questions', c.questions], ['rounds', c.rounds],
-    ['mcq', c.mcq], ['rapidfire', c.rapidfire], ['pass', c.pass], ['image', c.image], ['speaker', c.speaker || 0],
+    ['mcq', c.mcq], ['rapidfire', c.rapidfire], ['pass', c.pass], ['image', c.image], ['speaker', c.speaker || 0], ['buzzer', c.buzzer || 0],
   ].map(([l,n]) => `<div class="cell"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`).join('');
 
   const blockers = j.issues || [];

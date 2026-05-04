@@ -72,3 +72,13 @@ ALTER TABLE session_state ADD COLUMN IF NOT EXISTS hint_level     INTEGER DEFAUL
 ALTER TABLE session_state ADD COLUMN IF NOT EXISTS original_team_id INTEGER;
 ALTER TABLE session_state ADD COLUMN IF NOT EXISTS display_mode  TEXT DEFAULT 'question';
 ALTER TABLE questions     ADD COLUMN IF NOT EXISTS audio          TEXT;
+
+-- Buzzer round state. `buzzer_armed` gates whether mobile buzzers accept presses;
+-- the first valid press atomically sets `buzzer_locked_team_id`. Teams in
+-- `buzzer_attempted` already won/lost and are blocked from re-pressing; teams
+-- in `buzzer_passed` opted out without penalty.
+ALTER TABLE session_state ADD COLUMN IF NOT EXISTS buzzer_armed         BOOLEAN     DEFAULT FALSE;
+ALTER TABLE session_state ADD COLUMN IF NOT EXISTS buzzer_locked_team_id INTEGER;
+ALTER TABLE session_state ADD COLUMN IF NOT EXISTS buzzer_locked_at     TIMESTAMPTZ;
+ALTER TABLE session_state ADD COLUMN IF NOT EXISTS buzzer_attempted     INTEGER[]   DEFAULT '{}';
+ALTER TABLE session_state ADD COLUMN IF NOT EXISTS buzzer_passed        INTEGER[]   DEFAULT '{}';

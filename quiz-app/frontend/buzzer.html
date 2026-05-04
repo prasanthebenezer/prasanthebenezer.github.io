@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-store, must-revalidate">
+<meta name="theme-color" content="#111827">
+<title>Buzzer · Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=9">
+<script src="theme.js?v=1"></script>
+<style>
+  body.buzzer {
+    /* Lock the page to the viewport so the buzzer always fills the screen,
+       no scroll, even on small phones with on-screen keyboards. */
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    height: 100svh;
+  }
+  body.buzzer .container {
+    height: 100svh; max-width: 540px;
+    padding: 16px;
+    display: flex; flex-direction: column;
+  }
+  .bz-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-bottom: 8px;
+  }
+  .bz-header .brand { font-weight: 800; font-size: 18px; }
+  .bz-team-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 12px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .bz-team-bar .swatch { width: 18px; height: 18px; border-radius: 5px; flex: 0 0 auto; }
+  .bz-team-bar .name { font-weight: 800; font-size: 16px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bz-team-bar .change-btn {
+    flex: 0 0 auto; background: var(--card); color: var(--ghost-text);
+    padding: 6px 12px; font-size: 12px; border-radius: 8px;
+  }
+  .bz-q-strip {
+    padding: 12px 14px; border-radius: 12px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    margin-bottom: 12px;
+    font-size: 15px; line-height: 1.4;
+    max-height: 22svh; overflow: auto;
+  }
+  .bz-q-strip .label {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .bz-q-strip.empty { color: var(--muted); }
+
+  .bz-status {
+    text-align: center; font-size: 14px; font-weight: 700;
+    color: var(--muted); margin-bottom: 8px; letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .bz-status.armed { color: var(--good); }
+  .bz-status.locked { color: var(--warn); }
+  .bz-status.blocked { color: var(--bad); }
+
+  /* The hero: a giant circular buzzer that fills the rest of the screen. */
+  .bz-stage {
+    flex: 1 1 0; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 12px 4px 24px;
+  }
+  .bz-button {
+    width: min(72vw, 50svh); aspect-ratio: 1;
+    border-radius: 50%;
+    border: 6px solid var(--border);
+    background: radial-gradient(circle at 35% 30%, #4b5266 0%, #2a3142 60%, #1a2030 100%);
+    color: rgba(255,255,255,0.55);
+    font-size: clamp(36px, 11vw, 76px); font-weight: 900;
+    letter-spacing: 4px;
+    cursor: not-allowed;
+    box-shadow:
+      inset 0 -10px 20px rgba(0,0,0,0.5),
+      inset 0 10px 18px rgba(255,255,255,0.06),
+      0 14px 0 rgba(0,0,0,0.35);
+    transition: transform 0.07s ease, box-shadow 0.07s ease, background 0.2s, color 0.2s, border-color 0.2s;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    font-family: inherit;
+  }
+  .bz-button.armed {
+    background: radial-gradient(circle at 35% 30%, #ff8585 0%, #ef4444 55%, #b91c1c 100%);
+    border-color: #ef4444;
+    color: white;
+    cursor: pointer;
+    box-shadow:
+      inset 0 -12px 22px rgba(0,0,0,0.35),
+      inset 0 12px 22px rgba(255,255,255,0.18),
+      0 16px 0 #7f1d1d,
+      0 0 38px rgba(239,68,68,0.55);
+    animation: buzzerPulse 1.2s ease-in-out infinite;
+  }
+  .bz-button.armed:active {
+    transform: translateY(12px);
+    box-shadow:
+      inset 0 -4px 8px rgba(0,0,0,0.4),
+      inset 0 4px 8px rgba(255,255,255,0.1),
+      0 4px 0 #7f1d1d,
+      0 0 22px rgba(239,68,68,0.45);
+  }
+  @keyframes buzzerPulse {
+    0%, 100% { box-shadow:
+      inset 0 -12px 22px rgba(0,0,0,0.35),
+      inset 0 12px 22px rgba(255,255,255,0.18),
+      0 16px 0 #7f1d1d,
+      0 0 24px rgba(239,68,68,0.45); }
+    50%      { box-shadow:
+      inset 0 -12px 22px rgba(0,0,0,0.35),
+      inset 0 12px 22px rgba(255,255,255,0.18),
+      0 16px 0 #7f1d1d,
+      0 0 50px rgba(239,68,68,0.85); }
+  }
+  .bz-button.won {
+    background: radial-gradient(circle at 35% 30%, #6ee7b7 0%, #10b981 55%, #047857 100%);
+    border-color: #10b981; color: white;
+    box-shadow:
+      inset 0 -12px 22px rgba(0,0,0,0.35),
+      inset 0 12px 22px rgba(255,255,255,0.18),
+      0 16px 0 #064e3b,
+      0 0 50px rgba(16,185,129,0.7);
+    animation: none;
+    cursor: not-allowed;
+  }
+  .bz-button.lost {
+    background: radial-gradient(circle at 35% 30%, #6b7280 0%, #4b5563 55%, #1f2937 100%);
+    border-color: #4b5563; color: rgba(255,255,255,0.4);
+    box-shadow:
+      inset 0 -10px 20px rgba(0,0,0,0.5),
+      inset 0 10px 18px rgba(255,255,255,0.04),
+      0 12px 0 rgba(0,0,0,0.35);
+    animation: none;
+    cursor: not-allowed;
+  }
+
+  /* Team picker (shown until a team is chosen) */
+  .picker {
+    flex: 1 1 0; min-height: 0;
+    display: flex; flex-direction: column; gap: 12px;
+    overflow: auto; padding: 8px 4px;
+  }
+  .picker h2 { text-align: center; margin: 0 0 4px; }
+  .picker p  { text-align: center; color: var(--muted); margin: 0 0 8px; }
+  .picker-team {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 18px;
+    background: var(--bg-2); border: 2px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer; font-family: inherit; color: var(--text);
+    text-align: left;
+  }
+  .picker-team:active { transform: scale(0.98); }
+  .picker-team .swatch { width: 28px; height: 28px; border-radius: 8px; flex: 0 0 auto; }
+  .picker-team .name { font-size: 20px; font-weight: 800; flex: 1; }
+  .picker-team .score {
+    font-size: 18px; font-weight: 800; color: var(--muted);
+  }
+
+  .toast.bz {
+    bottom: 80px; right: 50%; transform: translateX(50%);
+    padding: 12px 22px; font-size: 16px; font-weight: 800;
+  }
+</style>
+</head>
+<body class="buzzer">
+<div class="container">
+
+  <div class="bz-header">
+    <div class="brand">🔔 Buzzer</div>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><span class="theme-icon">☀️</span></button>
+  </div>
+
+  <div id="picker" class="picker" style="display:none">
+    <h2>Pick your team</h2>
+    <p>Tap your team to claim this device as the captain's buzzer.</p>
+    <div id="picker-list"></div>
+  </div>
+
+  <div id="play" style="display:none; flex:1; min-height:0; display:flex; flex-direction:column;">
+    <div class="bz-team-bar">
+      <span class="swatch" id="bz-swatch"></span>
+      <span class="name" id="bz-name"></span>
+      <span class="score muted" id="bz-score"></span>
+      <button class="change-btn" onclick="resetTeam()">Change</button>
+    </div>
+
+    <div class="bz-q-strip empty" id="bz-q">Waiting for the host…</div>
+
+    <div class="bz-status" id="bz-status">Standing by</div>
+
+    <div class="bz-stage">
+      <button class="bz-button" id="bz-btn" type="button" disabled>BUZZ</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+<script src="/quiz/socket.io/socket.io.js"></script>
+<script>
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m, kind){
+  const t = document.getElementById('toast');
+  t.innerHTML = `<div class="toast bz ${kind||''}">${esc(m)}</div>`;
+  setTimeout(()=>t.innerHTML='', 1600);
+}
+
+const TEAM_KEY = 'quiz.buzzer.teamId';
+let teamId = parseInt(localStorage.getItem(TEAM_KEY) || '0', 10) || null;
+let lastState = null;
+let lastQuestionId = null;
+let pressInflight = false;
+
+const buttonEl = () => document.getElementById('bz-btn');
+
+async function fetchState() {
+  try {
+    const s = await fetch('api/public/state', { credentials: 'same-origin' }).then(r => r.json());
+    render(s);
+  } catch (e) { console.error(e); }
+}
+
+function ensureTeamValid(teams) {
+  if (!teamId) return false;
+  return teams.some(t => t.id === teamId);
+}
+
+function render(s) {
+  lastState = s;
+  const teams = s.teams || [];
+  const picker = document.getElementById('picker');
+  const play = document.getElementById('play');
+
+  if (!ensureTeamValid(teams)) {
+    play.style.display = 'none';
+    picker.style.display = 'flex';
+    document.getElementById('picker-list').innerHTML = teams.length
+      ? teams.map(t => `
+          <button class="picker-team" onclick="chooseTeam(${t.id})">
+            <span class="swatch" style="background:${t.color}"></span>
+            <span class="name">${esc(t.name)}</span>
+            <span class="score">${t.score}</span>
+          </button>`).join('')
+      : '<p class="muted">No teams loaded yet — ask the host to import the quiz.</p>';
+    return;
+  }
+  picker.style.display = 'none';
+  play.style.display = 'flex';
+
+  const me = teams.find(t => t.id === teamId);
+  document.getElementById('bz-swatch').style.background = me.color;
+  document.getElementById('bz-name').textContent = me.name;
+  document.getElementById('bz-score').textContent = me.score;
+
+  const round = s.round;
+  const q = s.question;
+  const isBuzzerRound = round && round.type === 'buzzer';
+  const qBox = document.getElementById('bz-q');
+
+  if (!isBuzzerRound) {
+    qBox.classList.add('empty');
+    qBox.innerHTML = round
+      ? `Current round is <b>${esc(round.name)}</b> (${esc(round.type)}). The buzzer activates only on Buzzer rounds.`
+      : 'Waiting for the host to start a buzzer round…';
+  } else if (!q) {
+    qBox.classList.add('empty');
+    qBox.innerHTML = 'Waiting for the next question…';
+  } else {
+    qBox.classList.remove('empty');
+    qBox.innerHTML =
+      `<div class="label">Round ${round.round_no} · ${esc(round.name)}</div>
+       <div>${esc(q.question)}</div>`;
+  }
+
+  // Reset visual state when the question changes — fresh question, fresh shot.
+  if (q && lastQuestionId !== q.id) {
+    lastQuestionId = q.id;
+    pressInflight = false;
+  } else if (!q) {
+    lastQuestionId = null;
+  }
+
+  updateButton(s);
+}
+
+function updateButton(s) {
+  const btn = buttonEl();
+  const status = document.getElementById('bz-status');
+  btn.classList.remove('armed', 'won', 'lost');
+  btn.disabled = true;
+  btn.textContent = 'BUZZ';
+
+  const round = s.round;
+  const q = s.question;
+  if (!round || round.type !== 'buzzer' || !q) {
+    status.className = 'bz-status';
+    status.textContent = 'Standing by';
+    return;
+  }
+
+  const armed = s.state.buzzer_armed;
+  const lockedTeam = s.state.buzzer_locked_team_id;
+  const attempted = s.state.buzzer_attempted || [];
+  const passed = s.state.buzzer_passed || [];
+  const meBlocked = attempted.includes(teamId) || passed.includes(teamId);
+
+  if (lockedTeam === teamId) {
+    btn.classList.add('won');
+    btn.textContent = 'YOU!';
+    status.className = 'bz-status locked';
+    status.textContent = 'You buzzed first — answer up!';
+    return;
+  }
+  if (lockedTeam) {
+    btn.classList.add('lost');
+    const t = (s.teams || []).find(x => x.id === lockedTeam);
+    status.className = 'bz-status locked';
+    status.textContent = `${t ? t.name : 'Another team'} buzzed first`;
+    return;
+  }
+  if (meBlocked) {
+    btn.classList.add('lost');
+    btn.textContent = passed.includes(teamId) ? 'PASSED' : 'OUT';
+    status.className = 'bz-status blocked';
+    status.textContent = passed.includes(teamId) ? 'You passed this question' : 'You already attempted';
+    return;
+  }
+  if (armed) {
+    btn.classList.add('armed');
+    btn.disabled = pressInflight;
+    status.className = 'bz-status armed';
+    status.textContent = 'BUZZER LIVE — tap to buzz in!';
+    return;
+  }
+  status.className = 'bz-status';
+  status.textContent = 'Wait for the host to arm the buzzer…';
+}
+
+async function press() {
+  const s = lastState;
+  if (!s || pressInflight) return;
+  if (!s.state.buzzer_armed || s.state.buzzer_locked_team_id || !s.question) return;
+  if ((s.state.buzzer_attempted || []).includes(teamId)) return;
+  if ((s.state.buzzer_passed || []).includes(teamId)) return;
+  pressInflight = true;
+  // Pre-emptive UI lock so the captain can't double-tap
+  buttonEl().disabled = true;
+  if (navigator.vibrate) { try { navigator.vibrate(60); } catch {} }
+  try {
+    const r = await fetch('api/public/buzzer/press', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team_id: teamId, question_id: s.question.id }),
+    }).then(r => r.json());
+    if (r && r.won) {
+      if (navigator.vibrate) { try { navigator.vibrate([80, 40, 120]); } catch {} }
+      toast('You buzzed first!', '');
+    } else if (r && r.error) {
+      toast(r.error, 'bad');
+    }
+  } catch (e) {
+    toast('Network error', 'bad');
+  } finally {
+    pressInflight = false;
+  }
+}
+
+function chooseTeam(id) {
+  teamId = id;
+  localStorage.setItem(TEAM_KEY, String(id));
+  fetchState();
+}
+
+function resetTeam() {
+  localStorage.removeItem(TEAM_KEY);
+  teamId = null;
+  fetchState();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buttonEl().addEventListener('click', press);
+  // Allow pressing Space on a paired keyboard for testing on a laptop.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+      e.preventDefault(); press();
+    }
+  });
+});
+
+const sock = io('/public', { path: '/quiz/socket.io' });
+sock.on('connect', () => fetchState());
+sock.on('state', () => fetchState());
+fetchState();
+</script>
+</body></html>

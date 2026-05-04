@@ -31,6 +31,8 @@ async function snapshot({ redactAnswer = false } = {}) {
       'SELECT id,type,question,options,answer,points,time_sec,image,audio FROM questions WHERE id=$1',
       [state.current_question_id]
     )).rows[0] || null;
+    // Buzzer answers stay hidden from the public projector until the host reveals
+    // (mirrors mcq behaviour) — captains shouldn't see the answer on their phone.
     if (question && redactAnswer && !state.revealed) question.answer = null;
   }
   if (state.current_round_id) {

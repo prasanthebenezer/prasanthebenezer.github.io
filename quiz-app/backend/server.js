@@ -112,6 +112,7 @@ app.get(`${BASE}/admin`, sendPage('admin.html'));
 app.get(`${BASE}/host`, sendPage('host.html'));
 app.get(`${BASE}/display`, sendPage('display.html'));
 app.get(`${BASE}/scores`, sendPage('scores.html'));
+app.get(`${BASE}/buzzer`, sendPage('buzzer.html'));
 
 // ---- 404 + error handler ----
 app.use(`${BASE}/api`, (req, res) => res.status(404).json({ error: 'not found' }));
