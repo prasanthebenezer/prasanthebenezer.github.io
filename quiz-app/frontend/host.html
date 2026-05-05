@@ -501,10 +501,13 @@ function render(s) {
       ? `<button class="good" onclick="ans('auto')">⚡ Judge Selected</button>` : '';
 
     // Pass cannot loop — once every team has had a chance, block the Pass button.
+    // Pass stays enabled after a Wrong answer (host can rotate to the next team)
+    // but is locked once the question has been answered correctly.
     const teamsCount = (s.teams || []).length;
     const passLevel = s.state.pass_level || 0;
     const passExhausted = teamsCount > 0 && passLevel >= Math.max(0, teamsCount - 1);
-    const passDis = (attempted || passExhausted) ? 'disabled style="opacity:0.4;cursor:not-allowed"' : '';
+    const answeredCorrectly = s.state.last_result === 'correct';
+    const passDis = (answeredCorrectly || passExhausted) ? 'disabled style="opacity:0.4;cursor:not-allowed"' : '';
     const passLabel = passExhausted ? '↪ Pass (no more)' : '↪ Pass (½)';
     const passTitle = passExhausted ? 'All teams have had a chance — pass disabled' : 'Halve points and rotate to next team';
 
@@ -816,7 +819,7 @@ document.addEventListener('keydown', (e) => {
   const timerEnabled = !s.config || s.config.timer_enabled !== false;
   if (k === 'c' && !attempted && !isBuzzer) { e.preventDefault(); ans('correct'); }
   else if (k === 'w' && !attempted && !isBuzzer) { e.preventDefault(); ans('wrong'); }
-  else if (k === 'p' && !attempted && !isBuzzer && !passExhausted) { e.preventDefault(); pass(); }
+  else if (k === 'p' && s.state.last_result !== 'correct' && !isBuzzer && !passExhausted) { e.preventDefault(); pass(); }
   else if (k === 'r') { e.preventDefault(); reveal(); }
   else if (k === 's') { e.preventDefault(); skip(); }
   else if (k === 'u') { e.preventDefault(); undoLast(); }

@@ -18,6 +18,7 @@ router.get('/state', async (req, res, next) => {
 const RESET_Q_FIELDS = `pass_level=0, hint_level=0, revealed=FALSE, attempted=FALSE,
  selected_option=NULL, wrong_options='{}', removed_option=NULL, clue=NULL,
  timer_started_at=NULL, timer_duration=NULL, original_team_id=NULL,
+ last_result=NULL,
  buzzer_armed=FALSE, buzzer_locked_team_id=NULL, buzzer_locked_at=NULL,
  buzzer_attempted='{}', buzzer_passed='{}'`;
 
@@ -205,7 +206,7 @@ router.post('/answer/:result', async (req, res, next) => {
     // a pass (halved) or when the host advances to the next question.
     if (actual === 'correct') {
       await pool.query(
-        `UPDATE session_state SET revealed=TRUE, attempted=TRUE,
+        `UPDATE session_state SET revealed=TRUE, attempted=TRUE, last_result='correct',
                                   timer_started_at=NULL, timer_duration=NULL
           WHERE id=1`
       );
@@ -215,7 +216,7 @@ router.post('/answer/:result', async (req, res, next) => {
       if (q?.type === 'mcq' && state.selected_option) {
         await pool.query(
           `UPDATE session_state
-             SET attempted=TRUE, revealed=TRUE,
+             SET attempted=TRUE, revealed=TRUE, last_result='wrong',
                  timer_started_at=NULL, timer_duration=NULL,
                  wrong_options = CASE WHEN $1 = ANY(wrong_options) THEN wrong_options
                                       ELSE array_append(wrong_options, $1) END
@@ -224,7 +225,7 @@ router.post('/answer/:result', async (req, res, next) => {
         );
       } else {
         await pool.query(
-          `UPDATE session_state SET attempted=TRUE, revealed=TRUE,
+          `UPDATE session_state SET attempted=TRUE, revealed=TRUE, last_result='wrong',
                                     timer_started_at=NULL, timer_duration=NULL
             WHERE id=1`
         );
@@ -238,7 +239,10 @@ router.post('/pass', async (req, res, next) => {
   try {
     const state = (await pool.query('SELECT * FROM session_state WHERE id=1')).rows[0];
     if (!state.current_question_id || !state.current_team_id) return res.status(400).json({ error: 'no question/team selected' });
-    if (state.attempted) return res.status(400).json({ error: 'team already attempted — cannot pass' });
+    // Pass is blocked once the question is closed by a correct answer. After a
+    // wrong answer the host can still rotate to the next team — the wrong team
+    // keeps its penalty and the next team picks up at the halved pass factor.
+    if (state.last_result === 'correct') return res.status(400).json({ error: 'team already answered correctly — cannot pass' });
     const teams = (await pool.query('SELECT id FROM teams ORDER BY position,id')).rows;
     // Pass cannot loop — every team gets at most one chance per question.
     // After (teams.length - 1) passes the next pass would wrap back to the
@@ -246,12 +250,18 @@ router.post('/pass', async (req, res, next) => {
     if ((state.pass_level || 0) >= Math.max(0, teams.length - 1)) {
       return res.status(400).json({ error: 'all teams have had a chance — cannot pass further' });
     }
-    await award(state, state.current_team_id, 'pass', { note: 'passed' });
+    // Skip the synthetic "pass" score row when the team already has a wrong
+    // record for this question — we don't want to double-record their attempt.
+    if (!state.attempted) {
+      await award(state, state.current_team_id, 'pass', { note: 'passed' });
+    }
     const idx = teams.findIndex((t) => t.id === state.current_team_id);
     const next = teams[(idx + 1) % teams.length];
     const origTeam = state.original_team_id || state.current_team_id;
     await pool.query(
-      `UPDATE session_state SET current_team_id=$1, pass_level=pass_level+1, attempted=FALSE, original_team_id=$2 WHERE id=1`,
+      `UPDATE session_state SET current_team_id=$1, pass_level=pass_level+1,
+                                attempted=FALSE, last_result=NULL,
+                                original_team_id=$2 WHERE id=1`,
       [next.id, origTeam]
     );
     // pass_level just incremented to >= 1, so autoStartTimer halves the duration.
@@ -366,12 +376,12 @@ router.post('/undo-last', async (req, res, next) => {
       if (row.result === 'wrong' && state.wrong_options?.length) {
         await pool.query(
           `UPDATE session_state
-             SET attempted=FALSE,
+             SET attempted=FALSE, last_result=NULL,
                  wrong_options = wrong_options[1:array_length(wrong_options,1)-1]
            WHERE id=1`
         );
       } else if (row.result === 'correct') {
-        await pool.query('UPDATE session_state SET attempted=FALSE, revealed=FALSE WHERE id=1');
+        await pool.query('UPDATE session_state SET attempted=FALSE, revealed=FALSE, last_result=NULL WHERE id=1');
       } else if (row.result === 'pass') {
         // Revert: restore passer as current team, decrement pass_level,
         // clear original_team_id if no more active passes remain.
@@ -381,12 +391,13 @@ router.post('/undo-last', async (req, res, next) => {
              SET current_team_id=$1,
                  pass_level=$2,
                  attempted=FALSE,
+                 last_result=NULL,
                  original_team_id = CASE WHEN $2 = 0 THEN NULL ELSE original_team_id END
            WHERE id=1`,
           [row.team_id, newLvl]
         );
       } else {
-        await pool.query('UPDATE session_state SET attempted=FALSE WHERE id=1');
+        await pool.query('UPDATE session_state SET attempted=FALSE, last_result=NULL WHERE id=1');
       }
     }
     broadcast(req); res.json({ ok: true, undone: row.result, pts: row.points_awarded });

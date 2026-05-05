@@ -86,3 +86,8 @@ ALTER TABLE session_state ADD COLUMN IF NOT EXISTS buzzer_passed        INTEGER[
 -- Optional per-round rules text. When non-empty, the host can flip the
 -- projector to a "rules" display mode before starting the questions.
 ALTER TABLE rounds ADD COLUMN IF NOT EXISTS rules TEXT;
+
+-- Tracks the last judging result for the current question so Pass can stay
+-- enabled after Wrong (host can keep rotating teams) but is disabled after
+-- Correct (question is done).
+ALTER TABLE session_state ADD COLUMN IF NOT EXISTS last_result TEXT;
