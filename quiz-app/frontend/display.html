@@ -1015,6 +1015,10 @@ function render(s) {
     else if (mode === 'intro') renderIntro(s);
     else if (mode === 'finale') { ensureConfetti(); renderFinale(s); }
     else if (s.question) renderQuestionBody(s);
+    // No current question — round just ended or we're between questions.
+    // If anyone has scored, show the full ranked podium (not just a heading)
+    // so the audience can read the standings while the host advances.
+    else if ((s.teams || []).some((t) => t.score !== 0)) renderLeaderboardForced(s);
     else renderLeaderboardEmpty(s);
   };
   maybeCrossfade(fadeKey, applyBody);
