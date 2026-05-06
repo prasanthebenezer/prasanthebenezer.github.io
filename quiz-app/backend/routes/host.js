@@ -506,7 +506,8 @@ router.post('/buzzer/judge/:result', async (req, res, next) => {
       // sees the answer and the countdown doesn't keep ticking after the win.
       await pool.query(
         `UPDATE session_state
-           SET revealed=TRUE, attempted=TRUE, buzzer_armed=FALSE,
+           SET revealed=TRUE, attempted=TRUE, last_result='correct',
+               buzzer_armed=FALSE,
                buzzer_locked_team_id=NULL, buzzer_locked_at=NULL,
                timer_started_at=NULL, timer_duration=NULL,
                buzzer_attempted = CASE WHEN $1 = ANY(buzzer_attempted) THEN buzzer_attempted
@@ -516,9 +517,12 @@ router.post('/buzzer/judge/:result', async (req, res, next) => {
       );
     } else {
       // Wrong — keep buzzer armed so other teams can try, but block this team.
+      // last_result='wrong' lets the projector fire the wrong-answer cue; it'll
+      // be cleared again the moment the next team locks the buzzer.
       await pool.query(
         `UPDATE session_state
            SET buzzer_locked_team_id=NULL, buzzer_locked_at=NULL, buzzer_armed=TRUE,
+               last_result='wrong',
                buzzer_attempted = CASE WHEN $1 = ANY(buzzer_attempted) THEN buzzer_attempted
                                         ELSE array_append(buzzer_attempted, $1) END
          WHERE id=1`,

@@ -720,8 +720,10 @@ function fireAudioCues(s) {
     // Question changed — reset audio's notion of "already played"
     const sameQ = prevAudio.qid === cur.qid;
     if (sameQ) {
-      if (cur.revealed && !prevAudio.revealed && cur.lastResult === 'correct') QuizAudio.playCorrect();
-      if (cur.attempted && !prevAudio.attempted && cur.lastResult === 'wrong') QuizAudio.playWrong();
+      // Fire on last_result transitions so buzzer rounds (which don't flip
+      // `attempted` per-team) get the same cues as the regular flow.
+      if (cur.lastResult === 'correct' && prevAudio.lastResult !== 'correct') QuizAudio.playCorrect();
+      if (cur.lastResult === 'wrong'   && prevAudio.lastResult !== 'wrong')   QuizAudio.playWrong();
       if (cur.armed && !prevAudio.armed) QuizAudio.playBuzzerArmed();
       if (cur.locked && cur.locked !== prevAudio.locked) QuizAudio.playBuzzerLocked();
     }

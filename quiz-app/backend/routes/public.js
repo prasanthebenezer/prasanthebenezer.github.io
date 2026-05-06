@@ -37,7 +37,8 @@ router.post('/buzzer/press', buzzerLimiter, async (req, res, next) => {
     const r = await pool.query(
       `UPDATE session_state
           SET buzzer_locked_team_id = $1,
-              buzzer_locked_at      = NOW()
+              buzzer_locked_at      = NOW(),
+              last_result           = NULL
         WHERE id = 1
           AND buzzer_armed = TRUE
           AND buzzer_locked_team_id IS NULL
