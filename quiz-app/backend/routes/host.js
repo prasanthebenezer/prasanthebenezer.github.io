@@ -413,7 +413,7 @@ router.post('/undo-last', async (req, res, next) => {
 router.post('/display-mode/:mode', async (req, res, next) => {
   try {
     const mode = String(req.params.mode || '').toLowerCase();
-    if (!['question', 'leaderboard', 'hidden', 'rules'].includes(mode)) {
+    if (!['question', 'leaderboard', 'hidden', 'rules', 'intro', 'finale'].includes(mode)) {
       return res.status(400).json({ error: 'invalid display mode' });
     }
     await pool.query('UPDATE session_state SET display_mode=$1 WHERE id=1', [mode]);

@@ -398,6 +398,183 @@
     padding-top: 8px; border-top: 1px solid var(--border);
   }
 
+  /* Round-intro screen — cinematic "Round N · The Mystery Round" takeover.
+     Each line has a staggered slide-up so the projector feels deliberate
+     when the host triggers it between rounds. */
+  body.display #qbox > .intro-screen {
+    flex: 1 1 0; min-height: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: clamp(10px, 2vh, 22px);
+    padding: 40px;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(99,102,241,0.25), transparent 55%),
+      radial-gradient(circle at 70% 80%, rgba(245,158,11,0.20), transparent 55%),
+      linear-gradient(135deg, var(--card) 0%, var(--surface) 100%);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    position: relative; overflow: hidden;
+    text-align: center;
+  }
+  body.display #qbox > .intro-screen::before {
+    content: ''; position: absolute; inset: -25%;
+    background: radial-gradient(circle at 50% 50%, rgba(139,92,246,0.16), transparent 60%);
+    animation: holdGlow 7s ease-in-out infinite; pointer-events: none;
+  }
+  body.display #qbox .intro-screen > * { position: relative; z-index: 1; opacity: 0; }
+  body.display #qbox .intro-label {
+    font-size: clamp(16px, 2.4vh, 28px); color: var(--muted);
+    letter-spacing: clamp(6px, 1.2vh, 14px); text-transform: uppercase;
+    font-weight: 800; margin-bottom: clamp(4px, 1vh, 12px);
+    animation: introIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.05s forwards;
+  }
+  body.display #qbox .intro-name {
+    font-size: clamp(48px, 11vh, 156px); font-weight: 900;
+    letter-spacing: -2px; line-height: 1.0;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2) 50%, var(--warn));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    max-width: 92%;
+    animation: introIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.30s forwards;
+  }
+  body.display #qbox .intro-meta {
+    display: inline-flex; gap: clamp(8px, 1.6vh, 18px); flex-wrap: wrap;
+    align-items: center; justify-content: center;
+    animation: introIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.55s forwards;
+  }
+  body.display #qbox .intro-meta .pill {
+    padding: clamp(6px, 1vh, 12px) clamp(14px, 2.2vh, 22px);
+    border-radius: 999px;
+    background: var(--bg-2); border: 2px solid var(--border);
+    font-size: clamp(14px, 2vh, 24px); font-weight: 800;
+    color: var(--text); letter-spacing: 2px; text-transform: uppercase;
+  }
+  body.display #qbox .intro-meta .pill.accent {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: white; border-color: transparent;
+  }
+  body.display #qbox .intro-cta {
+    margin-top: clamp(10px, 2.2vh, 26px);
+    font-size: clamp(18px, 3vh, 38px); font-weight: 900;
+    color: var(--warn); letter-spacing: clamp(3px, 0.6vh, 8px);
+    text-transform: uppercase;
+    animation: introIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.85s forwards,
+               ctaPulse 1.6s ease-in-out 1.55s infinite;
+  }
+  @keyframes introIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+  }
+  @keyframes ctaPulse { 50% { opacity: 0.6; transform: scale(1.04); } }
+
+  /* Finale screen — podium with the winner front-and-center, 2nd/3rd flanking,
+     plus a CSS-only confetti shower. Toggled via a fixed-position confetti
+     layer in the body so re-renders don't restart the falling animation. */
+  body.display #qbox > .finale-screen {
+    flex: 1 1 0; min-height: 0;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: clamp(10px, 2vh, 22px);
+    padding: clamp(16px, 2vh, 28px) clamp(20px, 3vh, 40px);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(245,158,11,0.18), transparent 55%),
+      linear-gradient(135deg, var(--card) 0%, var(--surface) 100%);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  body.display #qbox .finale-head {
+    font-size: clamp(20px, 2.8vh, 38px); font-weight: 900;
+    color: var(--muted); letter-spacing: clamp(4px, 0.8vh, 10px);
+    text-transform: uppercase;
+    animation: introIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+  }
+  body.display #qbox .podium {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: clamp(12px, 1.8vh, 22px);
+    align-items: end; justify-items: stretch;
+    min-height: 0;
+  }
+  body.display #qbox .podium-spot {
+    display: flex; flex-direction: column; align-items: center;
+    gap: clamp(6px, 1vh, 12px);
+    padding: clamp(14px, 2vh, 24px);
+    background: var(--bg-2); border: 3px solid var(--border);
+    border-radius: 18px;
+    min-height: 0; position: relative;
+    animation: introIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  body.display #qbox .podium-spot.gold   { border-color: #f5c518; animation-delay: 0.45s;
+    box-shadow: 0 0 0 4px rgba(245,197,24,0.18), 0 0 60px rgba(245,158,11,0.35); }
+  body.display #qbox .podium-spot.silver { border-color: #cbd5e1; animation-delay: 0.20s; }
+  body.display #qbox .podium-spot.bronze { border-color: #d97706; animation-delay: 0.30s; }
+  body.display #qbox .podium-rank {
+    font-size: clamp(28px, 4vh, 56px);
+  }
+  body.display #qbox .podium-spot.gold .podium-rank {
+    font-size: clamp(48px, 7vh, 96px);
+    animation: crownBob 2.4s ease-in-out infinite;
+  }
+  @keyframes crownBob { 50% { transform: translateY(-8px) rotate(-4deg); } }
+  body.display #qbox .podium-name {
+    font-size: clamp(20px, 3.2vh, 44px); font-weight: 800;
+    line-height: 1.1;
+  }
+  body.display #qbox .podium-spot.gold .podium-name {
+    font-size: clamp(28px, 4.6vh, 64px); font-weight: 900;
+    background: linear-gradient(135deg, #f5c518, #f59e0b);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  body.display #qbox .podium-score {
+    font-size: clamp(32px, 5vh, 72px); font-weight: 900;
+    letter-spacing: -2px;
+  }
+  body.display #qbox .podium-spot.gold .podium-score {
+    font-size: clamp(48px, 8vh, 124px);
+  }
+  body.display #qbox .podium-swatch {
+    width: clamp(20px, 2.6vh, 32px); height: clamp(20px, 2.6vh, 32px);
+    border-radius: 8px;
+  }
+  body.display #qbox .podium-runners {
+    display: flex; flex-direction: column; gap: 6px;
+    color: var(--muted); font-size: clamp(13px, 1.8vh, 20px);
+    align-self: end;
+    animation: introIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.7s both;
+  }
+  body.display #qbox .podium-runner {
+    display: inline-flex; gap: 8px; align-items: center;
+    justify-content: center;
+  }
+  body.display #qbox .podium-runner .sw {
+    width: 10px; height: 10px; border-radius: 3px;
+  }
+
+  /* Fixed-position confetti layer — sits above the projector content but
+     below the floating toggles. Pieces use plain falling animations and
+     hardcoded delays so the same DOM nodes can be hidden/shown with
+     `display.confetti` on the body without restarting any animation. */
+  #confettiLayer {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 50;
+    overflow: hidden; display: none;
+  }
+  body.confetti-on #confettiLayer { display: block; }
+  #confettiLayer .piece {
+    position: absolute; top: -20px;
+    width: 10px; height: 14px;
+    opacity: 0;
+    animation: confettiFall linear infinite;
+  }
+  @keyframes confettiFall {
+    0%   { opacity: 0; transform: translate3d(0, -20px, 0) rotate(0); }
+    8%   { opacity: 1; }
+    100% { opacity: 0.8; transform: translate3d(60px, 105vh, 0) rotate(720deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #confettiLayer .piece { animation: none; opacity: 0; }
+  }
+
   /* Buzzer-round status banner (sits above the question card on the projector). */
   .buzzer-banner {
     display: flex; align-items: center; gap: 14px;
@@ -490,6 +667,7 @@
 <div id="connBanner" class="conn-banner" role="status" aria-live="polite">
   <span class="dot"></span>Reconnecting to quiz server…
 </div>
+<div id="confettiLayer" aria-hidden="true"></div>
 <button class="audio-toggle floating" onclick="QuizAudio.toggleMuted()" aria-label="Mute sound"><span class="audio-icon">🔊</span></button>
 <button class="theme-toggle floating" onclick="toggleTheme()" aria-label="Toggle theme"><span class="theme-icon">☀️</span></button>
 <div class="container">
@@ -681,6 +859,90 @@ function renderLeaderboardForced(s) {
     </div>`;
 }
 
+// Round-intro: cinematic "Round N · The Mystery Round · 12 Q · Get Ready"
+// takeover. Sits between rounds — host triggers from /host/display-mode/intro.
+function renderIntro(s) {
+  const round = s.round;
+  if (!round) {
+    document.getElementById('qbox').innerHTML = `
+      <div class="intro-screen">
+        <div class="intro-name">Get Ready</div>
+        <div class="intro-cta">A new round begins</div>
+      </div>`;
+    return;
+  }
+  const qCount = (round.question_ids || []).length;
+  document.getElementById('qbox').innerHTML = `
+    <div class="intro-screen">
+      <div class="intro-label">Round ${round.round_no}</div>
+      <div class="intro-name">${esc(round.name)}</div>
+      <div class="intro-meta">
+        <span class="pill accent">${esc(round.type)}</span>
+        ${qCount ? `<span class="pill">${qCount} Question${qCount === 1 ? '' : 's'}</span>` : ''}
+      </div>
+      <div class="intro-cta">▸ Get Ready ◂</div>
+    </div>`;
+}
+
+// Finale: top-3 podium with the winner front-and-center, plus a confetti
+// shower toggled via a body class so the rain doesn't restart on every push.
+function renderFinale(s) {
+  const ranked = [...(s.teams || [])].sort((a, b) => b.score - a.score || a.position - b.position);
+  if (!ranked.length) {
+    document.getElementById('qbox').innerHTML = `
+      <div class="finale-screen">
+        <div class="finale-head">🎉 Game Complete 🎉</div>
+        <div class="empty"><div class="big">👥</div>No teams</div>
+      </div>`;
+    return;
+  }
+  const [first, second, third, ...rest] = ranked;
+  const card = (t, kind, rankSym) => t ? `
+    <div class="podium-spot ${kind}" style="border-color:${t.color}">
+      <div class="podium-rank">${rankSym}</div>
+      <div class="podium-swatch" style="background:${t.color}"></div>
+      <div class="podium-name">${esc(t.name)}</div>
+      <div class="podium-score">${t.score}</div>
+    </div>` : '<div></div>';
+  const runners = rest.length ? `
+    <div class="podium-runners">
+      ${rest.map((t, i) => `
+        <span class="podium-runner">
+          #${i + 4} <span class="sw" style="background:${t.color}"></span> ${esc(t.name)} · ${t.score}
+        </span>`).join('')}
+    </div>` : '<div></div>';
+  document.getElementById('qbox').innerHTML = `
+    <div class="finale-screen">
+      <div class="finale-head">🎉 Game Complete 🎉</div>
+      <div class="podium">
+        ${card(second, 'silver', '🥈')}
+        ${card(first,  'gold',   '👑')}
+        ${card(third,  'bronze', '🥉')}
+      </div>
+      ${runners}
+    </div>`;
+}
+
+// Confetti pieces are stable DOM nodes — we just toggle visibility via a body
+// class so falling animations don't restart when the projector re-renders.
+function ensureConfetti() {
+  const layer = document.getElementById('confettiLayer');
+  if (!layer || layer.children.length) return;
+  const colors = ['#f5c518', '#ef4444', '#10b981', '#6366f1', '#8b5cf6', '#f59e0b', '#3b82f6'];
+  const N = 36;
+  for (let i = 0; i < N; i++) {
+    const p = document.createElement('div');
+    p.className = 'piece';
+    p.style.left = (Math.random() * 100) + 'vw';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDuration = (3 + Math.random() * 2.5).toFixed(2) + 's';
+    p.style.animationDelay = (-Math.random() * 5).toFixed(2) + 's';
+    p.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
+    if (i % 3 === 0) { p.style.width = '14px'; p.style.height = '6px'; p.style.borderRadius = '4px'; }
+    layer.appendChild(p);
+  }
+}
+
 // Forced "hidden" mode: branded holding screen with the quiz title — looks
 // intentional on a 75" projector, not like the app crashed.
 function renderHidden(s) {
@@ -750,10 +1012,15 @@ function render(s) {
     if (mode === 'leaderboard') renderLeaderboardForced(s);
     else if (mode === 'hidden') renderHidden(s);
     else if (mode === 'rules') renderRules(s);
+    else if (mode === 'intro') renderIntro(s);
+    else if (mode === 'finale') { ensureConfetti(); renderFinale(s); }
     else if (s.question) renderQuestionBody(s);
     else renderLeaderboardEmpty(s);
   };
   maybeCrossfade(fadeKey, applyBody);
+  // Confetti only shows during finale — toggled via body class so the falling
+  // pieces don't restart on every state push.
+  document.body.classList.toggle('confetti-on', mode === 'finale');
   // Timer only shows during the live question view.
   renderTimer(mode === 'question' ? s.state : null);
   fireAudioCues(s);

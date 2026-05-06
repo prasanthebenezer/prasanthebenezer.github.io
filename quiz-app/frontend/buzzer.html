@@ -337,6 +337,47 @@ function render(s) {
     return;
   }
 
+  // Intro / finale: simple takeover so the captain's phone matches the
+  // projector mood. Re-uses the rules pane container — it's just a styled box.
+  if (mode === 'intro' && round) {
+    stage.style.display = 'none';
+    qBox.style.display = 'none';
+    rulesPane.style.display = 'flex';
+    rulesPane.innerHTML = `
+      <div class="head">
+        <span class="rno">Round ${round.round_no}</span>
+        <span class="rname">${esc(round.name)}</span>
+      </div>
+      <div class="body" style="text-align:center;font-size:18px;font-weight:700;padding:14px 0">
+        🎬 Round about to start<br><span style="color:var(--muted);font-weight:600;font-size:14px">Get ready — questions in a moment</span>
+      </div>`;
+    document.getElementById('bz-status').className = 'bz-status armed';
+    document.getElementById('bz-status').textContent = 'Round starting';
+    return;
+  }
+  if (mode === 'finale') {
+    stage.style.display = 'none';
+    qBox.style.display = 'none';
+    rulesPane.style.display = 'flex';
+    const ranked = [...(s.teams || [])].sort((a,b)=>b.score-a.score || a.position-b.position);
+    const winner = ranked[0];
+    const me = (s.teams || []).find((t) => t.id === teamId);
+    const myRank = winner ? ranked.findIndex((t) => t.id === teamId) + 1 : 0;
+    rulesPane.innerHTML = `
+      <div class="head">
+        <span class="rname">🏆 Game Over</span>
+      </div>
+      <div class="body" style="text-align:center;padding:8px 0">
+        ${winner ? `<div style="font-size:14px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">Winner</div>
+                    <div style="font-size:28px;font-weight:900;margin:4px 0">👑 ${esc(winner.name)}</div>
+                    <div style="font-size:36px;font-weight:900;color:var(--warn)">${winner.score}</div>` : ''}
+        ${me && myRank ? `<div style="margin-top:14px;font-size:14px;color:var(--muted)">Your team finished <b style="color:var(--text)">#${myRank}</b> with <b style="color:var(--text)">${me.score}</b></div>` : ''}
+      </div>`;
+    document.getElementById('bz-status').className = 'bz-status';
+    document.getElementById('bz-status').textContent = 'Game complete';
+    return;
+  }
+
   rulesPane.style.display = 'none';
   qBox.style.display = '';
   stage.style.display = '';

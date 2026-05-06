@@ -309,9 +309,11 @@
           <div class="display-controls">
             <span class="zone-label">Display</span>
             <div class="display-buttons">
+              <button class="ghost" id="btn-intro" onclick="setDisplayMode('intro')" title="Cinematic round-intro card on the projector">🎬 Round Intro</button>
               <button class="ghost" id="btn-rules" onclick="setDisplayMode('rules')" title="Show this round's rules on the projector">📋 Rules</button>
               <button class="ghost" id="btn-leaderboard" onclick="setDisplayMode('leaderboard')" title="Show leaderboard on the projector">📊 Leaderboard</button>
               <button class="ghost" id="btn-hidden" onclick="setDisplayMode('hidden')" title="Hide the question on the projector">🙈 Hide Q</button>
+              <button class="ghost" id="btn-finale" onclick="setDisplayMode('finale')" title="🏆 Winner-reveal podium with confetti — use after the last question">🏆 Finale</button>
             </div>
           </div>
         </aside>
@@ -584,12 +586,25 @@ function render(s) {
   const btnLb = document.getElementById('btn-leaderboard');
   const btnHide = document.getElementById('btn-hidden');
   const btnRules = document.getElementById('btn-rules');
+  const btnIntro = document.getElementById('btn-intro');
+  const btnFinale = document.getElementById('btn-finale');
   if (btnLb) btnLb.classList.toggle('active', mode === 'leaderboard');
   if (btnHide) btnHide.classList.toggle('active', mode === 'hidden');
   if (btnRules) {
     btnRules.classList.toggle('active', mode === 'rules');
     // Hide the Rules toggle when no round is selected — there's nothing to show.
     btnRules.style.display = s.round ? '' : 'none';
+  }
+  if (btnIntro) {
+    btnIntro.classList.toggle('active', mode === 'intro');
+    // Round Intro only makes sense when a round is loaded.
+    btnIntro.style.display = s.round ? '' : 'none';
+  }
+  if (btnFinale) {
+    btnFinale.classList.toggle('active', mode === 'finale');
+    // Finale only makes sense once at least one team has scored.
+    const anyScores = (s.teams || []).some((t) => t.score !== 0);
+    btnFinale.style.display = anyScores ? '' : 'none';
   }
 
   document.getElementById('recent').innerHTML = (s.recent||[]).map(r => {
