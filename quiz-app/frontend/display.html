@@ -447,6 +447,28 @@
     background-attachment: fixed;
   }
 
+  /* B6 — New-leader cue: gold ring expands outward when a team takes over
+     the top spot. Fired by JS on a real leader transition (not on every
+     state push), so the audience gets a clear "lead changes" moment. */
+  @keyframes leaderTake {
+    0%   { box-shadow: 0 0 0 0   rgba(245,158,11,0.85); transform: scale(1); }
+    25%  { box-shadow: 0 0 0 14px rgba(245,158,11,0.30); transform: scale(1.025); }
+    70%  { box-shadow: 0 0 0 22px rgba(245,158,11,0);    transform: scale(1.01); }
+    100% { box-shadow: 0 0 0 0   rgba(245,158,11,0);    transform: scale(1); }
+  }
+  body.display .team-card.new-leader {
+    animation: leaderTake 2.2s ease-out;
+    border-color: var(--warn) !important;
+    z-index: 2;
+  }
+  body.display .team-card.new-leader .rank {
+    animation: leaderTake 2.2s ease-out;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    body.display .team-card.new-leader { animation: none; }
+    body.display .team-card.new-leader .rank { animation: none; }
+  }
+
   /* B5 — Question entry animation: slide-up + scale-in for whatever mounts
      inside #qbox when the question or display mode actually changes. The
      `.entering` class is added by maybeCrossfade() only on a real key change,
@@ -492,6 +514,16 @@
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const prevScores = new Map(); // team_id -> last-seen score (for delta animation)
+
+// Tracks the current single-leader (or null when tied / no scores). Stays
+// `undefined` until the first render so reloading the page mid-show doesn't
+// fire the new-leader animation on whoever happens to be in front.
+let prevLeader; // undefined | null | team_id
+
+// Animations that should outlast incidental renderTeams re-renders. Maps
+// team_id → expiry timestamp; renderTeams re-applies the class after rebuilding
+// innerHTML so the gold ring keeps pulsing through host clicks.
+const leaderAnimUntil = new Map();
 
 // Tracks the previous state snapshot so we can fire one-shot sounds on
 // transitions (correct/wrong/buzzer-armed/buzzer-locked). null on first call
@@ -563,6 +595,16 @@ function renderTeams(s) {
     rankByTeam.set(t.id, denseRank);
   }
 
+  // Detect single-leader transitions for the gold "new leader" pulse. Tied
+  // tops collapse to null so the cue only fires on a clean lead change.
+  const leadersAtTop = ranked.filter((t) => t.score === topScore);
+  const currentLeader = (topScore > 0 && leadersAtTop.length === 1) ? leadersAtTop[0].id : null;
+  const isFirstRender = prevLeader === undefined;
+  if (!isFirstRender && currentLeader && currentLeader !== prevLeader) {
+    leaderAnimUntil.set(currentLeader, Date.now() + 2300);
+  }
+  prevLeader = currentLeader;
+
   container.innerHTML = ranked.map((t) => {
     const rank = rankByTeam.get(t.id);
     const isLeader = topScore > 0 && t.score === topScore;
@@ -592,6 +634,16 @@ function renderTeams(s) {
       flash.remove();
       card.classList.remove('score-bump');
     }, 1700);
+  }
+
+  // Re-apply the new-leader class to whichever cards are still inside their
+  // animation window. innerHTML rewrites strip CSS classes, so without this
+  // an unrelated state push mid-pulse would cut the animation short.
+  const now = Date.now();
+  for (const [teamId, expires] of leaderAnimUntil) {
+    if (now >= expires) { leaderAnimUntil.delete(teamId); continue; }
+    const card = container.querySelector(`[data-team="${teamId}"]`);
+    if (card) card.classList.add('new-leader');
   }
 }
 
