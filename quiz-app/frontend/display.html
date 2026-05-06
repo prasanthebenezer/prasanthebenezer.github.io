@@ -756,7 +756,13 @@ function renderTeams(s) {
   const container = document.getElementById('teams');
   // Rank by score desc, tie-break by original position
   const ranked = [...s.teams].sort((a,b) => b.score - a.score || a.position - b.position);
-  const assignedId = s.state.current_team_id;
+  // Buzzer rounds aren't turn-based — the rotating current_team_id carries
+  // over from prior rounds and would mislead the audience. Highlight only
+  // the team that actually buzzed in (or no one, if nobody has yet).
+  const isBuzzer = s.round && s.round.type === 'buzzer';
+  const assignedId = isBuzzer
+    ? (s.state.buzzer_locked_team_id || null)
+    : s.state.current_team_id;
 
   // Detect deltas vs previous snapshot
   const deltas = new Map();
@@ -1064,14 +1070,15 @@ function renderQuestionBody(s) {
             ? `<span class="verdict bad">✗ Wrong</span>`
             : `<span class="verdict warn">↪ Passed</span>`)
       : (s.state.attempted ? `<span class="verdict bad">✗ Wrong</span>` : '');
-    const assignedBanner = assigned
+    const isBuzzerRound = s.round && s.round.type === 'buzzer';
+    const assignedBanner = (assigned && !isBuzzerRound)
       ? `<div class="assigned-banner" style="border-color:${assigned.color}">
            <span class="swatch" style="background:${assigned.color}"></span>
            <span>Assigned to <b>${esc(assigned.name)}</b></span>
            ${verdictHtml}
          </div>` : '';
     let buzzerBanner = '';
-    if (s.round && s.round.type === 'buzzer') {
+    if (isBuzzerRound) {
       const lockedId = s.state.buzzer_locked_team_id;
       const lockedTeam = lockedId ? s.teams.find(t => t.id === lockedId) : null;
       if (lockedTeam) {
