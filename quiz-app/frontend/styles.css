@@ -332,3 +332,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 body.display .theme-toggle.floating { opacity: 0.55; }
 body.display .theme-toggle.floating:hover { opacity: 1; }
+
+/* Audio mute toggle — same look as the theme toggle, sits to its left */
+.audio-toggle {
+  flex: 0 0 auto; background: var(--card); color: var(--ghost-text);
+  border: 1px solid var(--border); padding: 8px 12px; border-radius: 10px;
+  font-size: 18px; line-height: 1; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s;
+}
+.audio-toggle:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.audio-toggle:active { transform: translateY(0); }
+.audio-toggle .audio-icon { font-size: 18px; }
+.audio-toggle.floating {
+  position: fixed; top: 16px; right: 76px; z-index: 200;
+  background: var(--surface); backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+}
+body.display .audio-toggle.floating { opacity: 0.55; }
+body.display .audio-toggle.floating:hover { opacity: 1; }
+.audio-toggle.muted { color: var(--muted); }

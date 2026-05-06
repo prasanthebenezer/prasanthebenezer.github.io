@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta http-equiv="Cache-Control" content="no-store, must-revalidate"><title>Quiz Display</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=11">
+<link rel="stylesheet" href="styles.css?v=12">
 <script src="theme.js?v=1"></script>
+<script src="audio.js?v=1"></script>
 <style>
   /* Phase 2 display polish */
   .round-progress {
@@ -431,6 +432,7 @@
 <div id="connBanner" class="conn-banner" role="status" aria-live="polite">
   <span class="dot"></span>Reconnecting to quiz server…
 </div>
+<button class="audio-toggle floating" onclick="QuizAudio.toggleMuted()" aria-label="Mute sound"><span class="audio-icon">🔊</span></button>
 <button class="theme-toggle floating" onclick="toggleTheme()" aria-label="Toggle theme"><span class="theme-icon">☀️</span></button>
 <div class="container">
 
@@ -454,6 +456,32 @@
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const prevScores = new Map(); // team_id -> last-seen score (for delta animation)
+
+// Tracks the previous state snapshot so we can fire one-shot sounds on
+// transitions (correct/wrong/buzzer-armed/buzzer-locked). null on first call
+// to avoid playing sounds for state that was already there at page load.
+let prevAudio = null;
+function fireAudioCues(s) {
+  const cur = {
+    qid:        s.question ? s.question.id : null,
+    revealed:   !!(s.state && s.state.revealed),
+    attempted:  !!(s.state && s.state.attempted),
+    lastResult: s.state && s.state.last_result,
+    armed:      !!(s.state && s.state.buzzer_armed),
+    locked:     (s.state && s.state.buzzer_locked_team_id) || null,
+  };
+  if (prevAudio) {
+    // Question changed — reset audio's notion of "already played"
+    const sameQ = prevAudio.qid === cur.qid;
+    if (sameQ) {
+      if (cur.revealed && !prevAudio.revealed && cur.lastResult === 'correct') QuizAudio.playCorrect();
+      if (cur.attempted && !prevAudio.attempted && cur.lastResult === 'wrong') QuizAudio.playWrong();
+      if (cur.armed && !prevAudio.armed) QuizAudio.playBuzzerArmed();
+      if (cur.locked && cur.locked !== prevAudio.locked) QuizAudio.playBuzzerLocked();
+    }
+  }
+  prevAudio = cur;
+}
 
 async function refresh() {
   try {
@@ -640,6 +668,7 @@ function render(s) {
   maybeCrossfade(fadeKey, applyBody);
   // Timer only shows during the live question view.
   renderTimer(mode === 'question' ? s.state : null);
+  fireAudioCues(s);
 }
 
 function renderQuestionBody(s) {
@@ -741,6 +770,7 @@ function renderTimer(st) {
   const ring = document.getElementById('ring');
   const fg = ring.querySelector('.fg');
   const txt = ring.querySelector('.txt');
+  let lastShown = null;
   const update = () => {
     const elapsed = (Date.now() - start) / 1000;
     const left = Math.max(0, dur - elapsed);
@@ -750,6 +780,12 @@ function renderTimer(st) {
     txt.textContent = shown;
     ring.classList.toggle('crit', shown <= 5 && shown > 0);
     ring.classList.toggle('warn', shown > 5 && shown <= 10);
+    // Tick on each second-transition during the final 5s; alarm at 0.
+    if (lastShown !== null && shown !== lastShown) {
+      if (shown > 0 && shown <= 5) QuizAudio.playTick();
+      else if (shown === 0)        QuizAudio.playTimerUp();
+    }
+    lastShown = shown;
     if (left <= 0) { clearInterval(timerTick); timerTick = null; }
   };
   update(); timerTick = setInterval(update, 100);
