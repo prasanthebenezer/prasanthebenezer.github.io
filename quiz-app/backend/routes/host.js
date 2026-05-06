@@ -502,11 +502,13 @@ router.post('/buzzer/judge/:result', async (req, res, next) => {
     );
     if (pts) await pool.query('UPDATE teams SET score=score+$1 WHERE id=$2', [pts, teamId]);
     if (result === 'correct') {
-      // Question is over — disarm and reveal so audience sees the answer.
+      // Question is over — disarm, reveal, and stop the timer so the audience
+      // sees the answer and the countdown doesn't keep ticking after the win.
       await pool.query(
         `UPDATE session_state
            SET revealed=TRUE, attempted=TRUE, buzzer_armed=FALSE,
                buzzer_locked_team_id=NULL, buzzer_locked_at=NULL,
+               timer_started_at=NULL, timer_duration=NULL,
                buzzer_attempted = CASE WHEN $1 = ANY(buzzer_attempted) THEN buzzer_attempted
                                         ELSE array_append(buzzer_attempted, $1) END
          WHERE id=1`,
