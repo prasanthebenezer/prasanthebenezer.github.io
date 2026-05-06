@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#111827">
 <title>Buzzer · Quiz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=11">
 <script src="theme.js?v=1"></script>
 <style>
   body.buzzer {
@@ -188,6 +188,9 @@
 </style>
 </head>
 <body class="buzzer">
+<div id="connBanner" class="conn-banner" role="status" aria-live="polite">
+  <span class="dot"></span>Reconnecting…
+</div>
 <div class="container">
 
   <div class="bz-header">
@@ -454,7 +457,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const sock = io('/public', { path: '/quiz/socket.io' });
-sock.on('connect', () => fetchState());
+const connBanner = document.getElementById('connBanner');
+let connDownTimer = null;
+function showConnLost() {
+  if (connDownTimer) return;
+  connDownTimer = setTimeout(() => connBanner.classList.add('show'), 1200);
+}
+function hideConnLost() {
+  if (connDownTimer) { clearTimeout(connDownTimer); connDownTimer = null; }
+  connBanner.classList.remove('show');
+}
+sock.on('connect',       () => { hideConnLost(); fetchState(); });
+sock.on('disconnect',    showConnLost);
+sock.on('reconnect',     () => { hideConnLost(); fetchState(); });
+sock.on('connect_error', showConnLost);
 sock.on('state', () => fetchState());
 fetchState();
 </script>

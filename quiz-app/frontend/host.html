@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta http-equiv="Cache-Control" content="no-store, must-revalidate"><title>Host · Quiz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=10">
+<link rel="stylesheet" href="styles.css?v=11">
 <script src="theme.js?v=1"></script>
 <style>
   /* Phase 1 host-specific UI */
@@ -251,7 +251,11 @@
   }
 </style>
 </head>
-<body><div class="container">
+<body>
+<div id="connBanner" class="conn-banner" role="status" aria-live="polite">
+  <span class="dot"></span>Reconnecting to quiz server…
+</div>
+<div class="container">
 
   <div class="topbar">
     <div class="brand">🎮 Host</div>
@@ -373,6 +377,20 @@ async function load() {
   document.getElementById('ui').style.display='block';
   refresh();
   const sock = io('/host', { path: '/quiz/socket.io', withCredentials: true });
+  const connBanner = document.getElementById('connBanner');
+  let connDownTimer = null;
+  const showConnLost = () => {
+    if (connDownTimer) return;
+    connDownTimer = setTimeout(() => connBanner.classList.add('show'), 1200);
+  };
+  const hideConnLost = () => {
+    if (connDownTimer) { clearTimeout(connDownTimer); connDownTimer = null; }
+    connBanner.classList.remove('show');
+  };
+  sock.on('connect',      () => { hideConnLost(); refresh(); });
+  sock.on('disconnect',   showConnLost);
+  sock.on('reconnect',    () => { hideConnLost(); refresh(); });
+  sock.on('connect_error', showConnLost);
   sock.on('state', s => render(s));
 }
 async function refresh() { render(await api('/host/state')); }

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta http-equiv="Cache-Control" content="no-store, must-revalidate"><title>Quiz Display</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=11">
 <script src="theme.js?v=1"></script>
 <style>
   /* Phase 2 display polish */
@@ -298,11 +298,64 @@
     font-size: clamp(36px, 6vh, 80px); font-weight: 800; letter-spacing: -2px;
   }
 
-  /* Forced "Hidden" mode — calm holding screen */
-  body.display #qbox > .hidden-screen .big { font-size: clamp(60px, 8vh, 120px); }
-  body.display #qbox > .hidden-screen h1 {
-    font-size: clamp(28px, 4vh, 56px); margin-top: 8px;
+  /* Forced "Hidden" mode — branded holding screen with a soft glow + bobbing
+     mark. The audience should feel the quiz is in progress, not broken. */
+  body.display #qbox > .hold-screen {
+    flex: 1 1 0; min-height: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: clamp(14px, 2.4vh, 26px);
+    padding: 40px;
+    background:
+      radial-gradient(circle at 50% 35%, rgba(99,102,241,0.18), transparent 60%),
+      linear-gradient(135deg, var(--card) 0%, var(--surface) 100%);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    position: relative; overflow: hidden;
+    text-align: center;
   }
+  body.display #qbox > .hold-screen::before {
+    content: ''; position: absolute; inset: -25%;
+    background: radial-gradient(circle at 50% 50%, rgba(139,92,246,0.18), transparent 55%);
+    animation: holdGlow 8s ease-in-out infinite; pointer-events: none;
+  }
+  @keyframes holdGlow {
+    0%, 100% { transform: scale(1); opacity: 0.55; }
+    50%      { transform: scale(1.12); opacity: 1; }
+  }
+  body.display #qbox .hold-mark {
+    font-size: clamp(80px, 14vh, 180px);
+    filter: drop-shadow(0 10px 28px rgba(99,102,241,0.45));
+    animation: holdBob 4s ease-in-out infinite;
+    position: relative; z-index: 1;
+  }
+  @keyframes holdBob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-12px); }
+  }
+  body.display #qbox .hold-title {
+    font-size: clamp(36px, 7vh, 96px); font-weight: 900;
+    letter-spacing: -1.5px; line-height: 1.05;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    position: relative; z-index: 1;
+    max-width: 90%;
+  }
+  body.display #qbox .hold-sub {
+    color: var(--muted);
+    font-size: clamp(13px, 2vh, 22px);
+    font-weight: 700; letter-spacing: 4px;
+    text-transform: uppercase;
+    position: relative; z-index: 1;
+  }
+  body.display #qbox .hold-sub .live-dot {
+    display: inline-block; width: 9px; height: 9px;
+    border-radius: 50%; background: var(--good);
+    margin-right: 8px; vertical-align: middle;
+    box-shadow: 0 0 12px var(--good);
+    animation: liveDot 1.4s ease-in-out infinite;
+  }
+  @keyframes liveDot { 50% { opacity: 0.4; transform: scale(0.85); } }
 
   /* Rules-mode projector screen — large heading, scrollable rules body. */
   body.display #qbox > .rules-wrap {
@@ -375,6 +428,9 @@
 </style>
 </head>
 <body class="display">
+<div id="connBanner" class="conn-banner" role="status" aria-live="polite">
+  <span class="dot"></span>Reconnecting to quiz server…
+</div>
 <button class="theme-toggle floating" onclick="toggleTheme()" aria-label="Toggle theme"><span class="theme-icon">☀️</span></button>
 <div class="container">
 
@@ -509,11 +565,16 @@ function renderLeaderboardForced(s) {
     </div>`;
 }
 
-// Forced "hidden" mode: clear the question region so the projector audience
-// just sees a calm holding screen while the host briefs the room.
-function renderHidden() {
+// Forced "hidden" mode: branded holding screen with the quiz title — looks
+// intentional on a 75" projector, not like the app crashed.
+function renderHidden(s) {
+  const title = (s && s.title) ? esc(s.title) : 'Quiz in progress';
   document.getElementById('qbox').innerHTML = `
-    <div class="empty hidden-screen"><div class="big">⏸</div><h1>Stand by…</h1></div>`;
+    <div class="hold-screen">
+      <div class="hold-mark">🎯</div>
+      <div class="hold-title">${title}</div>
+      <div class="hold-sub"><span class="live-dot"></span>Stand by</div>
+    </div>`;
 }
 
 // Plain text → bullet list when every non-empty line starts with a bullet
@@ -571,7 +632,7 @@ function render(s) {
     : `mode:${mode}`;
   const applyBody = () => {
     if (mode === 'leaderboard') renderLeaderboardForced(s);
-    else if (mode === 'hidden') renderHidden();
+    else if (mode === 'hidden') renderHidden(s);
     else if (mode === 'rules') renderRules(s);
     else if (s.question) renderQuestionBody(s);
     else renderLeaderboardEmpty(s);
@@ -706,7 +767,21 @@ function maybeCrossfade(nextQid, apply) {
   }
 }
 const sock = io('/public', { path: '/quiz/socket.io' });
-sock.on('connect', () => console.log('connected'));
+const connBanner = document.getElementById('connBanner');
+let connDownTimer = null;
+function showConnLost() {
+  // small grace period — short blips shouldn't flash the banner
+  if (connDownTimer) return;
+  connDownTimer = setTimeout(() => connBanner.classList.add('show'), 1200);
+}
+function hideConnLost() {
+  if (connDownTimer) { clearTimeout(connDownTimer); connDownTimer = null; }
+  connBanner.classList.remove('show');
+}
+sock.on('connect',     () => { hideConnLost(); refresh(); });
+sock.on('disconnect',  showConnLost);
+sock.on('reconnect',   () => { hideConnLost(); refresh(); });
+sock.on('connect_error', showConnLost);
 sock.on('state', refresh);
 refresh();
 </script>

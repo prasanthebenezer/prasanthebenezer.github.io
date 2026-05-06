@@ -170,14 +170,60 @@ img.q-image {
 }
 .controls button { padding: 14px; font-size: 15px; }
 
-/* Quiz title banner */
+/* Quiz title banner — animated sheen + slow gradient drift for an event-grade feel. */
 .title-banner {
-  text-align: center; padding: 20px 24px; margin-bottom: 20px;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-  border-radius: 16px; box-shadow: var(--shadow);
-  font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: white;
+  text-align: center; padding: 22px 28px; margin-bottom: 20px;
+  background: linear-gradient(120deg,
+    var(--accent) 0%, var(--accent-2) 35%, var(--accent) 70%, var(--accent-2) 100%);
+  background-size: 220% 100%;
+  animation: titleDrift 14s ease-in-out infinite;
+  border-radius: 16px;
+  box-shadow:
+    0 8px 28px rgba(99,102,241,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -1px 0 rgba(0,0,0,0.12);
+  font-size: 28px; font-weight: 900; letter-spacing: -0.5px; color: white;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.20);
+  position: relative; overflow: hidden;
 }
-body.display .title-banner { font-size: 44px; padding: 28px; }
+.title-banner::after {
+  content: ''; position: absolute; top: 0; left: -60%;
+  width: 50%; height: 100%;
+  background: linear-gradient(100deg,
+    transparent 25%, rgba(255,255,255,0.22) 50%, transparent 75%);
+  animation: titleSheen 9s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes titleDrift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+@keyframes titleSheen {
+  0%        { transform: translateX(0); }
+  55%, 100% { transform: translateX(360%); }
+}
+body.display .title-banner { font-size: 44px; padding: 30px; }
+
+/* Connection-loss banner — fixed top strip across host/display/buzzer.
+   Hidden by default; .show slides it in when the websocket drops. */
+.conn-banner {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 2000;
+  padding: 9px 14px; text-align: center;
+  background: var(--bad); color: white;
+  font-size: 14px; font-weight: 700; letter-spacing: 0.4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.30);
+  transform: translateY(-110%);
+  transition: transform 0.25s ease;
+}
+.conn-banner.show { transform: translateY(0); }
+.conn-banner .dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: white; margin-right: 8px; vertical-align: middle;
+  animation: connPulse 0.9s ease-in-out infinite;
+}
+@keyframes connPulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+body.display .conn-banner { font-size: 18px; padding: 12px 18px; }
 
 /* Verdict pill (shown inside assigned banner) */
 .verdict {
