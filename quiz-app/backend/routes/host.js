@@ -211,12 +211,15 @@ router.post('/answer/:result', async (req, res, next) => {
           WHERE id=1`
       );
     } else {
-      // Track wrong MCQ option so it renders yellow for subsequent teams
+      // Track wrong MCQ option so it renders yellow for subsequent teams.
+      // Do NOT set revealed=TRUE on wrong — the next team may still pass-attempt,
+      // so the correct answer must stay hidden until the host explicitly Reveals
+      // or a team gets it right.
       const q = (await pool.query('SELECT type FROM questions WHERE id=$1', [state.current_question_id])).rows[0];
       if (q?.type === 'mcq' && state.selected_option) {
         await pool.query(
           `UPDATE session_state
-             SET attempted=TRUE, revealed=TRUE, last_result='wrong',
+             SET attempted=TRUE, last_result='wrong',
                  timer_started_at=NULL, timer_duration=NULL,
                  wrong_options = CASE WHEN $1 = ANY(wrong_options) THEN wrong_options
                                       ELSE array_append(wrong_options, $1) END
@@ -225,7 +228,7 @@ router.post('/answer/:result', async (req, res, next) => {
         );
       } else {
         await pool.query(
-          `UPDATE session_state SET attempted=TRUE, revealed=TRUE, last_result='wrong',
+          `UPDATE session_state SET attempted=TRUE, last_result='wrong',
                                     timer_started_at=NULL, timer_duration=NULL
             WHERE id=1`
         );
