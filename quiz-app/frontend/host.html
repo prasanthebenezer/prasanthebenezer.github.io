@@ -561,7 +561,7 @@ function render(s) {
         <button class="ghost" onclick="reveal()">👁 Reveal <span class="kbd">R</span></button>
         <button class="ghost" onclick="skip()">⤼ Skip <span class="kbd">S</span></button>
         <button onclick="next()">Next → <span class="kbd">→</span></button>
-        <button class="undo-btn" onclick="undoLast()" title="Reverse the last scoring action (60s window)">↶ Undo <span class="kbd">U</span></button>
+        <button class="undo-btn" onclick="undoLast()" title="Reverse the last scoring action (10 min window)">↶ Undo <span class="kbd">U</span></button>
       </div>
       ${(!isBuzzer && attempted && !s.state.revealed) ? '<p class="muted" style="margin:0">Team marked wrong — assign another team, Reveal, or Skip/Next.</p>' : ''}
     `;

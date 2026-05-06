@@ -241,6 +241,23 @@ let lastState = null;
 let lastQuestionId = null;
 let pressInflight = false;
 
+// Keep the captain's phone awake during a buzzer round — sleeping mid-question
+// makes them miss the buzz. The Wake Lock API needs a user gesture to start, so
+// we request it on team selection and re-acquire when the tab returns to view.
+let wakeLock = null;
+async function keepAwake() {
+  if (!('wakeLock' in navigator)) return;
+  if (document.visibilityState !== 'visible') return;
+  try {
+    if (wakeLock && !wakeLock.released) return;
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch (e) { /* user denied or unsupported — silently no-op */ }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') keepAwake();
+});
+
 const buttonEl = () => document.getElementById('bz-btn');
 
 function rulesAsHtml(text) {
@@ -412,6 +429,9 @@ async function press() {
   pressInflight = true;
   // Pre-emptive UI lock so the captain can't double-tap
   buttonEl().disabled = true;
+  // Tap is a user gesture — re-acquire the wake lock if the OS released it
+  // while the phone was idle (covers reloads where teamId was remembered).
+  keepAwake();
   if (navigator.vibrate) { try { navigator.vibrate(60); } catch {} }
   try {
     const r = await fetch('api/public/buzzer/press', {
@@ -435,6 +455,9 @@ async function press() {
 function chooseTeam(id) {
   teamId = id;
   localStorage.setItem(TEAM_KEY, String(id));
+  // Tap on a team is a user gesture — request the screen wake lock now so the
+  // browser grants it (later programmatic requests without a gesture fail).
+  keepAwake();
   fetchState();
 }
 
@@ -471,7 +494,9 @@ sock.on('connect',       () => { hideConnLost(); fetchState(); });
 sock.on('disconnect',    showConnLost);
 sock.on('reconnect',     () => { hideConnLost(); fetchState(); });
 sock.on('connect_error', showConnLost);
-sock.on('state', () => fetchState());
+// Server already pushes the full snapshot — use the payload instead of
+// round-tripping a second HTTP fetch per push.
+sock.on('state', (s) => { try { render(s); } catch (e) { console.error(e); } });
 fetchState();
 </script>
 </body></html>

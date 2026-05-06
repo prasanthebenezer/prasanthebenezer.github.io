@@ -869,7 +869,9 @@ sock.on('connect',     () => { hideConnLost(); refresh(); });
 sock.on('disconnect',  showConnLost);
 sock.on('reconnect',   () => { hideConnLost(); refresh(); });
 sock.on('connect_error', showConnLost);
-sock.on('state', refresh);
+// Server already pushes the full snapshot in the `state` event — render
+// directly instead of round-tripping a second HTTP fetch per push.
+sock.on('state', (s) => { try { render(s); } catch (e) { console.error(e); } });
 refresh();
 </script>
 </body></html>
