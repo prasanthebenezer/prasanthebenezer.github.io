@@ -426,6 +426,42 @@
   }
   @keyframes bzArmedPulse { 50% { box-shadow: 0 0 0 6px rgba(16,185,129,0.22); } }
   @keyframes bzLockPulse  { 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0.35); transform: scale(1.01); } }
+
+  /* B4 — Background depth: layer soft corner glows over the body gradient so
+     the projector doesn't look like a flat default theme on a 75" screen.
+     Fixed-attachment so the haze stays put while content swaps. */
+  body.display {
+    background:
+      radial-gradient(900px 620px at 6% -10%,  rgba(99,102,241,0.20), transparent 62%),
+      radial-gradient(900px 620px at 100% 110%, rgba(139,92,246,0.22), transparent 62%),
+      radial-gradient(520px 520px at 92% 4%,    rgba(99,102,241,0.10), transparent 70%),
+      var(--body-bg);
+    background-attachment: fixed;
+  }
+  [data-theme="light"] body.display {
+    background:
+      radial-gradient(900px 620px at 6% -10%,  rgba(139,92,246,0.18), transparent 62%),
+      radial-gradient(900px 620px at 100% 110%, rgba(244,114,182,0.20), transparent 62%),
+      radial-gradient(520px 520px at 92% 4%,    rgba(99,102,241,0.10), transparent 70%),
+      var(--body-bg);
+    background-attachment: fixed;
+  }
+
+  /* B5 — Question entry animation: slide-up + scale-in for whatever mounts
+     inside #qbox when the question or display mode actually changes. The
+     `.entering` class is added by maybeCrossfade() only on a real key change,
+     so toggles like reveal/select don't replay the animation. */
+  @keyframes qEnter {
+    from { opacity: 0; transform: translateY(14px) scale(0.985); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+  }
+  body.display #qbox.entering > * {
+    animation: qEnter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    transform-origin: 50% 30%;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    body.display #qbox.entering > * { animation: none; }
+  }
 </style>
 </head>
 <body class="display">
@@ -791,13 +827,28 @@ function renderTimer(st) {
   update(); timerTick = setInterval(update, 100);
 }
 
-// Crossfade qbox when the question id changes
+// Crossfade qbox when the question id changes. We also tag the box with
+// `.entering` for ~450ms after a real key change so the slide-up + scale-in
+// animation runs on the new content (B5) — this avoids replaying every time
+// a host toggle pushes a state event for the same question.
 let lastQid = null;
+let enterClearTimer = null;
 function maybeCrossfade(nextQid, apply) {
   const qb = document.getElementById('qbox');
-  if (lastQid !== null && lastQid !== nextQid) {
+  const changed = lastQid !== null && lastQid !== nextQid;
+  const flagEntered = () => {
+    if (enterClearTimer) clearTimeout(enterClearTimer);
+    qb.classList.add('entering');
+    enterClearTimer = setTimeout(() => qb.classList.remove('entering'), 480);
+  };
+  if (changed) {
     qb.classList.add('fading');
-    setTimeout(() => { apply(); qb.classList.remove('fading'); lastQid = nextQid; }, 200);
+    setTimeout(() => {
+      apply();
+      qb.classList.remove('fading');
+      flagEntered();
+      lastQid = nextQid;
+    }, 200);
   } else {
     apply(); lastQid = nextQid;
   }
