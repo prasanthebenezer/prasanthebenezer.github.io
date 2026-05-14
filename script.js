@@ -1,57 +1,54 @@
 // Theme Toggle
+function applyThemeUI(isDark) {
+    const themeToggle = document.querySelector('.theme-toggle');
+    if (!themeToggle) return;
+    const iconClass = isDark ? 'fa-sun' : 'fa-moon';
+    themeToggle.innerHTML = `<i class="fas ${iconClass}" aria-hidden="true"></i>`;
+    themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+}
+
 function toggleTheme() {
     const body = document.body;
-    const themeToggle = document.querySelector('.theme-toggle');
-
     body.classList.toggle('dark-theme');
-
-    if (body.classList.contains('dark-theme')) {
-        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-        localStorage.setItem('theme', 'dark');
-    } else {
-        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-        localStorage.setItem('theme', 'light');
-    }
+    const isDark = body.classList.contains('dark-theme');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    applyThemeUI(isDark);
 }
 
 // Load saved theme (syncs body class with html class set in head script)
 function loadTheme() {
     const savedTheme = localStorage.getItem('theme');
-    const themeToggle = document.querySelector('.theme-toggle');
-
-    if (savedTheme === 'dark') {
+    const isDark = savedTheme === 'dark';
+    if (isDark) {
         document.body.classList.add('dark-theme');
-        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
     }
+    applyThemeUI(isDark);
     // Remove the html-level class now that body has it
     document.documentElement.classList.remove('dark-theme');
 }
 
 // Mobile Menu Toggle
-function toggleMobileMenu() {
+function setMobileMenuState(open) {
     const navLinks = document.getElementById('navLinks');
     const menuToggle = document.querySelector('.mobile-menu-toggle');
-
-    navLinks.classList.toggle('active');
-
-    // Change icon
+    if (!navLinks || !menuToggle) return;
+    navLinks.classList.toggle('active', open);
+    menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     const icon = menuToggle.querySelector('i');
-    if (navLinks.classList.contains('active')) {
-        icon.className = 'fas fa-times';
-    } else {
-        icon.className = 'fas fa-bars';
-    }
+    if (icon) icon.className = open ? 'fas fa-times' : 'fas fa-bars';
+}
+
+function toggleMobileMenu() {
+    const navLinks = document.getElementById('navLinks');
+    if (!navLinks) return;
+    setMobileMenuState(!navLinks.classList.contains('active'));
 }
 
 // Close mobile menu when link is clicked
 function closeMobileMenu() {
     const navLinks = document.getElementById('navLinks');
-    const menuToggle = document.querySelector('.mobile-menu-toggle');
-
-    if (navLinks.classList.contains('active')) {
-        navLinks.classList.remove('active');
-        const icon = menuToggle.querySelector('i');
-        icon.className = 'fas fa-bars';
+    if (navLinks && navLinks.classList.contains('active')) {
+        setMobileMenuState(false);
     }
 }
 
@@ -76,8 +73,13 @@ function smoothScroll() {
     });
 }
 
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 // Intersection Observer for fade-in animations
 function initScrollAnimations() {
+    // Skip animations entirely for users who prefer reduced motion
+    if (prefersReducedMotion) return;
+
     // Add class so CSS can safely hide elements (no-JS users see everything)
     document.body.classList.add('js-animations');
 
@@ -134,9 +136,10 @@ function updateActiveNav() {
     });
 
     navLinks.forEach(link => {
-        link.style.color = '';
         if (link.getAttribute('href') === `#${current}`) {
-            link.style.color = 'var(--text-primary)';
+            link.setAttribute('aria-current', 'page');
+        } else {
+            link.removeAttribute('aria-current');
         }
     });
 }
@@ -190,6 +193,9 @@ function handleFormSubmit() {
 
 // Animate stats on scroll
 function animateStats() {
+    // Skip the counter animation when the user prefers reduced motion
+    if (prefersReducedMotion) return;
+
     const stats = document.querySelectorAll('.stat-value');
     const observerOptions = {
         threshold: 0.5
@@ -263,20 +269,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Back to top button
     const backToTop = document.getElementById('backToTop');
     if (backToTop) {
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 500) {
-                backToTop.classList.add('visible');
-            } else {
-                backToTop.classList.remove('visible');
-            }
-        });
         backToTop.addEventListener('click', function() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
 
-    // Update active nav on scroll
-    window.addEventListener('scroll', updateActiveNav);
+    // Single throttled scroll handler for nav highlight + back-to-top visibility
+    let scrollTicking = false;
+    function onScroll() {
+        if (scrollTicking) return;
+        scrollTicking = true;
+        window.requestAnimationFrame(() => {
+            updateActiveNav();
+            if (backToTop) {
+                backToTop.classList.toggle('visible', window.scrollY > 500);
+            }
+            scrollTicking = false;
+        });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
 
     // Initial call to set active nav
     updateActiveNav();
