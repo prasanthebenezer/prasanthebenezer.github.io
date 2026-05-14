@@ -36,10 +36,6 @@ python3 -m http.server 8000
 - **`quiz-app/`** — Live quiz app for kids (host-driven, real-time, multi-team). Container `quiz-app` on port 3100 with Postgres sidecar `quiz-db`, served at `prasanthebenezer.com/quiz/`. Requires `.env` with `QUIZ_SESSION_SECRET`, `QUIZ_DB_PASSWORD`, and `QUIZ_ADMIN_PASSWORD` or `QUIZ_ADMIN_PASSWORD_HASH`. See `quiz-app/README.md` for the game-day workflow and round types.
 - **`maintenance`** service — built from `../maintenance-dashboard` (sibling repo, outside this tree). Served at `maintenance.prasanthebenezer.com`.
 
-### Legacy / reference (do not edit unless asked)
-- **`prasanth_portfolio_site/`**, **`prasanth_portfolio_site_v2/`** — earlier portfolio versions.
-- **`index_old.html`, `index_y.html`, `styles_old.css`, `MyGit.html`** — legacy/experimental files.
-
 When editing the portfolio, only touch root-level files. When editing a sibling app, stay within its subdirectory.
 
 ## Docker Compose stack
