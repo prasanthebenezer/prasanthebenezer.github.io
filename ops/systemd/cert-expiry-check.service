@@ -1,0 +1,8 @@
+[Unit]
+Description=Check TLS cert expiry on prasanthebenezer.com hostnames
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cert-expiry-check.sh
