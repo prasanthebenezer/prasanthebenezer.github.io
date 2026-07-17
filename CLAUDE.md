@@ -36,6 +36,13 @@ python3 -m http.server 8000
 - **`quiz-app/`** — Live quiz app for kids (host-driven, real-time, multi-team). Container `quiz-app` on port 3100 with Postgres sidecar `quiz-db`, served at `prasanthebenezer.com/quiz/`. Requires `.env` with `QUIZ_SESSION_SECRET`, `QUIZ_DB_PASSWORD`, and `QUIZ_ADMIN_PASSWORD` or `QUIZ_ADMIN_PASSWORD_HASH`. See `quiz-app/README.md` for the game-day workflow and round types.
 - **`maintenance`** service — built from `../maintenance-dashboard` (sibling repo, outside this tree). Served at `maintenance.prasanthebenezer.com`.
 
+### VPS ops (`ops/`)
+- **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes all 4 hostnames and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
+- **`ops/systemd/cert-expiry-check.{service,timer}`** — systemd units for the monitor (runs 09:00 UTC daily).
+- **`ops/letsencrypt-hooks/sync-and-reload.sh`** — certbot deploy hook: after renewal, copies `/etc/letsencrypt/` into `./letsencrypt/` (the read-only mount into the nginx container) and reloads nginx.
+
+Runtime paths on the VPS (`/usr/local/bin/cert-expiry-check.sh`, `/etc/systemd/system/cert-expiry-check.{service,timer}`, `/etc/letsencrypt/renewal-hooks/deploy/sync-and-reload.sh`) are symlinks into `ops/` — so a `git pull` on the box deploys edits with no copy step. The ntfy topic lives in `/etc/cert-monitor.env` (chmod 600, not in git). All symlinks assume the repo stays at `/root/prasanthebenezer.github.io/`.
+
 When editing the portfolio, only touch root-level files. When editing a sibling app, stay within its subdirectory.
 
 ## Docker Compose stack
