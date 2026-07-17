@@ -8,6 +8,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./letsencrypt:/etc/letsencrypt:ro
+      - ./webroot:/var/www/certbot:ro
     networks:
       - web
 
