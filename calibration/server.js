@@ -8,8 +8,8 @@ const XLSX = require('xlsx');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const INITIAL_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-const INITIAL_CERT_VIEW_PASSWORD = process.env.CERT_VIEW_PASSWORD || 'view123';
+const INITIAL_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const INITIAL_CERT_VIEW_PASSWORD = process.env.CERT_VIEW_PASSWORD;
 
 // Ensure directories exist
 const DB_DIR = path.join(__dirname, 'database');
@@ -68,15 +68,21 @@ function getStoredHash(key) {
   return row ? row.value : null;
 }
 
-// Seed from env vars on first boot only — subsequent changes happen via the admin UI
-if (!getStoredHash('admin_password')) {
-  upsertSetting.run('admin_password', hashPassword(INITIAL_ADMIN_PASSWORD));
-  console.log('Seeded admin password from ADMIN_PASSWORD env var');
+// Seed from env vars on first boot only — subsequent changes happen via the admin UI.
+// No built-in fallback: a fresh database with no env var is a hard startup failure
+// rather than a site that quietly comes up on a well-known password.
+function seedPassword(settingKey, envValue, envName) {
+  if (getStoredHash(settingKey)) return;
+  if (!envValue) {
+    console.error(`Refusing to start: ${envName} must be set to seed ${settingKey} on a fresh database.`);
+    process.exit(1);
+  }
+  upsertSetting.run(settingKey, hashPassword(envValue));
+  console.log(`Seeded ${settingKey} from ${envName}`);
 }
-if (!getStoredHash('cert_view_password')) {
-  upsertSetting.run('cert_view_password', hashPassword(INITIAL_CERT_VIEW_PASSWORD));
-  console.log('Seeded certificate viewing password from CERT_VIEW_PASSWORD env var');
-}
+
+seedPassword('admin_password', INITIAL_ADMIN_PASSWORD, 'ADMIN_PASSWORD');
+seedPassword('cert_view_password', INITIAL_CERT_VIEW_PASSWORD, 'CERT_VIEW_PASSWORD');
 
 // Seed data if empty
 const count = db.prepare('SELECT COUNT(*) as c FROM equipment').get();

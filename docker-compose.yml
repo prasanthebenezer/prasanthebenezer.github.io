@@ -17,8 +17,8 @@ services:
     container_name: calibration-app
     restart: unless-stopped
     environment:
-      - ADMIN_PASSWORD=admin123       # Change in production
-      - CERT_VIEW_PASSWORD=view123    # Change in production
+      - ADMIN_PASSWORD=${CALIBRATION_ADMIN_PASSWORD:?set CALIBRATION_ADMIN_PASSWORD in .env}
+      - CERT_VIEW_PASSWORD=${CALIBRATION_CERT_VIEW_PASSWORD:?set CALIBRATION_CERT_VIEW_PASSWORD in .env}
       - PORT=3000
     volumes:
       - calibration-data:/app/database

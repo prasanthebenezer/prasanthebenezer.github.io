@@ -443,21 +443,27 @@ const CONFIG = {
 };
 ```
 
-Backend configuration is via environment variables in `docker-compose.yml`:
+Backend configuration is via environment variables in `docker-compose.yml`, which
+reads the password values from the repo-root `.env` (gitignored):
 
-| Variable             | Default    | Description                    |
-|----------------------|------------|--------------------------------|
-| `ADMIN_PASSWORD`     | `admin123` | Password for admin operations  |
-| `CERT_VIEW_PASSWORD` | `view123`  | Password to view certificates  |
-| `PORT`               | `3000`     | Express server port            |
+| Variable             | Default  | Description                             |
+|----------------------|----------|-----------------------------------------|
+| `ADMIN_PASSWORD`     | *none*   | Seeds the admin password on first boot  |
+| `CERT_VIEW_PASSWORD` | *none*   | Seeds the cert-view password            |
+| `PORT`               | `3000`   | Express server port                     |
+
+There are no built-in default passwords. Starting against a **fresh** database with
+either variable unset is a hard failure — the server logs the missing variable and
+exits rather than coming up on a guessable password.
 
 ---
 
-## Default Credentials
+## Password handling
 
-| Purpose              | Password   |
-|----------------------|------------|
-| Admin panel          | `admin123` |
-| Certificate viewing  | `view123`  |
+Both passwords are scrypt-hashed into the `settings` table in SQLite. The env vars
+seed them **on first boot only**; once a hash exists, the env var is ignored.
 
-**Change these immediately in production** by updating the environment variables in `docker-compose.yml`.
+That means rotating a password on a running instance is *not* done by editing `.env`
+— it has to go through the admin UI (or `POST /api/change-passwords`, which requires
+the current admin password). Keep `.env` in sync afterwards so a rebuild from an
+empty volume seeds the same values.
