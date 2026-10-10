@@ -6,6 +6,17 @@ services:
       - "80:80"
       - "443:443"
     restart: unless-stopped
+    depends_on:
+      - contact
     volumes:
       - ./letsencrypt:/etc/letsencrypt:ro
       - ./webroot:/var/www/certbot:ro
+
+  # Contact-form backend, reachable only from nginx at /api/contact.
+  # Secrets live in /etc/contact-form.env on the VPS (chmod 600, not in git).
+  contact:
+    build: ./contact
+    container_name: prasanth-contact
+    restart: unless-stopped
+    env_file: /etc/contact-form.env
+    read_only: true

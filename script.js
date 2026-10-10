@@ -176,7 +176,8 @@ function handleFormSubmit() {
         formStatus.textContent = '';
 
         try {
-            const formData = new FormData(form);
+            // URL-encoded body for the contact/ service behind /api/contact
+            const formData = new URLSearchParams(new FormData(form));
             const response = await fetch(form.getAttribute('action'), {
                 method: 'POST',
                 body: formData,
@@ -184,16 +185,19 @@ function handleFormSubmit() {
                     'Accept': 'application/json'
                 }
             });
+            const result = await response.json().catch(() => ({}));
 
             if (response.ok) {
                 formStatus.textContent = 'Message sent successfully!';
                 formStatus.style.color = 'var(--accent)';
                 form.reset();
             } else {
-                throw new Error('Network response was not ok');
+                const err = new Error('Request failed');
+                err.userMessage = result.error;
+                throw err;
             }
         } catch (error) {
-            formStatus.textContent = 'Oops! Something went wrong. Please try again.';
+            formStatus.textContent = error.userMessage || 'Oops! Something went wrong. Please try again.';
             formStatus.style.color = '#ef4444';
             console.error('Error:', error);
         } finally {

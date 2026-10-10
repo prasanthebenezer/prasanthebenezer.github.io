@@ -40,7 +40,7 @@ Runtime paths on the VPS (`/usr/local/bin/cert-expiry-check.sh`, `/etc/systemd/s
 
 ## Docker Compose
 
-`docker-compose.yml` defines a single `portfolio` service (nginx, ports 80/443) with `./letsencrypt` and `./webroot` mounted read-only. Common ops:
+`docker-compose.yml` defines a `portfolio` service (nginx, ports 80/443) with `./letsencrypt` and `./webroot` mounted read-only, and a `contact` service (contact-form backend, not exposed; nginx proxies `/api/contact` to it). Common ops:
 ```
 docker compose up -d --build portfolio
 docker compose logs -f portfolio
@@ -66,12 +66,12 @@ The site is a single-page, vanilla HTML/CSS/JS portfolio with no frameworks or d
 - `handleFormSubmit()` — async POST to the N8N webhook for the contact form
 - `animateStats()` / `animateValue()` — counter animation for hero stats on scroll into view
 
-**Contact form** posts to an N8N cloud webhook URL defined directly in `index.html` on the `<form action="...">` attribute. Update that URL there if the webhook changes.
+**Contact form** posts URL-encoded fields to `https://prasanthebenezer.com/api/contact` (the `<form action="...">` in `index.html`; absolute so the GitHub Pages copy uses it too). nginx proxies that path to the `contact` service (`contact/app.py`, Python stdlib only), which emails the message via Gmail SMTP with the visitor as Reply-To. Secrets (`SMTP_*`, `MAIL_TO`, `RECAPTCHA_SECRET`) live in `/etc/contact-form.env` on the VPS (chmod 600, not in git). CORS allows only `prasanthebenezer.com` and `prasanthebenezer.github.io`.
 
-Spam protection is split between the page and n8n — keep the field names in sync:
-- **Page:** a reCAPTCHA v2 checkbox (`.g-recaptcha`, site key in `data-sitekey`; Google loads it via `recaptcha/api.js`) and a hidden honeypot input `name="website"`. `handleFormSubmit()` refuses to send without a solved captcha, fakes success when the honeypot is filled, and calls `grecaptcha.reset()` after each send (tokens are single-use).
-- **n8n workflow:** Webhook → HTTP Request (POST `https://www.google.com/recaptcha/api/siteverify` with `secret` + `response` = `body["g-recaptcha-response"]`) → IF (`success` is true AND `body.website` empty) → email node, which reads fields via `$('Webhook').item.json.body.*`. The secret key lives only in n8n, never in this repo.
-- The webhook URL is public, so the n8n check is what actually blocks bots; the page-side checks only stop form-filling bots.
+Spam protection — keep field names in sync between page and `app.py`:
+- **Page:** a reCAPTCHA v2 checkbox (`.g-recaptcha`, site key in `data-sitekey`) and a hidden honeypot input `name="website"`. `handleFormSubmit()` refuses to send without a solved captcha, fakes success when the honeypot is filled, shows the server's `error` text on failure, and calls `grecaptcha.reset()` after each send (tokens are single-use).
+- **`contact/app.py`:** drops honeypot submissions (returns 200), validates fields, verifies `g-recaptcha-response` with Google's siteverify (must succeed with a hostname in `ALLOWED_HOSTNAMES`), and rate-limits to 5 sends per IP per hour (in memory, reset on restart). This server-side check is what actually blocks bots.
+- Test sending without a browser: `docker compose exec contact python -c "import app; app.send_mail('Test','you@example.com','hi','local')"`. Logs: `docker compose logs -f contact`.
 
 ## Sections (in order)
 
