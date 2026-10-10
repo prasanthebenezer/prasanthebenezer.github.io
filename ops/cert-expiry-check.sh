@@ -77,9 +77,9 @@ Thresholds: WARN <= ${WARN_DAYS}d, CRIT <= ${CRIT_DAYS}d.
 Certbot renews at 30d remaining, so WARN means a renewal cycle was missed.
 
 Investigate on VPS:
-  journalctl -u certbot-renew.service --since '7 days ago'
+  journalctl -u certbot.service --since '7 days ago'
   certbot certificates
-  systemctl status certbot-renew.timer"
+  systemctl status certbot.timer"
 
 curl -sS --max-time 15 \
   -H "Title: ${title}" \
