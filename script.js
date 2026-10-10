@@ -155,6 +155,22 @@ function handleFormSubmit() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
+        // Honeypot filled in: a bot. Pretend it worked and send nothing.
+        if (form.elements.website && form.elements.website.value) {
+            formStatus.textContent = 'Message sent successfully!';
+            formStatus.style.color = 'var(--accent)';
+            form.reset();
+            return;
+        }
+
+        // reCAPTCHA adds its token to the form as g-recaptcha-response,
+        // which the n8n webhook verifies with Google before sending email.
+        if (typeof grecaptcha === 'undefined' || !grecaptcha.getResponse()) {
+            formStatus.textContent = 'Please tick "I\'m not a robot" before sending.';
+            formStatus.style.color = '#ef4444';
+            return;
+        }
+
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
         formStatus.textContent = '';
@@ -183,6 +199,8 @@ function handleFormSubmit() {
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
+            // Each token is single-use, so get a fresh one for the next send
+            grecaptcha.reset();
 
             setTimeout(() => {
                 formStatus.textContent = '';

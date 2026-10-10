@@ -37,7 +37,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=20260514">
+    <link rel="stylesheet" href="styles.css?v=20261010">
 </head>
 <body>
     <a href="#main" class="skip-link">Skip to content</a>
@@ -457,6 +457,12 @@
                         <label for="contact-message">Message</label>
                         <textarea id="contact-message" name="message" rows="4" required></textarea>
                     </div>
+                    <!-- Honeypot: hidden from people, filled in by bots -->
+                    <div class="form-honeypot" aria-hidden="true">
+                        <label for="contact-website">Website</label>
+                        <input type="text" id="contact-website" name="website" tabindex="-1" autocomplete="off">
+                    </div>
+                    <div class="g-recaptcha" data-sitekey="6LeKJugtAAAAABJQ-_avjtRX7bQ1cokCkm-7MydE"></div>
                     <button type="submit" class="btn btn-primary" id="submit-btn">
                         <i class="fas fa-paper-plane" aria-hidden="true"></i> Send Message
                     </button>
@@ -485,6 +491,7 @@
         <i class="fas fa-arrow-up" aria-hidden="true"></i>
     </button>
 
-    <script src="script.js?v=20260514"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="script.js?v=20261010"></script>
 </body>
 </html>

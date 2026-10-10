@@ -772,6 +772,18 @@ body.dark-theme .nav {
     resize: vertical;
 }
 
+.form-honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.g-recaptcha {
+    min-height: 78px;
+}
+
 #form-status {
     font-size: 0.875rem;
     margin-top: var(--space-sm);
