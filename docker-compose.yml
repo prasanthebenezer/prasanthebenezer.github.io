@@ -1,7 +1,8 @@
 services:
   portfolio:
     build: .
-    container_name: prasanth-portfolio
+    image: prasanthebenezer-portfolio
+    container_name: prasanthebenezer-portfolio
     ports:
       - "80:80"
       - "443:443"
@@ -16,7 +17,8 @@ services:
   # Secrets live in /etc/contact-form.env on the VPS (chmod 600, not in git).
   contact:
     build: ./contact
-    container_name: prasanth-contact
+    image: prasanthebenezer-contact
+    container_name: prasanthebenezer-contact
     restart: unless-stopped
     env_file: /etc/contact-form.env
     read_only: true

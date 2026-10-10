@@ -12,4 +12,4 @@ cp -rL /etc/letsencrypt/live "$REPO/letsencrypt/"
 cp -rL /etc/letsencrypt/archive "$REPO/letsencrypt/"
 cp -rL /etc/letsencrypt/renewal "$REPO/letsencrypt/"
 
-docker exec prasanth-portfolio nginx -s reload
+docker exec prasanthebenezer-portfolio nginx -s reload

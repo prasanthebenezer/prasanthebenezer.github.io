@@ -276,7 +276,7 @@ docker ps
 
 # Expected output:
 # CONTAINER ID  IMAGE          STATUS        PORTS                                     NAMES
-# abc123...     ...portfolio   Up X mins     0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp  prasanth-portfolio
+# abc123...     ...portfolio   Up X mins     0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp  prasanthebenezer-portfolio
 
 # Test from the server itself
 curl -I http://localhost
@@ -332,7 +332,7 @@ certbot renew --quiet
 cp -rL /etc/letsencrypt /root/prasanthebenezer.github.io/letsencrypt
 
 # Reload nginx inside the container to pick up new certs
-docker exec prasanth-portfolio nginx -s reload
+docker exec prasanthebenezer-portfolio nginx -s reload
 SCRIPT
 
 chmod +x /root/renew-ssl.sh
@@ -503,7 +503,7 @@ cp -rL /etc/letsencrypt ./letsencrypt
 docker compose up -d --build
 
 # Set up auto-renewal
-echo '0 0,12 * * * root certbot renew --quiet && cp -rL /etc/letsencrypt /root/prasanthebenezer.github.io/letsencrypt && docker exec prasanth-portfolio nginx -s reload' >> /etc/crontab
+echo '0 0,12 * * * root certbot renew --quiet && cp -rL /etc/letsencrypt /root/prasanthebenezer.github.io/letsencrypt && docker exec prasanthebenezer-portfolio nginx -s reload' >> /etc/crontab
 
 echo "Done! Visit https://prasanthebenezer.com"
 ```
