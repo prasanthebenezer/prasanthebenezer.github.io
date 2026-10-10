@@ -68,6 +68,11 @@ The site is a single-page, vanilla HTML/CSS/JS portfolio with no frameworks or d
 
 **Contact form** posts to an N8N cloud webhook URL defined directly in `index.html` on the `<form action="...">` attribute. Update that URL there if the webhook changes.
 
+Spam protection is split between the page and n8n — keep the field names in sync:
+- **Page:** a reCAPTCHA v2 checkbox (`.g-recaptcha`, site key in `data-sitekey`; Google loads it via `recaptcha/api.js`) and a hidden honeypot input `name="website"`. `handleFormSubmit()` refuses to send without a solved captcha, fakes success when the honeypot is filled, and calls `grecaptcha.reset()` after each send (tokens are single-use).
+- **n8n workflow:** Webhook → HTTP Request (POST `https://www.google.com/recaptcha/api/siteverify` with `secret` + `response` = `body["g-recaptcha-response"]`) → IF (`success` is true AND `body.website` empty) → email node, which reads fields via `$('Webhook').item.json.body.*`. The secret key lives only in n8n, never in this repo.
+- The webhook URL is public, so the n8n check is what actually blocks bots; the page-side checks only stop form-filling bots.
+
 ## Sections (in order)
 
 Hero → About → Experience (timeline) → Projects (two categories: AI Automation, Industrial Automation) → Skills → Education & Certifications → Contact → Footer
