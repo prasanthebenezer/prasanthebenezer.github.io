@@ -18,8 +18,6 @@ fi
 HOSTS=(
   prasanthebenezer.com
   www.prasanthebenezer.com
-  maintenance.prasanthebenezer.com
-  calibration.prasanthebenezer.com
 )
 
 WARN_DAYS=20

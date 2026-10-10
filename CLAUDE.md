@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This repo serves two deployment targets from the same tree:
 
 1. **Static portfolio** — deployed via GitHub Pages at `https://prasanthebenezer.github.io` (root-level `index.html`, `styles.css`, `script.js`, `assets/`). No build step.
-2. **VPS multi-app stack** — deployed via Docker Compose at `https://prasanthebenezer.com` and subdomains, serving the portfolio plus several sibling apps behind nginx with Let's Encrypt TLS. See `VPS-DEPLOYMENT-GUIDE.md`.
+2. **VPS** — the same static files served by an nginx container via Docker Compose at `https://prasanthebenezer.com`, with Let's Encrypt TLS. See `VPS-DEPLOYMENT-GUIDE.md`.
 
 ## Git & Deployment
 
@@ -25,36 +25,29 @@ python3 -m http.server 8000
 
 ## File Structure
 
-### Portfolio (GitHub Pages + nginx container root)
+### Portfolio
 - **`index.html` / `styles.css` / `script.js`** — Live portfolio site (root level).
 - **`assets/Prasanth_Philip_CV.pdf`** — CV linked from nav and footer.
-- **`Dockerfile` / `nginx.conf`** — nginx container that serves the static portfolio and reverse-proxies to the other apps on the VPS.
+- **`Dockerfile` / `nginx.conf`** — nginx container that serves the static portfolio on the VPS.
 - **`setup-ssl.sh` / `letsencrypt/`** — Let's Encrypt cert provisioning + volume mount (read-only into the portfolio container).
 
-### Sibling apps (each is its own Docker service)
-- **`calibration/`** — Calibration equipment management app. Container `calibration-app` on port 3000, served at `calibration.prasanthebenezer.com`. Env: `ADMIN_PASSWORD`, `CERT_VIEW_PASSWORD`. Volumes: `calibration-data` (SQLite), `calibration-certs`.
-- **`quiz-app/`** — Live quiz app for kids (host-driven, real-time, multi-team). Container `quiz-app` on port 3100 with Postgres sidecar `quiz-db`, served at `prasanthebenezer.com/quiz/`. Requires `.env` with `QUIZ_SESSION_SECRET`, `QUIZ_DB_PASSWORD`, and `QUIZ_ADMIN_PASSWORD` or `QUIZ_ADMIN_PASSWORD_HASH`. See `quiz-app/README.md` for the game-day workflow and round types.
-- **`maintenance`** service — built from `../maintenance-dashboard` (sibling repo, outside this tree). Served at `maintenance.prasanthebenezer.com`.
-
 ### VPS ops (`ops/`)
-- **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes all 4 hostnames and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
+- **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes `prasanthebenezer.com` and `www.` and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
 - **`ops/systemd/cert-expiry-check.{service,timer}`** — systemd units for the monitor (runs 09:00 UTC daily).
 - **`ops/letsencrypt-hooks/sync-and-reload.sh`** — certbot deploy hook: after renewal, copies `/etc/letsencrypt/` into `./letsencrypt/` (the read-only mount into the nginx container) and reloads nginx.
 
 Runtime paths on the VPS (`/usr/local/bin/cert-expiry-check.sh`, `/etc/systemd/system/cert-expiry-check.{service,timer}`, `/etc/letsencrypt/renewal-hooks/deploy/sync-and-reload.sh`) are symlinks into `ops/` — so a `git pull` on the box deploys edits with no copy step. The ntfy topic lives in `/etc/cert-monitor.env` (chmod 600, not in git). All symlinks assume the repo stays at `/root/prasanthebenezer.github.io/`.
 
-When editing the portfolio, only touch root-level files. When editing a sibling app, stay within its subdirectory.
+## Docker Compose
 
-## Docker Compose stack
-
-`docker-compose.yml` defines five services on a shared `web` network: `portfolio` (nginx, ports 80/443), `calibration`, `maintenance`, `quiz`, `quiz-db`. Named volumes persist data for each app. `.env` at repo root holds quiz secrets (gitignored). Common ops:
+`docker-compose.yml` defines a single `portfolio` service (nginx, ports 80/443) with `./letsencrypt` and `./webroot` mounted read-only. Common ops:
 ```
-docker compose up -d --build <service>
-docker compose logs -f <service>
+docker compose up -d --build portfolio
+docker compose logs -f portfolio
 docker compose exec portfolio nginx -s reload    # after nginx.conf edits
 ```
 
-`nginx.conf` terminates TLS for `prasanthebenezer.com`, `www.`, `calibration.`, and `maintenance.` subdomains and proxies `/quiz/` to the quiz container. Certs live under `./letsencrypt/live/<domain>/`.
+`nginx.conf` terminates TLS for `prasanthebenezer.com` and redirects `www.` to the apex. Certs live under `./letsencrypt/live/<domain>/`.
 
 ## Architecture
 
