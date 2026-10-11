@@ -18,6 +18,7 @@ fi
 HOSTS=(
   prasanthebenezer.com
   www.prasanthebenezer.com
+  n8n.prasanthebenezer.com
 )
 
 WARN_DAYS=20

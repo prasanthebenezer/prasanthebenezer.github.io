@@ -33,7 +33,7 @@ python3 -m http.server 8000
 - **`setup-ssl.sh` / `letsencrypt/`** — Let's Encrypt cert provisioning + volume mount (read-only into the portfolio container).
 
 ### VPS ops (`ops/`)
-- **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes `prasanthebenezer.com` and `www.` and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
+- **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes `prasanthebenezer.com`, `www.` and `n8n.` and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
 - **`ops/systemd/cert-expiry-check.{service,timer}`** — systemd units for the monitor (runs 09:00 UTC daily).
 - **`ops/letsencrypt-hooks/sync-and-reload.sh`** — certbot deploy hook: after renewal, copies `/etc/letsencrypt/` into `./letsencrypt/` (the read-only mount into the nginx container) and reloads nginx.
 
@@ -48,7 +48,7 @@ docker compose logs -f portfolio
 docker compose exec portfolio nginx -s reload    # after nginx.conf edits
 ```
 
-`nginx.conf` terminates TLS for `prasanthebenezer.com` and redirects `www.` to the apex. Certs live under `./letsencrypt/live/<domain>/`.
+`nginx.conf` terminates TLS for `prasanthebenezer.com` and redirects `www.` to the apex. It also proxies `n8n.prasanthebenezer.com` to the self-hosted n8n stack in `/root/n8n`, which joins this compose network as host `n8n` (port 5678 is bound to localhost only). Certs live under `./letsencrypt/live/<domain>/`.
 
 ## Architecture
 
