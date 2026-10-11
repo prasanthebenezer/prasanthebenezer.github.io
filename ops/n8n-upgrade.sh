@@ -7,8 +7,10 @@
 # (localhost-only port, N8N_HOST/WEBHOOK_URL, portfolio network) survive it.
 # It finds the install via ./n8n relative to the cwd, so N8N_DIR is pinned here.
 #
-# Usage: n8n-upgrade.sh           upgrade, then verify
-#        n8n-upgrade.sh --check   verify only
+# Runtime: /usr/local/bin/n8n-upgrade -> this file (symlink).
+#
+# Usage: n8n-upgrade           upgrade, then verify
+#        n8n-upgrade --check   verify only
 set -uo pipefail
 
 N8N_DIR=/root/n8n
