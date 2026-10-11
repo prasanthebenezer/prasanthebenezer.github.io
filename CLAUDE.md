@@ -28,6 +28,7 @@ python3 -m http.server 8000
 ### Portfolio
 - **`index.html` / `styles.css` / `script.js`** — Live portfolio site (root level).
 - **`assets/Prasanth_Philip_CV.pdf`** — CV linked from nav and footer.
+- **`assets/profile.jpg`** — hero portrait (4:5, ~760×950). Optional: if missing, the frame falls back to "PP" initials.
 - **`Dockerfile` / `nginx.conf`** — nginx container that serves the static portfolio on the VPS.
 - **`setup-ssl.sh` / `letsencrypt/`** — Let's Encrypt cert provisioning + volume mount (read-only into the portfolio container).
 
@@ -52,7 +53,7 @@ docker compose exec portfolio nginx -s reload    # after nginx.conf edits
 ## Architecture
 
 The site is a single-page, vanilla HTML/CSS/JS portfolio with no frameworks or dependencies beyond CDN-loaded libraries:
-- **Google Fonts** — Inter typeface
+- **Google Fonts** — Inter (body/headings) and JetBrains Mono (labels, stats, tags)
 - **Font Awesome 6.4** — icons throughout
 
 **`styles.css`** uses CSS custom properties (`--bg-primary`, `--accent`, etc.) defined in `:root` for the light theme, overridden under `body.dark-theme` for dark mode. All spacing, color, and typography use these variables — extend them rather than hardcoding values.

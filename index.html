@@ -35,19 +35,14 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=20261010">
+    <link rel="stylesheet" href="styles.css?v=20261011">
 </head>
 <body>
     <a href="#main" class="skip-link">Skip to content</a>
 
-    <!-- Theme Toggle -->
-    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Switch to dark mode">
-        <i class="fas fa-moon" aria-hidden="true"></i>
-    </button>
-
-    <!-- Minimal Navigation -->
+    <!-- Navigation -->
     <nav class="nav" id="nav">
         <div class="nav-content">
             <a href="#about" class="nav-logo">PP</a>
@@ -60,6 +55,9 @@
                 <a href="#contact">Contact</a>
             </div>
             <div class="nav-actions">
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Switch to dark mode">
+                    <i class="fas fa-moon" aria-hidden="true"></i>
+                </button>
                 <a href="./assets/Prasanth_Philip_CV.pdf?v=20260514" target="_blank" class="nav-cta">
                     <i class="fas fa-file-pdf" aria-hidden="true"></i> CV
                 </a>
@@ -73,31 +71,41 @@
     <!-- Hero Section -->
     <section class="hero" id="main">
         <div class="container">
-            <div class="hero-content">
-                <p class="hero-label">Manager, Maintenance · Automation & AI Leader</p>
-                <h1 class="hero-title">Prasanth Philip</h1>
-                <p class="hero-subtitle">Leading plant maintenance and building intelligent systems that bridge industrial automation and AI-powered business operations</p>
-                <div class="hero-stats" aria-label="Career to date">
-                    <div class="stat">
-                        <div class="stat-value">17+</div>
-                        <div class="stat-label">Years experience</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-value">37</div>
-                        <div class="stat-label">Direct reports</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-value">SAR 15M</div>
-                        <div class="stat-label">Capex delivered</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-value">25%</div>
-                        <div class="stat-label">Efficiency uplift</div>
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <p class="hero-label">Manager, Maintenance · Automation & AI Leader</p>
+                    <h1 class="hero-title">Prasanth Philip<span class="accent-dot">.</span></h1>
+                    <p class="hero-subtitle">Leading plant maintenance and building intelligent systems that bridge industrial automation and AI-powered business operations.</p>
+                    <div class="hero-actions">
+                        <a href="#contact" class="btn btn-primary">Get in Touch <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+                        <a href="#projects" class="btn btn-secondary">View Work</a>
                     </div>
                 </div>
-                <div class="hero-actions">
-                    <a href="#contact" class="btn btn-primary">Get in Touch</a>
-                    <a href="#projects" class="btn btn-secondary">View Work</a>
+                <!-- Portrait: drop a photo at assets/profile.jpg; initials show until then -->
+                <figure class="hero-photo">
+                    <div class="hero-photo-frame">
+                        <span class="hero-photo-initials" aria-hidden="true">PP</span>
+                        <img src="assets/profile.jpg" alt="Portrait of Prasanth Philip" width="760" height="950" onerror="this.remove()">
+                    </div>
+                    <figcaption><span class="status-dot" aria-hidden="true"></span>Al Kharj, Saudi Arabia</figcaption>
+                </figure>
+            </div>
+            <div class="hero-stats" aria-label="Career to date">
+                <div class="stat">
+                    <div class="stat-value">17+</div>
+                    <div class="stat-label">Years experience</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">37</div>
+                    <div class="stat-label">Direct reports</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">SAR 15M</div>
+                    <div class="stat-label">Capex delivered</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">25%</div>
+                    <div class="stat-label">Efficiency uplift</div>
                 </div>
             </div>
         </div>
@@ -492,6 +500,6 @@
     </button>
 
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <script src="script.js?v=20261010b"></script>
+    <script src="script.js?v=20261011"></script>
 </body>
 </html>
