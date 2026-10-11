@@ -33,7 +33,7 @@ python3 -m http.server 8000
 - **`setup-ssl.sh` / `letsencrypt/`** — Let's Encrypt cert provisioning + volume mount (read-only into the portfolio container).
 
 ### VPS ops (`ops/`)
-- **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes `prasanthebenezer.com`, `www.` and `n8n.` and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
+- **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes `prasanthebenezer.com`, `www.`, `n8n.` and `webui.` and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
 - **`ops/systemd/cert-expiry-check.{service,timer}`** — systemd units for the monitor (runs 09:00 UTC daily).
 - **`ops/n8n-upgrade.sh`** — upgrades the n8n stack (`get-n8n.sh --upgrade` with `N8N_DIR=/root/n8n` pinned) and then verifies the `n8n.` proxy setup; `--check` verifies only. Installed as the `n8n-upgrade` command; use it instead of the raw curl one-liner.
 - **`ops/letsencrypt-hooks/sync-and-reload.sh`** — certbot deploy hook: after renewal, copies `/etc/letsencrypt/` into `./letsencrypt/` (the read-only mount into the nginx container) and reloads nginx.
@@ -49,7 +49,9 @@ docker compose logs -f portfolio
 docker compose exec portfolio nginx -s reload    # after nginx.conf edits
 ```
 
-`nginx.conf` terminates TLS for `prasanthebenezer.com` and redirects `www.` to the apex. It also proxies `n8n.prasanthebenezer.com` to the self-hosted n8n stack in `/root/n8n`, which joins this compose network as host `n8n` (port 5678 is bound to localhost only). Certs live under `./letsencrypt/live/<domain>/`.
+`nginx.conf` terminates TLS for `prasanthebenezer.com` and redirects `www.` to the apex. It also proxies `n8n.prasanthebenezer.com` to the self-hosted n8n stack in `/root/n8n`, which joins this compose network as host `n8n` (port 5678 is bound to localhost only). It also proxies `webui.prasanthebenezer.com` to Open WebUI, which runs with Ollama in a separate compose stack at `/root/ollama/docker-compose.yml` (not in this repo) and joins this compose network as host `open-webui` (port 8080, no published port). Ollama itself (`ollama:11434`, bound to 127.0.0.1 on the host) sits on the `n8n_default` network so n8n and Open WebUI can reach it; it is never exposed publicly because it has no auth. Certs live under `./letsencrypt/live/<domain>/`.
+
+Adding a new subdomain: create the DNS A record (→ the VPS IPv4), issue the cert with `certbot certonly --webroot -w /root/prasanthebenezer.github.io/webroot -d <sub>.prasanthebenezer.com`, copy it in with `cp -rL /etc/letsencrypt/{live,archive,renewal} letsencrypt/` (the deploy hook runs only on renewals, not first issuance), add HTTP-redirect + HTTPS server blocks to `nginx.conf` (copy the `n8n.`/`webui.` blocks, which resolve the upstream per request via `resolver 127.0.0.11`), add the host to `HOSTS` in `ops/cert-expiry-check.sh`, then `docker compose up -d --build portfolio`.
 
 ## Architecture
 
