@@ -22,13 +22,18 @@ fi
 
 failed=0
 check() {  # check <description> <command...>
-  local desc=$1; shift
-  if "$@" >/dev/null 2>&1; then
-    echo "  [OK]    $desc"
-  else
-    echo "  [FAIL]  $desc"
-    failed=1
-  fi
+  # Retries for ~60s: /healthz answers before n8n has finished starting up
+  # (e.g. the push websocket), so a freshly recreated container can fail briefly.
+  local desc=$1 i; shift
+  for i in {1..12}; do
+    if "$@" >/dev/null 2>&1; then
+      echo "  [OK]    $desc"
+      return
+    fi
+    sleep 5
+  done
+  echo "  [FAIL]  $desc"
+  failed=1
 }
 
 container=$(docker compose -f "$N8N_DIR/compose.yml" ps -q n8n)
