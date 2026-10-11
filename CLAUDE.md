@@ -35,6 +35,7 @@ python3 -m http.server 8000
 ### VPS ops (`ops/`)
 - **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes `prasanthebenezer.com`, `www.` and `n8n.` and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
 - **`ops/systemd/cert-expiry-check.{service,timer}`** — systemd units for the monitor (runs 09:00 UTC daily).
+- **`ops/n8n-upgrade.sh`** — upgrades the n8n stack (`get-n8n.sh --upgrade` with `N8N_DIR=/root/n8n` pinned) and then verifies the `n8n.` proxy setup; `--check` verifies only. Use it instead of the raw curl one-liner.
 - **`ops/letsencrypt-hooks/sync-and-reload.sh`** — certbot deploy hook: after renewal, copies `/etc/letsencrypt/` into `./letsencrypt/` (the read-only mount into the nginx container) and reloads nginx.
 
 Runtime paths on the VPS (`/usr/local/bin/cert-expiry-check.sh`, `/etc/systemd/system/cert-expiry-check.{service,timer}`, `/etc/letsencrypt/renewal-hooks/deploy/sync-and-reload.sh`) are symlinks into `ops/` — so a `git pull` on the box deploys edits with no copy step. The ntfy topic lives in `/etc/cert-monitor.env` (chmod 600, not in git). All symlinks assume the repo stays at `/root/prasanthebenezer.github.io/`.
