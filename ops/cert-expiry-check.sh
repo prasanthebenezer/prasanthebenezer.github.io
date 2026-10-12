@@ -20,6 +20,7 @@ HOSTS=(
   www.prasanthebenezer.com
   n8n.prasanthebenezer.com
   webui.prasanthebenezer.com
+  upload.prasanthebenezer.com
 )
 
 WARN_DAYS=20
