@@ -1,3 +1,5 @@
+// toggleTheme and toggleMobileMenu are called from inline onclick handlers in index.html
+/* exported toggleTheme, toggleMobileMenu */
 // Theme Toggle
 function applyThemeUI(isDark) {
     const themeToggle = document.querySelector('.theme-toggle');
