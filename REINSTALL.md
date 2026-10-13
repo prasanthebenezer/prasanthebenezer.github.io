@@ -14,7 +14,7 @@ How to bring back everything that runs on the VPS: the portfolio and contact for
 
 ## Before you need it: make a backup
 
-A backup runs automatically **every day at about 02:30 UTC** (systemd timer `vps-backup.timer`). Each run writes `/root/backups/vps-backup-<date>.tgz` (under 1 MB at present) and then deletes the previous one, so only the newest copy stays on the VPS. If a run fails, an alert goes to the cert monitor's ntfy topic.
+A backup runs automatically **every day at about 02:30 UTC** (systemd timer `vps-backup.timer`). Each run writes `/root/backups/vps-backup-<date>.tgz` (under 1 MB at present) and then deletes older ones, so the newest 7 (a week's worth) stay on the VPS. If a run fails, an alert goes to the cert monitor's ntfy topic.
 
 To make one right away, for example after adding a VPN device, run `vps-backup` on the VPS. It prints the command to download the file. On your Windows PC, in PowerShell:
 

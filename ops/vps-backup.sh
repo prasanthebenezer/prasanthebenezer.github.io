@@ -6,7 +6,7 @@
 # Runtime: /usr/local/bin/vps-backup -> this file (symlink).
 #
 # Usage: vps-backup    writes /root/backups/vps-backup-<date>.tgz (chmod 600)
-#                      and then deletes the older vps-backup-*.tgz there
+#                      and then deletes all but the newest $KEEP there
 #
 # Runs daily from systemd/vps-backup.timer.
 #
@@ -16,6 +16,7 @@
 set -euo pipefail
 
 OUT_DIR=/root/backups
+KEEP=7   # number of backups to keep
 OUT="$OUT_DIR/vps-backup-$(date -u +%Y%m%d-%H%M).tgz"
 WORK=$(mktemp -d)
 umask 077
@@ -86,8 +87,10 @@ mkdir -p "$OUT_DIR"
 tar czf "$OUT" -C "$WORK" README.txt host-files.tgz volumes
 chmod 600 "$OUT"
 
-# Only now that the new backup is complete, remove the older ones.
-find "$OUT_DIR" -maxdepth 1 -name 'vps-backup-*.tgz' ! -path "$OUT" -print -delete | sed 's/^/removed /'
+# Only now that the new backup is complete, remove all but the newest $KEEP.
+# The names hold a sortable UTC timestamp, so newest-first is a reverse sort.
+find "$OUT_DIR" -maxdepth 1 -name 'vps-backup-*.tgz' | sort -r | tail -n +$((KEEP + 1)) |
+  while read -r old; do rm -f "$old" && echo "removed $old"; done
 echo
 echo "Backup: $OUT ($(du -h "$OUT" | cut -f1))"
 echo "Download it from your PC (PowerShell) with:"
