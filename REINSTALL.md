@@ -14,13 +14,9 @@ How to bring back everything that runs on the VPS: the portfolio and contact for
 
 ## Before you need it: make a backup
 
-On the VPS, run:
+A backup runs automatically every **Sunday at about 02:30 UTC** (systemd timer `vps-backup.timer`). Each run writes `/root/backups/vps-backup-<date>.tgz` (under 1 MB at present) and then deletes the previous one, so only the newest copy stays on the VPS. If a run fails, an alert goes to the cert monitor's ntfy topic.
 
-```
-vps-backup
-```
-
-It writes `/root/backups/vps-backup-<date>.tgz` (under 1 MB at present) and prints the command to download it. On your Windows PC, in PowerShell:
+To make one right away, for example after adding a VPN device, run `vps-backup` on the VPS. It prints the command to download the file. On your Windows PC, in PowerShell:
 
 ```
 scp root@187.77.170.101:/root/backups/vps-backup-<date>.tgz .
@@ -28,7 +24,7 @@ scp root@187.77.170.101:/root/backups/vps-backup-<date>.tgz .
 
 Keep the file somewhere private, such as a password manager attachment or an encrypted drive. It contains the Gmail app password, reCAPTCHA secret, TLS and VPN private keys, and n8n credentials. Never commit it or upload it through the `files.` uploader.
 
-Run it again after anything changes: a new VPN device, new n8n workflows, a password change, or new uploads you want kept. Old backups in `/root/backups` can be deleted.
+A backup that stays on the VPS is lost along with the VPS, so download the latest one regularly, and always after anything important changes: a new VPN device, new n8n workflows, a password change, or uploads you want kept.
 
 ---
 
@@ -103,11 +99,13 @@ ln -sf $R/ops/vps-backup.sh /usr/local/bin/vps-backup
 ln -sf /root/vps-uploader/set-password.sh /usr/local/bin/uploader-set-password
 ln -sf $R/ops/systemd/cert-expiry-check.service /etc/systemd/system/
 ln -sf $R/ops/systemd/cert-expiry-check.timer /etc/systemd/system/
+ln -sf $R/ops/systemd/vps-backup.service /etc/systemd/system/
+ln -sf $R/ops/systemd/vps-backup.timer /etc/systemd/system/
 mkdir -p /etc/letsencrypt/renewal-hooks/deploy
 ln -sf $R/ops/letsencrypt-hooks/sync-and-reload.sh /etc/letsencrypt/renewal-hooks/deploy/
 cp /root/vps-uploader/rescan.cron /etc/cron.d/vps-uploader-rescan
 systemctl daemon-reload
-systemctl enable --now cert-expiry-check.timer certbot.timer
+systemctl enable --now cert-expiry-check.timer certbot.timer vps-backup.timer
 ```
 
 ### 7. Start the stacks, in this order

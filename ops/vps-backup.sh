@@ -6,6 +6,9 @@
 # Runtime: /usr/local/bin/vps-backup -> this file (symlink).
 #
 # Usage: vps-backup    writes /root/backups/vps-backup-<date>.tgz (chmod 600)
+#                      and then deletes the older vps-backup-*.tgz there
+#
+# Runs weekly from systemd/vps-backup.timer.
 #
 # Deliberately left out: the Ollama models (ollama_ollama volume, several GB,
 # re-pull with `ollama pull`), the Open WebUI volume, ClamAV signatures and
@@ -82,6 +85,9 @@ EOF
 mkdir -p "$OUT_DIR"
 tar czf "$OUT" -C "$WORK" README.txt host-files.tgz volumes
 chmod 600 "$OUT"
+
+# Only now that the new backup is complete, remove the older ones.
+find "$OUT_DIR" -maxdepth 1 -name 'vps-backup-*.tgz' ! -path "$OUT" -print -delete | sed 's/^/removed /'
 echo
 echo "Backup: $OUT ($(du -h "$OUT" | cut -f1))"
 echo "Download it from your PC (PowerShell) with:"

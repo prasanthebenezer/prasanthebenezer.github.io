@@ -1,0 +1,11 @@
+[Unit]
+Description=Back up VPS secrets, certs and data (see REINSTALL.md)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/vps-backup
+# Alert through the cert monitor's ntfy topic if the backup fails.
+EnvironmentFile=/etc/cert-monitor.env
+ExecStopPost=/bin/sh -c '[ "$SERVICE_RESULT" = success ] || curl -fsS -H "Title: VPS backup FAILED" -H "Priority: high" -d "vps-backup failed on $(hostname). See: journalctl -u vps-backup" "https://ntfy.sh/$NTFY_TOPIC" >/dev/null'
