@@ -8,7 +8,7 @@
 # Usage: vps-backup    writes /root/backups/vps-backup-<date>.tgz (chmod 600)
 #                      and then deletes the older vps-backup-*.tgz there
 #
-# Runs weekly from systemd/vps-backup.timer.
+# Runs daily from systemd/vps-backup.timer.
 #
 # Deliberately left out: the Ollama models (ollama_ollama volume, several GB,
 # re-pull with `ollama pull`), the Open WebUI volume, ClamAV signatures and
