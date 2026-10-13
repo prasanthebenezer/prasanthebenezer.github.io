@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This repo serves two deployment targets from the same tree:
 
 1. **Static portfolio** — deployed via GitHub Pages at `https://prasanthebenezer.github.io` (root-level `index.html`, `styles.css`, `script.js`, `assets/`). No build step.
-2. **VPS** — the same static files served by an nginx container via Docker Compose at `https://prasanthebenezer.com`, with Let's Encrypt TLS. See `VPS-DEPLOYMENT-GUIDE.md`.
+2. **VPS** — the same static files served by an nginx container via Docker Compose at `https://prasanthebenezer.com`, with Let's Encrypt TLS. To rebuild the whole VPS (this repo plus `vps-uploader` and `wg-easy`), follow `REINSTALL.md`; `VPS-DEPLOYMENT-GUIDE.md` is the older, generic first-install guide.
 
 ## Git & Deployment
 
@@ -36,9 +36,10 @@ python3 -m http.server 8000
 - **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes `prasanthebenezer.com`, `www.`, `n8n.`, `webui.` and `files.` and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
 - **`ops/systemd/cert-expiry-check.{service,timer}`** — systemd units for the monitor (runs 09:00 UTC daily).
 - **`ops/n8n-upgrade.sh`** — upgrades the n8n stack (`get-n8n.sh --upgrade` with `N8N_DIR=/root/n8n` pinned) and then verifies the `n8n.` proxy setup; `--check` verifies only. Installed as the `n8n-upgrade` command; use it instead of the raw curl one-liner.
+- **`ops/vps-backup.sh`** — installed as `vps-backup`. Writes `/root/backups/vps-backup-<date>.tgz` (chmod 600) with everything a rebuild needs that git doesn't hold: `/etc` secrets, `/etc/letsencrypt`, uploader secrets/shares.db/`/srv/uploads`, `/root/n8n`, the Ollama compose file, and the `wg-easy_etc_wireguard` and `n8n_n8n-data` volumes (briefly `docker pause`s their containers). Ollama models and Open WebUI data are deliberately excluded. Restore steps: `REINSTALL.md`.
 - **`ops/letsencrypt-hooks/sync-and-reload.sh`** — certbot deploy hook: after renewal, copies `/etc/letsencrypt/` into `./letsencrypt/` (the read-only mount into the nginx container) and reloads nginx.
 
-Runtime paths on the VPS (`/usr/local/bin/cert-expiry-check.sh`, `/usr/local/bin/n8n-upgrade`, `/etc/systemd/system/cert-expiry-check.{service,timer}`, `/etc/letsencrypt/renewal-hooks/deploy/sync-and-reload.sh`) are symlinks into `ops/` — so a `git pull` on the box deploys edits with no copy step. The ntfy topic lives in `/etc/cert-monitor.env` (chmod 600, not in git). All symlinks assume the repo stays at `/root/prasanthebenezer.github.io/`.
+Runtime paths on the VPS (`/usr/local/bin/cert-expiry-check.sh`, `/usr/local/bin/n8n-upgrade`, `/usr/local/bin/vps-backup`, `/etc/systemd/system/cert-expiry-check.{service,timer}`, `/etc/letsencrypt/renewal-hooks/deploy/sync-and-reload.sh`) are symlinks into `ops/` — so a `git pull` on the box deploys edits with no copy step. The ntfy topic lives in `/etc/cert-monitor.env` (chmod 600, not in git). All symlinks assume the repo stays at `/root/prasanthebenezer.github.io/`.
 
 ## Docker Compose
 
