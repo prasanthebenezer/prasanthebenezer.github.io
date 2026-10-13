@@ -16,11 +16,36 @@ How to bring back everything that runs on the VPS: the portfolio and contact for
 
 A backup runs automatically **every day at about 02:30 UTC** (systemd timer `vps-backup.timer`). Each run writes `/root/backups/vps-backup-<date>.tgz` (under 1 MB at present) and then deletes older ones, so the newest 7 (a week's worth) stay on the VPS. If a run fails, an alert goes to the cert monitor's ntfy topic.
 
-To make one right away, for example after adding a VPN device, run `vps-backup` on the VPS. It prints the command to download the file. On your Windows PC, in PowerShell:
+To make one right away, for example after adding a VPN device, run `vps-backup` on the VPS. It prints the command to download that file.
+
+### Download backups to your PC
+
+Run these in PowerShell on your PC. Each saves into the current folder; to save elsewhere, replace the final `.` with a folder such as `D:\Backups\`.
+
+**The newest backup** (usually all you need):
 
 ```
+scp "root@187.77.170.101:$(ssh root@187.77.170.101 'ls -t /root/backups/vps-backup-*.tgz | head -1')" .
+```
+
+**All 7:**
+
+```
+scp "root@187.77.170.101:/root/backups/vps-backup-*.tgz" .
+```
+
+Keep the quotes, so the `*` is expanded on the VPS rather than by PowerShell.
+
+**A specific day:** list the backups, then copy the one you want:
+
+```
+ssh root@187.77.170.101 ls -lh /root/backups
 scp root@187.77.170.101:/root/backups/vps-backup-<date>.tgz .
 ```
+
+To drag and drop instead, connect with WinSCP using the same SSH key and open `/root/backups`.
+
+The newest backup is enough for a rebuild. The older ones are only useful to get something back as it was a few days earlier.
 
 Keep the file somewhere private, such as a password manager attachment or an encrypted drive. It contains the Gmail app password, reCAPTCHA secret, TLS and VPN private keys, and n8n credentials. Never commit it or upload it through the `files.` uploader.
 
