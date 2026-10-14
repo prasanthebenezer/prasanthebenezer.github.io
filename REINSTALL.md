@@ -20,7 +20,9 @@ To make one right away, for example after adding a VPN device, run `vps-backup` 
 
 ### Download backups to your PC
 
-Run these in PowerShell on your PC. Each saves into the current folder; to save elsewhere, replace the final `.` with a folder such as `D:\Backups\`.
+**In the browser (easiest):** log in at https://files.prasanthebenezer.com, open the **Backups** folder and click Download on the one you want. That folder is `/root/backups` mounted read-only, so you can't delete or upload there from the page. Avoid making a Share link for a backup: anyone with the link would get every secret on the VPS.
+
+**Over SSH:** run these in PowerShell on your PC. Each saves into the current folder; to save elsewhere, replace the final `.` with a folder such as `D:\Backups\`.
 
 **The newest backup** (usually all you need):
 
@@ -47,7 +49,7 @@ To drag and drop instead, connect with WinSCP using the same SSH key and open `/
 
 The newest backup is enough for a rebuild. The older ones are only useful to get something back as it was a few days earlier.
 
-Keep the file somewhere private, such as a password manager attachment or an encrypted drive. It contains the Gmail app password, reCAPTCHA secret, TLS and VPN private keys, and n8n credentials. Never commit it or upload it through the `files.` uploader.
+Keep the file somewhere private, such as a password manager attachment or an encrypted drive. It contains the Gmail app password, reCAPTCHA secret, TLS and VPN private keys, and n8n credentials. Never commit it or upload it into the `files.` uploader's Uploads folder (that would also put it inside the next backup).
 
 A backup that stays on the VPS is lost along with the VPS, so download the latest one regularly, and always after anything important changes: a new VPN device, new n8n workflows, a password change, or uploads you want kept.
 

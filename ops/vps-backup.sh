@@ -5,7 +5,9 @@
 #
 # Runtime: /usr/local/bin/vps-backup -> this file (symlink).
 #
-# Usage: vps-backup    writes /root/backups/vps-backup-<date>.tgz (chmod 600)
+# Usage: vps-backup    writes /root/backups/vps-backup-<date>.tgz (chmod 640,
+#                      group 10001 so the files.prasanthebenezer.com uploader
+#                      can offer it for download under "Backups", read-only)
 #                      and then deletes all but the newest $KEEP there
 #
 # Runs daily from systemd/vps-backup.timer.
@@ -84,8 +86,9 @@ volumes/<name>.tgz   one per Docker volume, extract into that volume (see REINST
 EOF
 
 mkdir -p "$OUT_DIR"
+chgrp 10001 "$OUT_DIR" && chmod 750 "$OUT_DIR"   # 10001 = the uploader container's user
 tar czf "$OUT" -C "$WORK" README.txt host-files.tgz volumes
-chmod 600 "$OUT"
+chgrp 10001 "$OUT" && chmod 640 "$OUT"
 
 # Only now that the new backup is complete, remove all but the newest $KEEP.
 # The names hold a sortable UTC timestamp, so newest-first is a reverse sort.
