@@ -21,6 +21,7 @@ HOSTS=(
   n8n.prasanthebenezer.com
   webui.prasanthebenezer.com
   files.prasanthebenezer.com
+  training.prasanthebenezer.com
 )
 
 WARN_DAYS=20

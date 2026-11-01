@@ -1,6 +1,7 @@
 #!/bin/bash
 # Back up everything on the VPS that a rebuild needs but git doesn't hold:
-# secrets, TLS certs, VPN keys, n8n data, uploader links/files, and the
+# secrets, TLS certs, VPN keys, n8n data, uploader links/files, training
+# system records/videos, and the
 # n8n/ollama compose files. Restore steps are in REINSTALL.md.
 #
 # Runtime: /usr/local/bin/vps-backup -> this file (symlink).
@@ -35,12 +36,15 @@ HOST_PATHS=(
   /root/n8n
   /root/ollama/docker-compose.yml
   /root/.ssh/authorized_keys
+  /root/onboarding-training-system/.env
+  /root/onboarding-training-system/docker-compose.override.yml
 )
 
 # Docker volume -> container that writes to it.
 declare -A VOLUMES=(
   [wg-easy_etc_wireguard]=wg-easy
   [n8n_n8n-data]=n8n-n8n-1
+  [onboarding-training-system_media]=onboarding-training-system-app-1
 )
 
 # Containers are paused (frozen for a few seconds, not restarted) while their
@@ -65,6 +69,15 @@ for vol in "${!VOLUMES[@]}"; do
   echo "volume  $vol"
 done
 
+# Training records (ISO audit evidence): a consistent pg_dump, no pause needed.
+TRAINING_DB=onboarding-training-system-db-1
+if docker ps -q --filter "name=^$TRAINING_DB$" --filter status=running | grep -q .; then
+  docker exec "$TRAINING_DB" pg_dump -U training training | gzip > "$WORK/training-db.sql.gz"
+  echo "db      training (postgres)"
+else
+  echo "missing $TRAINING_DB (training DB skipped)"
+fi
+
 pause vps-uploader   # for shares.db
 existing=()
 for p in "${HOST_PATHS[@]}"; do
@@ -83,11 +96,13 @@ Restore steps: REINSTALL.md in github.com/prasanthebenezer/prasanthebenezer.gith
 
 host-files.tgz       extract at / on the new VPS:  tar xzf host-files.tgz -C /
 volumes/<name>.tgz   one per Docker volume, extract into that volume (see REINSTALL.md)
+training-db.sql.gz   onboarding-training-system Postgres dump:
+                     gunzip -c training-db.sql.gz | docker compose exec -T db psql -U training training
 EOF
 
 mkdir -p "$OUT_DIR"
 chgrp 10001 "$OUT_DIR" && chmod 750 "$OUT_DIR"   # 10001 = the uploader container's user
-tar czf "$OUT" -C "$WORK" README.txt host-files.tgz volumes
+tar czf "$OUT" -C "$WORK" README.txt host-files.tgz volumes $( [[ -f $WORK/training-db.sql.gz ]] && echo training-db.sql.gz )
 chgrp 10001 "$OUT" && chmod 640 "$OUT"
 
 # Only now that the new backup is complete, remove all but the newest $KEEP.
