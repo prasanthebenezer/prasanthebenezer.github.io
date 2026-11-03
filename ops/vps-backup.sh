@@ -19,7 +19,7 @@
 set -euo pipefail
 
 OUT_DIR=/root/backups
-KEEP=7   # number of backups to keep
+KEEP=3   # number of backups to keep
 OUT="$OUT_DIR/vps-backup-$(date -u +%Y%m%d-%H%M).tgz"
 WORK=$(mktemp -d)
 umask 077
