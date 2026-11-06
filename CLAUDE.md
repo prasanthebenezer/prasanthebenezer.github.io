@@ -55,6 +55,8 @@ docker compose exec portfolio nginx -s reload    # after nginx.conf edits
 
 Adding a new subdomain: create the DNS A record (→ the VPS IPv4), issue the cert with `certbot certonly --webroot -w /root/prasanthebenezer.github.io/webroot -d <sub>.prasanthebenezer.com`, copy it in with `cp -rL /etc/letsencrypt/{live,archive,renewal} letsencrypt/` (the deploy hook runs only on renewals, not first issuance), add HTTP-redirect + HTTPS server blocks to `nginx.conf` (copy the `n8n.`/`webui.` blocks, which resolve the upstream per request via `resolver 127.0.0.11`), add the host to `HOSTS` in `ops/cert-expiry-check.sh`, then `docker compose up -d --build portfolio`.
 
+Per-site config files (preferred for new stacks): `nginx.conf` ends with `include /etc/nginx/sites.d/*.conf;`, and the host directory `/root/nginx-sites/` is bind-mounted read-only at `/etc/nginx/sites.d`. A stack outside this repo keeps its own HTTP-redirect + HTTPS server blocks in its own repo and installs them there, so this repo needs no change beyond the cert-monitor `HOSTS` entry. After the cert steps above: `install -m 644 <file>.conf /root/nginx-sites/`, then `docker exec prasanthebenezer-portfolio nginx -t && docker exec prasanthebenezer-portfolio nginx -s reload` (no rebuild needed). The include is kept at the end of `nginx.conf` so the blocks here stay the default servers for unknown hosts and the bare IP. Currently: `trade.prasanthebenezer.com` → Kite trading console (`/root/kite-console`, private repo `prasanthebenezer/kite-console`, host `console:8000`; its site file lives in that repo at `deploy/nginx/`).
+
 ## Architecture
 
 The site is a single-page, vanilla HTML/CSS/JS portfolio with no frameworks or dependencies beyond CDN-loaded libraries:

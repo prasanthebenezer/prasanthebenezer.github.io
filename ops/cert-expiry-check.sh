@@ -23,6 +23,7 @@ HOSTS=(
   files.prasanthebenezer.com
   training.prasanthebenezer.com
   tts.prasanthebenezer.com
+  trade.prasanthebenezer.com
 )
 
 WARN_DAYS=20
