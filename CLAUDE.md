@@ -62,7 +62,7 @@ The only container publishing 80/443 is `edge-proxy` (stock `nginx:1.31-alpine`,
 | `training.` | `training:8000` | `/root/onboarding-training-system` (untracked `docker-compose.override.yml` disables its Caddy) |
 | `tts.` | `tts:3900` | `/root/voicestudio` (apex `/tts` 301s here; its UI needs a domain root) |
 | `trade.` | `console:8000` | `/root/kite-console` (site file owned by that repo at `deploy/nginx/`; `TRUSTED_PROXY_HOST=edge-proxy` so it trusts only the proxy's `X-Forwarded-For`) |
-| `chrome.` | `chrome:8080` | `/root/chrome` (neko remote Chromium, untracked local compose + `.env`; WebRTC media goes direct to the host on 52000 udp/tcp, not through the proxy) |
+| `chrome.` | `chrome:8080` | `/root/chrome` (neko remote Chromium, untracked local compose + `.env`; WebRTC media goes direct to the host on UDP 52000-52049, not through the proxy) |
 
 Ollama (`ollama:11434`, 127.0.0.1 on the host) is only on `n8n_default`; never expose it, it has no auth.
 
