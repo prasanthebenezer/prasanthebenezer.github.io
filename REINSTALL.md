@@ -178,8 +178,11 @@ gh repo clone prasanthebenezer/ClaudeAgent /root/ClaudeAgent
 cd /root/ClaudeAgent && sed -i "s/^BRIDGE_GID=.*/BRIDGE_GID=$(getent group claudebridge | cut -d: -f3)/" .env
 docker compose create
 docker run --rm -v claudeagent_agent-data:/data -v /root/restore/volumes:/b alpine tar xzf /b/claudeagent_agent-data.tgz -C /data
+sudo ./set-secrets.sh connector-key   # new connector key; the old one is deliberately not in the backup
 docker compose up -d --build
 ```
+
+The restored `.env` already lists `docker-compose.connectors.yml` in `COMPOSE_FILE`, so the app needs `/etc/claudeagent/connector.key` to exist before it starts (the line above creates it; the key is never printed). Connector tokens in the restored database were encrypted with the old key, so open 🔌 Connectors and sign in to each connector again (or paste its token again). Copy `bridge/claude_bridge.py` to `/opt/claude-bridge/` as the README describes, or Claude Code chats run without connectors.
 
 ### 8. Check everything
 

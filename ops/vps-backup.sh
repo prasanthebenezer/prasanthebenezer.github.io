@@ -41,6 +41,8 @@ HOST_PATHS=(
   /root/onboarding-training-system/docker-compose.override.yml
   /root/ClaudeAgent/.env
   /etc/claude-bridge.env
+  # /etc/claudeagent (ClaudeAgent's connector.key) is left out on purpose: without it the
+  # connector tokens in claudeagent_agent-data are unreadable ciphertext. See REINSTALL.md.
 )
 
 # Docker volume -> container that writes to it.
