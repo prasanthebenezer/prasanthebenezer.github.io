@@ -30,6 +30,7 @@ HOST_PATHS=(
   /etc/cert-monitor.env
   /etc/vps-uploader
   /etc/letsencrypt
+  /root/edge-proxy
   /var/lib/vps-uploader/shares.db
   /var/lib/vps-uploader/quarantine/quarantine.log
   /srv/uploads

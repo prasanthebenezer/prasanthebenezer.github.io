@@ -1,10 +1,10 @@
 #!/bin/bash
 # Upgrade the self-hosted n8n stack, then verify it is still served at
-# https://n8n.prasanthebenezer.com via the portfolio nginx.
+# https://n8n.prasanthebenezer.com via the edge proxy (/root/edge-proxy).
 #
 # get-n8n.sh --upgrade only edits the two version lines in .env and the sandbox
 # image tags in compose.yml, so our proxy settings in /root/n8n/compose.yml
-# (localhost-only port, N8N_HOST/WEBHOOK_URL, portfolio network) survive it.
+# (localhost-only port, N8N_HOST/WEBHOOK_URL, edge network) survive it.
 # It finds the install via ./n8n relative to the cwd, so N8N_DIR is pinned here.
 #
 # Runtime: /usr/local/bin/n8n-upgrade -> this file (symlink).
@@ -15,7 +15,7 @@ set -uo pipefail
 
 N8N_DIR=/root/n8n
 HOST=n8n.prasanthebenezer.com
-PORTFOLIO_NET=prasanthebenezergithubio_default
+EDGE_NET=edge
 
 if [[ "${1:-}" != "--check" ]]; then
   curl -fsSL https://get.n8n.io | N8N_DIR="$N8N_DIR" sh -s -- --upgrade || exit 1
@@ -43,8 +43,8 @@ container=$(docker compose -f "$N8N_DIR/compose.yml" ps -q n8n)
 echo "Verifying n8n proxy setup:"
 check "port 5678 bound to localhost only" \
   bash -c '! ss -tlnH "sport = :5678" | grep -v -q "127.0.0.1:5678"'
-check "n8n container joined to $PORTFOLIO_NET" \
-  bash -c "docker inspect -f '{{json .NetworkSettings.Networks}}' '$container' | grep -q '\"$PORTFOLIO_NET\"'"
+check "n8n container joined to $EDGE_NET" \
+  bash -c "docker inspect -f '{{json .NetworkSettings.Networks}}' '$container' | grep -q '\"$EDGE_NET\"'"
 check "N8N_HOST=$HOST in container" \
   bash -c "docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' '$container' | grep -qx 'N8N_HOST=$HOST'"
 check "https://$HOST/healthz returns 200" \

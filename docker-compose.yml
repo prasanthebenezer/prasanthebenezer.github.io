@@ -1,20 +1,21 @@
 services:
+  # Static portfolio + /api/contact over plain HTTP. Not published on the host:
+  # the edge proxy (/root/edge-proxy) terminates TLS and forwards
+  # prasanthebenezer.com to host "portfolio" on the external "edge" network.
   portfolio:
     build: .
     image: prasanthebenezer-portfolio
     container_name: prasanthebenezer-portfolio
-    ports:
-      - "80:80"
-      - "443:443"
     restart: unless-stopped
     depends_on:
       - contact
-    volumes:
-      - ./letsencrypt:/etc/letsencrypt:ro
-      - ./webroot:/var/www/certbot:ro
-      - /root/nginx-sites:/etc/nginx/sites.d:ro
+    networks:
+      default:
+      edge:
+        aliases: [portfolio]
 
-  # Contact-form backend, reachable only from nginx at /api/contact.
+  # Contact-form backend, reachable only from the portfolio nginx at /api/contact
+  # (default network only, not on the edge network).
   # Secrets live in /etc/contact-form.env on the VPS (chmod 600, not in git).
   contact:
     build: ./contact
@@ -23,3 +24,8 @@ services:
     restart: unless-stopped
     env_file: /etc/contact-form.env
     read_only: true
+
+networks:
+  edge:
+    name: edge
+    external: true

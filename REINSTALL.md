@@ -4,10 +4,11 @@ How to bring back everything that runs on the VPS: the portfolio and contact for
 
 | What | Where it comes from |
 |---|---|
-| Portfolio, contact form, nginx, cert monitor, ops scripts | repo `prasanthebenezer.github.io` (public) |
+| Portfolio, contact form, cert monitor, ops scripts | repo `prasanthebenezer.github.io` (public) |
+| Edge proxy (nginx on 80/443 for every site) | `/root/edge-proxy`, restored from the backup file |
 | File uploader at `files.` | repo `vps-uploader` (private) |
 | WireGuard VPN | repo `wg-easy` (private) |
-| Secrets, TLS certs, VPN keys, n8n data, uploaded files, uploader share links, n8n and Ollama compose files | backup file `vps-backup-<date>.tgz` |
+| Secrets, TLS certs, VPN keys, n8n data, uploaded files, uploader share links, n8n and Ollama compose files, `/root/edge-proxy` | backup file `vps-backup-<date>.tgz` |
 | Ollama models, Open WebUI chats, ClamAV signatures, Docker images | not backed up; downloaded again (models: step 7) |
 
 ---
@@ -110,8 +111,7 @@ On the VPS:
 ```
 mkdir -p /root/restore && cd /root/restore
 tar xzf /root/vps-backup-*.tgz
-tar xzf host-files.tgz -C /          # /etc secrets and certs, /srv/uploads, /root/n8n, /root/ollama, ...
-cp -rL /etc/letsencrypt/{live,archive,renewal} /root/prasanthebenezer.github.io/letsencrypt/
+tar xzf host-files.tgz -C /          # /etc secrets and certs, /srv/uploads, /root/n8n, /root/ollama, /root/edge-proxy, ...
 ```
 
 **No backup?** See [Without a backup](#without-a-backup) at the end, then continue with step 6.
@@ -129,7 +129,8 @@ ln -sf $R/ops/systemd/cert-expiry-check.timer /etc/systemd/system/
 ln -sf $R/ops/systemd/vps-backup.service /etc/systemd/system/
 ln -sf $R/ops/systemd/vps-backup.timer /etc/systemd/system/
 mkdir -p /etc/letsencrypt/renewal-hooks/deploy
-ln -sf $R/ops/letsencrypt-hooks/sync-and-reload.sh /etc/letsencrypt/renewal-hooks/deploy/
+ln -sf /root/edge-proxy/hooks/reload.sh /etc/letsencrypt/renewal-hooks/deploy/edge-reload.sh
+ln -sfn /root/edge-proxy/sites /root/nginx-sites   # old path, still used by kite-console's install steps
 cp /root/vps-uploader/rescan.cron /etc/cron.d/vps-uploader-rescan
 systemctl daemon-reload
 systemctl enable --now cert-expiry-check.timer certbot.timer vps-backup.timer
@@ -137,10 +138,14 @@ systemctl enable --now cert-expiry-check.timer certbot.timer vps-backup.timer
 
 ### 7. Start the stacks, in this order
 
-The order matters: the portfolio creates the shared network the others join, and Ollama joins n8n's network.
+The order matters: every app joins the shared `edge` network, which must exist first, and Ollama joins n8n's network. The edge proxy starts even while apps are missing (it resolves them per request).
 
 ```
-# 1. Portfolio + contact form (creates the prasanthebenezergithubio_default network)
+# 0. Shared network + edge proxy (the only container on ports 80/443)
+docker network create edge
+cd /root/edge-proxy && docker compose up -d
+
+# 1. Portfolio + contact form
 cd /root/prasanthebenezer.github.io && docker compose up -d --build
 
 # 2. n8n, with its data restored into the volume first
@@ -187,19 +192,19 @@ Then clean up: `rm -rf /root/restore /root/vps-backup-*.tgz`, and run `vps-backu
 
 Everything can be rebuilt, but secrets have to be entered again and data is lost: n8n workflows and credentials, VPN devices, uploader share links and uploaded files.
 
-**TLS certificates.** nginx won't start without them, so issue them before step 7 while port 80 is free, then switch renewals to the webroot method that nginx serves:
+**Edge proxy.** `/root/edge-proxy` only exists in the backup. Without one, recreate it from the description in this repo's `CLAUDE.md` (Docker Compose section): a stock `nginx` container with one site file per hostname.
+
+**TLS certificates.** nginx won't start without them, so issue them before step 7 while port 80 is free, then switch renewals to the webroot method that the edge proxy serves:
 
 ```
-R=/root/prasanthebenezer.github.io
 certbot certonly --standalone --cert-name prasanthebenezer.com-0001 -d prasanthebenezer.com -d www.prasanthebenezer.com
-for d in n8n webui files; do certbot certonly --standalone -d $d.prasanthebenezer.com; done
-cp -rL /etc/letsencrypt/{live,archive,renewal} $R/letsencrypt/
+for d in n8n webui files training tts trade chrome; do certbot certonly --standalone -d $d.prasanthebenezer.com; done
 ```
 
-After step 7's portfolio container is up, run this for each certificate (`prasanthebenezer.com-0001`, then `n8n.`, `webui.` and `files.prasanthebenezer.com`):
+After step 7's edge proxy is up, run this for each certificate (`prasanthebenezer.com-0001`, then each `<sub>.prasanthebenezer.com`):
 
 ```
-certbot reconfigure --cert-name <name> --webroot -w /root/prasanthebenezer.github.io/webroot
+certbot reconfigure --cert-name <name> --webroot -w /root/edge-proxy/webroot
 ```
 
 **Contact-form secrets** (`/etc/contact-form.env`, chmod 600). Needs a Gmail app password and the reCAPTCHA v2 secret:

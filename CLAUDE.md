@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This repo serves two deployment targets from the same tree:
 
 1. **Static portfolio** — deployed via GitHub Pages at `https://prasanthebenezer.github.io` (root-level `index.html`, `styles.css`, `script.js`, `assets/`). No build step.
-2. **VPS** — the same static files served by an nginx container via Docker Compose at `https://prasanthebenezer.com`, with Let's Encrypt TLS. To rebuild the whole VPS (this repo plus `vps-uploader` and `wg-easy`), follow `REINSTALL.md`; `VPS-DEPLOYMENT-GUIDE.md` is the older, generic first-install guide.
+2. **VPS** — the same static files served by an nginx container via Docker Compose, behind a separate edge proxy (`/root/edge-proxy`, not in this repo) that terminates Let's Encrypt TLS for `https://prasanthebenezer.com` and every subdomain. To rebuild the whole VPS (this repo plus `vps-uploader` and `wg-easy`), follow `REINSTALL.md`; `VPS-DEPLOYMENT-GUIDE.md` is the older, generic first-install guide.
 
 ## Git & Deployment
 
@@ -29,33 +29,46 @@ python3 -m http.server 8000
 - **`index.html` / `styles.css` / `script.js`** — Live portfolio site (root level).
 - **`assets/Prasanth_Philip_CV.pdf`** — CV linked from nav and footer.
 - **`assets/profile.jpg`** — hero portrait (4:5, ~760×950). Optional: if missing, the frame falls back to "PP" initials.
-- **`Dockerfile` / `nginx.conf`** — nginx container that serves the static portfolio on the VPS.
-- **`setup-ssl.sh` / `letsencrypt/`** — Let's Encrypt cert provisioning + volume mount (read-only into the portfolio container).
+- **`Dockerfile` / `nginx.conf`** — nginx container that serves the static portfolio and `/api/contact` over plain HTTP on the VPS (no TLS; the edge proxy handles that).
+- **`setup-ssl.sh`** — original first-install cert script (historical). The gitignored `letsencrypt/` and `webroot/` folders are leftovers from before the edge proxy and are no longer mounted.
 
 ### VPS ops (`ops/`)
-- **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes `prasanthebenezer.com`, `www.`, `n8n.`, `webui.`, `files.`, `training.` and `tts.` and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
+- **`ops/cert-expiry-check.sh`** — daily TLS expiry monitor. TLS-probes `prasanthebenezer.com`, `www.`, `n8n.`, `webui.`, `files.`, `training.`, `tts.`, `trade.` and `chrome.` and alerts via ntfy.sh at ≤20 days (WARN) / ≤7 days (CRITICAL). Deliberately independent of certbot state so it catches silent renewal failures.
 - **`ops/systemd/cert-expiry-check.{service,timer}`** — systemd units for the monitor (runs 09:00 UTC daily).
 - **`ops/n8n-upgrade.sh`** — upgrades the n8n stack (`get-n8n.sh --upgrade` with `N8N_DIR=/root/n8n` pinned) and then verifies the `n8n.` proxy setup; `--check` verifies only. Installed as the `n8n-upgrade` command; use it instead of the raw curl one-liner.
-- **`ops/vps-backup.sh`** — installed as `vps-backup`. Writes `/root/backups/vps-backup-<date>.tgz` (chmod 640, group 10001 so the uploader container can serve it: `/root/backups` is mounted read-only into `vps-uploader` as its "Backups" folder) with everything a rebuild needs that git doesn't hold: `/etc` secrets, `/etc/letsencrypt`, uploader secrets/shares.db/`/srv/uploads`, `/root/n8n`, the Ollama compose file, and the `wg-easy_etc_wireguard` and `n8n_n8n-data` volumes (briefly `docker pause`s their containers). Ollama models and Open WebUI data are deliberately excluded. After a successful run it deletes all but the newest 3 (`KEEP`). Restore steps: `REINSTALL.md`.
+- **`ops/vps-backup.sh`** — installed as `vps-backup`. Writes `/root/backups/vps-backup-<date>.tgz` (chmod 640, group 10001 so the uploader container can serve it: `/root/backups` is mounted read-only into `vps-uploader` as its "Backups" folder) with everything a rebuild needs that git doesn't hold: `/etc` secrets, `/etc/letsencrypt`, `/root/edge-proxy`, uploader secrets/shares.db/`/srv/uploads`, `/root/n8n`, the Ollama compose file, and the `wg-easy_etc_wireguard` and `n8n_n8n-data` volumes (briefly `docker pause`s their containers). Ollama models and Open WebUI data are deliberately excluded. After a successful run it deletes all but the newest 3 (`KEEP`). Restore steps: `REINSTALL.md`.
 - **`ops/systemd/vps-backup.{service,timer}`** — runs `vps-backup` daily (02:30 UTC); on failure, `ExecStopPost` alerts via the cert monitor's ntfy topic (`/etc/cert-monitor.env`).
-- **`ops/letsencrypt-hooks/sync-and-reload.sh`** — certbot deploy hook: after renewal, copies `/etc/letsencrypt/` into `./letsencrypt/` (the read-only mount into the nginx container) and reloads nginx.
 
-Runtime paths on the VPS (`/usr/local/bin/cert-expiry-check.sh`, `/usr/local/bin/n8n-upgrade`, `/usr/local/bin/vps-backup`, `/etc/systemd/system/cert-expiry-check.{service,timer}`, `/etc/systemd/system/vps-backup.{service,timer}`, `/etc/letsencrypt/renewal-hooks/deploy/sync-and-reload.sh`) are symlinks into `ops/` — so a `git pull` on the box deploys edits with no copy step. The ntfy topic lives in `/etc/cert-monitor.env` (chmod 600, not in git). All symlinks assume the repo stays at `/root/prasanthebenezer.github.io/`.
+Runtime paths on the VPS (`/usr/local/bin/cert-expiry-check.sh`, `/usr/local/bin/n8n-upgrade`, `/usr/local/bin/vps-backup`, `/etc/systemd/system/cert-expiry-check.{service,timer}`, `/etc/systemd/system/vps-backup.{service,timer}`) are symlinks into `ops/` — so a `git pull` on the box deploys edits with no copy step. The ntfy topic lives in `/etc/cert-monitor.env` (chmod 600, not in git). All symlinks assume the repo stays at `/root/prasanthebenezer.github.io/`.
 
 ## Docker Compose
 
-`docker-compose.yml` defines a `portfolio` service (nginx, ports 80/443) with `./letsencrypt` and `./webroot` mounted read-only, and a `contact` service (contact-form backend, not exposed; nginx proxies `/api/contact` to it). Common ops:
+`docker-compose.yml` defines a `portfolio` service (nginx serving the static site on port 80, **no published ports**) and a `contact` service (contact-form backend; the portfolio nginx proxies `/api/contact` to it). `portfolio` joins the external `edge` network as host `portfolio`; `contact` stays on this project's default network only. `nginx.conf` trusts `X-Real-IP` from private ranges (`real_ip`), so logs and the contact rate limit see the visitor. Common ops:
 ```
 docker compose up -d --build portfolio
 docker compose logs -f portfolio
-docker compose exec portfolio nginx -s reload    # after nginx.conf edits
 ```
 
-`nginx.conf` terminates TLS for `prasanthebenezer.com` and redirects `www.` to the apex. It also proxies `n8n.prasanthebenezer.com` to the self-hosted n8n stack in `/root/n8n`, which joins this compose network as host `n8n` (port 5678 is bound to localhost only). It also proxies `webui.prasanthebenezer.com` to Open WebUI, which runs with Ollama in a separate compose stack at `/root/ollama/docker-compose.yml` (not in this repo) and joins this compose network as host `open-webui` (port 8080, no published port). It also proxies `training.prasanthebenezer.com` to the onboarding/training app in `/root/onboarding-training-system/` (not in this repo; see its `docs/DEPLOY.md`), which joins this compose network as host `training` (port 8000) via an untracked `docker-compose.override.yml` that disables its own Caddy. It also proxies `files.prasanthebenezer.com` to a password-protected file uploader in a separate compose stack at `/root/vps-uploader/` (not in this repo; see its README), which joins this compose network as host `uploader` (port 8090, no published port) and writes into `/srv/uploads`. It also proxies `tts.prasanthebenezer.com` to VoiceStudio TTS in `/root/voicestudio/` (not in this repo; untracked local `docker-compose.yml` + `.env` holding the login key), which joins this compose network as host `tts` (port 3900); the apex `/tts` path 301-redirects there because the app's UI must sit at a domain root. Ollama itself (`ollama:11434`, bound to 127.0.0.1 on the host) sits on the `n8n_default` network so n8n and Open WebUI can reach it; it is never exposed publicly because it has no auth. Certs live under `./letsencrypt/live/<domain>/`.
+### Edge proxy (`/root/edge-proxy`, separate stack, not in this repo)
 
-Adding a new subdomain: create the DNS A record (→ the VPS IPv4), issue the cert with `certbot certonly --webroot -w /root/prasanthebenezer.github.io/webroot -d <sub>.prasanthebenezer.com`, copy it in with `cp -rL /etc/letsencrypt/{live,archive,renewal} letsencrypt/` (the deploy hook runs only on renewals, not first issuance), add HTTP-redirect + HTTPS server blocks to `nginx.conf` (copy the `n8n.`/`webui.` blocks, which resolve the upstream per request via `resolver 127.0.0.11`), add the host to `HOSTS` in `ops/cert-expiry-check.sh`, then `docker compose up -d --build portfolio`.
+The only container publishing 80/443 is `edge-proxy` (stock `nginx:1.31-alpine`, `/root/edge-proxy/docker-compose.yml`; see its `README.md`). It terminates TLS for every hostname and forwards to apps on the shared external Docker network `edge` (created once with `docker network create edge`). Each app stack declares `networks: portfolio: {name: edge, external: true}` (the key is still called `portfolio` in their compose files) with an alias, and publishes no public port:
 
-Per-site config files (preferred for new stacks): `nginx.conf` ends with `include /etc/nginx/sites.d/*.conf;`, and the host directory `/root/nginx-sites/` is bind-mounted read-only at `/etc/nginx/sites.d`. A stack outside this repo keeps its own HTTP-redirect + HTTPS server blocks in its own repo and installs them there, so this repo needs no change beyond the cert-monitor `HOSTS` entry. After the cert steps above: `install -m 644 <file>.conf /root/nginx-sites/`, then `docker exec prasanthebenezer-portfolio nginx -t && docker exec prasanthebenezer-portfolio nginx -s reload` (no rebuild needed). The include is kept at the end of `nginx.conf` so the blocks here stay the default servers for unknown hosts and the bare IP. Currently: `trade.prasanthebenezer.com` → Kite trading console (`/root/kite-console`, private repo `prasanthebenezer/kite-console`, host `console:8000`; its site file lives in that repo at `deploy/nginx/`).
+| Hostname | Upstream on `edge` | Stack |
+|---|---|---|
+| `prasanthebenezer.com` (+ `www.` → apex) | `portfolio:80` | this repo |
+| `n8n.` | `n8n:5678` | `/root/n8n` (5678 also bound to 127.0.0.1) |
+| `webui.` | `open-webui:8080` | `/root/ollama/docker-compose.yml` |
+| `files.` | `uploader:8090` | `/root/vps-uploader` |
+| `training.` | `training:8000` | `/root/onboarding-training-system` (untracked `docker-compose.override.yml` disables its Caddy) |
+| `tts.` | `tts:3900` | `/root/voicestudio` (apex `/tts` 301s here; its UI needs a domain root) |
+| `trade.` | `console:8000` | `/root/kite-console` (site file owned by that repo at `deploy/nginx/`; `TRUSTED_PROXY_HOST=edge-proxy` so it trusts only the proxy's `X-Forwarded-For`) |
+| `chrome.` | `chrome:8080` | `/root/chrome` (neko remote Chromium, untracked local compose + `.env`; extra nginx basic auth via `/root/edge-proxy/snippets/chrome.htpasswd`; WebRTC media goes direct to the host on 52000 udp/tcp, not through the proxy) |
+
+Ollama (`ollama:11434`, 127.0.0.1 on the host) is only on `n8n_default`; never expose it, it has no auth.
+
+Layout: `conf.d/00-http.conf` (http-level settings, `resolver 127.0.0.11`, default servers: unknown HTTP hosts → apex redirect with ACME passthrough, unknown HTTPS names → handshake rejected), `snippets/tls.conf` (shared TLS + HSTS), `sites/<host>.conf` (one per hostname; `/root/nginx-sites` is a symlink to it). Certs are mounted read-only straight from `/etc/letsencrypt`; certbot renews via `--webroot -w /root/edge-proxy/webroot` and its deploy hook `/etc/letsencrypt/renewal-hooks/deploy/edge-reload.sh` → `/root/edge-proxy/hooks/reload.sh` just reloads nginx. Upstreams are `proxy_pass $var` so the proxy starts even when an app is down.
+
+Adding a new subdomain: DNS A record → the VPS IPv4; `certbot certonly --webroot -w /root/edge-proxy/webroot -d <sub>.prasanthebenezer.com` (works before the site file exists, via the default server); put the app on the `edge` network with an alias; add `/root/edge-proxy/sites/<sub>.prasanthebenezer.com.conf` (copy `n8n.`'s); `docker exec edge-proxy nginx -t && docker exec edge-proxy nginx -s reload`; add the host to `HOSTS` in `ops/cert-expiry-check.sh`.
 
 ## Architecture
 
