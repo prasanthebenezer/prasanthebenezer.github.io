@@ -25,6 +25,7 @@ HOSTS=(
   tts.prasanthebenezer.com
   trade.prasanthebenezer.com
   chrome.prasanthebenezer.com
+  agent.prasanthebenezer.com
 )
 
 WARN_DAYS=20
