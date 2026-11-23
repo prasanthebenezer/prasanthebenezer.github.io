@@ -171,6 +171,16 @@ docker compose up -d
 
 Open WebUI starts empty. Create its admin account again at https://webui.prasanthebenezer.com.
 
+**ClaudeAgent** (https://agent.prasanthebenezer.com). `.env` comes back from the backup. Set up the Claude Code bridge first (user `claude`, group `claudebridge`, `/opt/claude-bridge`, `/etc/claude-bridge.env` also from the backup): follow "Claude Code mode" in its README, then sign the `claude` user in again (`sudo -iu claude claude`, `/login`). Group ids can change on a new VPS, so update `BRIDGE_GID` in `.env` before starting:
+
+```
+gh repo clone prasanthebenezer/ClaudeAgent /root/ClaudeAgent
+cd /root/ClaudeAgent && sed -i "s/^BRIDGE_GID=.*/BRIDGE_GID=$(getent group claudebridge | cut -d: -f3)/" .env
+docker compose create
+docker run --rm -v claudeagent_agent-data:/data -v /root/restore/volumes:/b alpine tar xzf /b/claudeagent_agent-data.tgz -C /data
+docker compose up -d --build
+```
+
 ### 8. Check everything
 
 | Check | Expected |
@@ -179,6 +189,7 @@ Open WebUI starts empty. Create its admin account again at https://webui.prasant
 | https://prasanthebenezer.com | site loads; send yourself a test message through the contact form |
 | https://n8n.prasanthebenezer.com | your workflows are there |
 | https://webui.prasanthebenezer.com | answers a prompt |
+| https://agent.prasanthebenezer.com | log in; old chats are there; Claude Code mode shows "Connected" |
 | https://files.prasanthebenezer.com | same password as before; files and share links are there |
 | VPN on a phone | connects; https://whatismyipaddress.com shows the VPS IP |
 | `systemctl start cert-expiry-check.service && journalctl -u cert-expiry-check -n 20` | all five hosts OK |
@@ -198,7 +209,7 @@ Everything can be rebuilt, but secrets have to be entered again and data is lost
 
 ```
 certbot certonly --standalone --cert-name prasanthebenezer.com-0001 -d prasanthebenezer.com -d www.prasanthebenezer.com
-for d in n8n webui files training tts trade chrome; do certbot certonly --standalone -d $d.prasanthebenezer.com; done
+for d in n8n webui files training tts trade chrome agent; do certbot certonly --standalone -d $d.prasanthebenezer.com; done
 ```
 
 After step 7's edge proxy is up, run this for each certificate (`prasanthebenezer.com-0001`, then each `<sub>.prasanthebenezer.com`):

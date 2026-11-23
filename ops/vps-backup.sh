@@ -39,6 +39,8 @@ HOST_PATHS=(
   /root/.ssh/authorized_keys
   /root/onboarding-training-system/.env
   /root/onboarding-training-system/docker-compose.override.yml
+  /root/ClaudeAgent/.env
+  /etc/claude-bridge.env
 )
 
 # Docker volume -> container that writes to it.
@@ -46,6 +48,7 @@ declare -A VOLUMES=(
   [wg-easy_etc_wireguard]=wg-easy
   [n8n_n8n-data]=n8n-n8n-1
   [onboarding-training-system_media]=onboarding-training-system-app-1
+  [claudeagent_agent-data]=claudeagent-app-1
 )
 
 # Containers are paused (frozen for a few seconds, not restarted) while their
