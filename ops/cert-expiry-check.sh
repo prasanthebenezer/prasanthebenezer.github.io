@@ -26,6 +26,7 @@ HOSTS=(
   trade.prasanthebenezer.com
   chrome.prasanthebenezer.com
   agent.prasanthebenezer.com
+  notiq.prasanthebenezer.com
 )
 
 WARN_DAYS=20

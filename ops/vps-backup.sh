@@ -40,6 +40,7 @@ HOST_PATHS=(
   /root/onboarding-training-system/.env
   /root/onboarding-training-system/docker-compose.override.yml
   /root/ClaudeAgent/.env
+  /root/notiq/.env
   /etc/claude-bridge.env
   # /etc/claudeagent (ClaudeAgent's connector.key) is left out on purpose: without it the
   # connector tokens in claudeagent_agent-data are unreadable ciphertext. See REINSTALL.md.
@@ -82,6 +83,15 @@ if docker ps -q --filter "name=^$TRAINING_DB$" --filter status=running | grep -q
   echo "db      training (postgres)"
 else
   echo "missing $TRAINING_DB (training DB skipped)"
+fi
+
+# Notiq notes, tasks and sign-in data: a consistent pg_dump, no pause needed.
+NOTIQ_DB=notiq-db-1
+if docker ps -q --filter "name=^$NOTIQ_DB$" --filter status=running | grep -q .; then
+  docker exec "$NOTIQ_DB" pg_dump -U notiq notiq | gzip > "$WORK/notiq-db.sql.gz"
+  echo "db      notiq (postgres)"
+else
+  echo "missing $NOTIQ_DB (notiq DB skipped)"
 fi
 
 pause vps-uploader   # for shares.db
